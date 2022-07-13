@@ -1,0 +1,10 @@
+{
+    "shell": true,
+    "cmd": ["start", "cmd", "/k", "wsl", "bash", 
+                "./simulate.sh",
+                "$file_name"
+        ],
+    "selector": "source.SystemVerilog",
+    "file_patterns": ["*.v", "*.sv"],
+    "working_dir": "$folder\\script\\"
+}
