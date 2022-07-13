@@ -88,7 +88,7 @@ module CPU_TopLevel #(
         // Stall Control (Ready For Testing)
             wire InstructionValid = s1_InstructionValid;
             wire BranchStallIn = BranchStall;
-            wire RegisterStallIn = RegisterStallOut;
+            wire RegisterStallIn = RegisterStall;
             wire IssueCongestionStallIn = IssueCongestionStallOut;
             wire StallEn;
             StallControl StallCtl (
@@ -132,7 +132,7 @@ module CPU_TopLevel #(
             wire                       Write_En = ;
             wire    [DATABITWIDTH-1:0] Write_Data = ;
             wire                       RegistersSync;
-            wire                       RegisterStallOut;
+            wire                       RegisterStall;
             RegisterFile #(
                 .DATABITWIDTH(DATABITWIDTH),
                 .REGISTERCOUNT(REGISTERCOUNT),
@@ -155,7 +155,7 @@ module CPU_TopLevel #(
                 .Write_En         (Write_En),
                 .Write_Data       (Write_Data),
                 .RegistersSync    (RegistersSync),
-                .RegisterStallOut (RegisterStallOut)
+                .RegisterStallOut (RegisterStall)
             );
         //
         

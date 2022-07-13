@@ -25,7 +25,7 @@ module RegisterFile #(
     input     [DATABITWIDTH-1:0] Write_Data,
 
     output RegistersSync;
-    output RegisterStallIn;
+    output RegisterStallOut;
 );
 
     // Write Decoder
@@ -78,11 +78,11 @@ module RegisterFile #(
         end
     endgenerate
 
-    // RegisterStallIn and Sync Generation
+    // RegisterStallOut and Sync Generation
     wire   StallA = DirtyBitOutVector[ReadA_Address] && ReadA_En;
     wire   StallB = DirtyBitOutVector[ReadB_Address] && ReadB_En;
     assign RegistersSync = ~|DirtyBitOutVector;
-    assign RegisterStallIn = StallA || StallB;
+    assign RegisterStallOut = StallA || StallB;
 
     // Read A decoder
     assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
