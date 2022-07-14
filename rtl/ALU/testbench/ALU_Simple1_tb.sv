@@ -63,7 +63,7 @@ module ALU_Simple1_tb ();
 			//         \|/
 			if (1'b1) begin
                 $display("IN   - A:B:En:Opcode - %0b:%0b:%0b:%0h", Data_InA, Data_InB, ALU_Enable, Opcode);
-                $display("OUT  - C             - %016b", Data_OutC);
+                $display("OUT  - C             - %016b", ResultOut);
                 // $display("TEST - test          - %016b", TEST);
             	$display(">>>>>>> Count (%0d) <<<<<<<", Count);
 				$display("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
@@ -102,7 +102,7 @@ module ALU_Simple1_tb ();
     wire [15:0] Data_InB = 16'b1000_0000_0001_1111;
     wire        ALU_Enable = 1'b1;
     wire  [3:0] Opcode = Count[3:0];
-    wire [15:0] Data_OutC;
+    wire [15:0] ResultOut;
     wire [15:0] TEST;
 
     ALU_Simple1 #(
@@ -112,7 +112,7 @@ module ALU_Simple1_tb ();
         .Data_InB  (Data_InB),
         .ALU_Enable(ALU_Enable),
         .Opcode    (Opcode),
-        .Data_OutC (Data_OutC)
+        .ResultOut (ResultOut)
     );
 
 

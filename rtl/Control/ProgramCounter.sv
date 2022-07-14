@@ -1,5 +1,5 @@
 module ProgramCounter #(
-    parameter DATABITWIDTH = 16;
+    parameter DATABITWIDTH = 16
 )(
     input clk,
     input clk_en,

@@ -1,6 +1,7 @@
 module InstructionDecoder #(
     parameter DATABITWIDTH = 16
 )(
+    input         sync_rst,
     input  [15:0] InstructionIn,
     input         InstructionInValid,
 
@@ -95,8 +96,8 @@ module InstructionDecoder #(
             5'b1_1001 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_1_10_10000_0}; // J&L Imm
             5'b1_1010 : OperationBitVector = {1'b0, BranchStall_tmp, 13'b0_0_0_0_0_00_10000_0}; // Branch Reg
             5'b1_1011 : OperationBitVector = {1'b0, BranchStall_tmp, 13'b0_0_0_0_1_00_10000_0}; // Branch Imm
-            5'b1_1110 : OperationBitVector = 15'b0_ 0_1_1_0_1_1_00_00000_0; // Upper Immediate
-            5'b1_11?? : OperationBitVector = 15'b0_ 0_1_1_0_0_1_00_00000_0; // Immediate
+            5'b1_1110 : OperationBitVector = 15'b0_0_1_1_0_1_1_00_00000_0; // Upper Immediate
+            5'b1_11?? : OperationBitVector = 15'b0_0_1_1_0_0_1_00_00000_0; // Immediate
             default   : OperationBitVector = 0;
         endcase
     end
