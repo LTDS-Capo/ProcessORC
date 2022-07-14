@@ -155,11 +155,7 @@ module CPU_TopLevel #(
                 .Write_En         (Write_En),
                 .Write_Data       (Write_Data),
                 .RegistersSync    (RegistersSync),
-<<<<<<< HEAD
                 .RegisterStallOut (RegisterStall)
-=======
-                .RegisterStallIn  (RegisterStallOut)
->>>>>>> origin/main
             );
         //
         
@@ -233,12 +229,10 @@ module CPU_TopLevel #(
             wire    [DATABITWIDTH-1:0] s1_BranchComparisonValue;
             wire    [DATABITWIDTH-1:0] s1_BranchDest;
             wire                       s1_ALU0_Enable;
-            wire    [DATABITWIDTH-1:0] s1_ALU0_Data_InA;
-            wire    [DATABITWIDTH-1:0] s1_ALU0_Data_InB;
             wire                       s1_ALU1_Enable;
-            wire                 [3:0] s1_ALU_MinorOpcode;
-            wire    [DATABITWIDTH-1:0] s1_ALU1_Data_InA;
-            wire    [DATABITWIDTH-1:0] s1_ALU1_Data_InB;
+            wire                 [3:0] s1_MinorOpcode;
+            wire    [DATABITWIDTH-1:0] s1_Data_InA;
+            wire    [DATABITWIDTH-1:0] s1_Data_InB;
             wire                       IssueCongestionStallOut;
             wire                       s1_RegWriteEn;
             wire                 [1:0] s1_WriteBackSourceOut;
@@ -260,9 +254,9 @@ module CPU_TopLevel #(
                 .BranchEn               (s1_BranchEn),
                 .ALU0_Enable            (s1_ALU0_Enable),
                 .ALU1_Enable            (s1_ALU1_Enable),
-                .ALU_MinorOpcode       (s1_ALU_MinorOpcode),
-                .Data_A          (s1_ALU1_Data_InA),
-                .Data_B          (s1_ALU1_Data_InB),
+                .ALU_MinorOpcode        (s1_MinorOpcode),
+                .Data_A                 (s1_Data_A),
+                .Data_B                 (s1_Data_B),
                 .IssueCongestionStallOut(IssueCongestionStallOut),
                 .RegWriteEn             (s1_RegWriteEn),
                 .WriteBackSourceOut     (s1_WriteBackSourceOut),
@@ -276,7 +270,7 @@ module CPU_TopLevel #(
             localparam S1BUFFERINBITWIDTH_WRITEBACK = REGADDRBITWIDTH + 3;
 
             wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
-            wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_ALU_MinorOpcode, s1_ALU0_Data_InA, s1_ALU0_Data_InB};
+            wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
             wire [S1BUFFERINBITWIDTH_WRITEBACK-1:0] s1_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
             localparam S1BUFFERBITWIDTH = S1BUFFERINBITWIDTH_FUE + S1BUFFERINBITWIDTH_META + S1BUFFERINBITWIDTH_WRITEBACK;
