@@ -23,7 +23,7 @@ module InstructionROM (
             9'h00e  : NextInstruction = 16'h0000;
             9'h00f  : NextInstruction = 16'h0000;
             // 9'h1FF : Next = SOMETHING; MAX ADDRESS FOR THIS ROM!!!!!!!!!!!!!!!
-            default: Next = 0; // Default is also case 0
+            default: NextInstruction = 0; // Default is also case 0
         endcase
     end
     

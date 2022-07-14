@@ -24,8 +24,8 @@ module RegisterFile #(
     input                        Write_En,
     input     [DATABITWIDTH-1:0] Write_Data,
 
-    output RegistersSync;
-    output RegisterStallIn;
+    output RegistersSync,
+    output RegisterStallIn
 );
 
     // Write Decoder
@@ -62,7 +62,7 @@ module RegisterFile #(
                 wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && Tag_Request;
                 wire LocalMemWriteEn = MemWriteDecodeVector[RegisterIndex] && Mem_Write_En;
                 wire LocalWriteEn = WriteDecodeVector[RegisterIndex] && Write_En;
-                RegisterFileUpdate_Cell RegisterCell (
+                RegisterFile_Cell RegisterCell (
                     .clk         (clk),
                     .clk_en      (clk_en),
                     .sync_rst    (sync_rst),
@@ -81,7 +81,7 @@ module RegisterFile #(
     // RegisterStallIn and Sync Generation
     wire   StallA = DirtyBitOutVector[ReadA_Address] && ReadA_En;
     wire   StallB = DirtyBitOutVector[ReadB_Address] && ReadB_En;
-    assign RegistersSync = ~|DirtyBitOutVector;
+    assign RegistersSync = ~|DirtyBitOutVector[0];
     assign RegisterStallIn = StallA || StallB;
 
     // Read A decoder
