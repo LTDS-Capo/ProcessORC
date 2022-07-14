@@ -1,25 +1,30 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "testBench",
-      "type": "shell",
-      "command": "wsl bash ./simulate.sh ${fileBasename}",
-      "options": {
-        "cwd": "${workspaceFolder}/script/"
-      },
-      "presentation": {
-        "reveal": "always",
-        "focus": true,
-        "echo": false,
-        "clear": true,
-        "close": false
-      },
-      "problemMatcher": [],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "testBench",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}/script/",
+            },
+            "windows": {
+                "command": "wsl bash ./simulate.sh ${fileBasename}",
+            },
+            "linux": {
+                "command": "./simulate.sh ${fileBasename}",
+            },
+            "presentation": {
+                "reveal": "always",
+                "focus": true,
+                "echo": false,
+                "clear": true,
+                "close": false,
+            },
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true,
+            },
+        }
+    ]
 }

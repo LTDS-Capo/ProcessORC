@@ -1,5 +1,5 @@
-module PlatformIndependant_TopLevel (
-    ports
+module PlatformIndependent_TopLevel (
+    //ports
 );
     
 

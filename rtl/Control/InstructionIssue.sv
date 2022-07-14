@@ -56,7 +56,7 @@ module InstructionIssue #(
     assign ALU1_Enable = FunctionalUnitEnable[1];
 
     // Universal output assignments
-    assign MinorOpcode = MinorOpcode;
+    assign ALU_MinorOpcode = MinorOpcode;
     assign Data_A = RegADataIn;
     assign Data_B = RegBDataIn;
 
