@@ -1,7 +1,7 @@
 module ForwardingSystem #(
     parameter DATABITWIDTH = 16,
     parameter REGISTERCOUNT = 16,
-    parameter REGADDRBITWIDTH = 4,
+    parameter REGADDRBITWIDTH = 4
 )(
     input clk,
     input clk_en,

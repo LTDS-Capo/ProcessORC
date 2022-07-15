@@ -67,10 +67,10 @@ module InstructionDecoder #(
     // b4 - Branch Enable
 
     // Write Back Source Bitmap
-    // 00 - ALU 0 (Immediate)
-    // 01 - ALU 1
-    // 10 - Program Counter + 1
-    // 11 - RESERVED
+    // 00 - RESERVED
+    // 01 - Program Counter + 1
+    // 10 - ALU 0 (Immediate)
+    // 11 - ALU 1
 
     logic [14:0] OperationBitVector;
     // OperationBitVector Bitmap
@@ -88,12 +88,12 @@ module InstructionDecoder #(
     wire [4:0] InstructionConditon = {InstructionInValid, InstructionIn[15:12]};
     always_comb begin : InstructionDecoderDecoder
         casez (InstructionConditon)
-            5'b1_0000 : OperationBitVector = 15'b0_0_1_1_1_0_0_00_00001_0; // ALU O
-            5'b1_0001 : OperationBitVector = 15'b0_0_1_1_1_0_0_01_00010_0; // ALU 1
+            5'b1_0000 : OperationBitVector = 15'b0_0_1_1_1_0_0_10_00001_0; // ALU O
+            5'b1_0001 : OperationBitVector = 15'b0_0_1_1_1_0_0_11_00010_0; // ALU 1
             5'b1_0010 : OperationBitVector = 15'b0_0_1_0_1_0_0_00_00100_1; // Complex
             5'b1_0011 : OperationBitVector = 15'b0_0_1_0_1_0_0_00_01000_1; // Memory
-            5'b1_1000 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_0_10_10000_0}; // J&L Reg
-            5'b1_1001 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_1_10_10000_0}; // J&L Imm
+            5'b1_1000 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_0_01_10000_0}; // J&L Reg
+            5'b1_1001 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_1_01_10000_0}; // J&L Imm
             5'b1_1010 : OperationBitVector = {1'b0, BranchStall_tmp, 13'b0_0_0_0_0_00_10000_0}; // Branch Reg
             5'b1_1011 : OperationBitVector = {1'b0, BranchStall_tmp, 13'b0_0_0_0_1_00_10000_0}; // Branch Imm
             5'b1_1110 : OperationBitVector = 15'b0_0_1_1_0_1_1_00_00000_0; // Upper Immediate

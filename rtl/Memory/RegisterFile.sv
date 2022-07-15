@@ -51,7 +51,7 @@ module RegisterFile #(
 
     // Register Generation
     wire  [DATABITWIDTH-1:0] DataOutVector [REGISTERCOUNT-1:0];
-    wire                     DirtyBitOutVector [REGISTERCOUNT-1:0];
+    wire [REGISTERCOUNT-1:0] DirtyBitOutVector;
     generate
         genvar RegisterIndex;
         for (RegisterIndex = 0; RegisterIndex < REGISTERCOUNT; RegisterIndex = RegisterIndex + 1) begin : RegisterGeneration
@@ -63,17 +63,22 @@ module RegisterFile #(
                 wire LocalMemWriteEn = MemWriteDecodeVector[RegisterIndex] && Mem_Write_En;
                 wire LocalWriteEn = WriteDecodeVector[RegisterIndex] && Write_En;
                 RegisterFile_Cell RegisterCell (
-                    .clk         (clk),
-                    .clk_en      (clk_en),
-                    .sync_rst    (sync_rst),
-                    .Write_En    (LocalWriteEn),
-                    .DataIn      (Write_Data),
-                    .Dirty_Set   (LocalDirtyBitSet),
-                    .Mem_Write_En(LocalMemWriteEn),
-                    .Mem_DataIn  (Mem_Write_Data),
-                    .DataOut     (DataOutVector[RegisterIndex]),
-                    .DirtyBitOut (DirtyBitOutVector[RegisterIndex])
+                    .clk           (clk),
+                    .clk_en        (clk_en),
+                    .sync_rst      (sync_rst),
+                    .Write_En      (LocalWriteEn),
+                    .DataIn        (Write_Data),
+                    .Dirty_Set     (LocalDirtyBitSet),
+                    .Mem_Write_En  (LocalMemWriteEn),
+                    .Mem_DataIn    (Mem_Write_Data),
+                    .DataOut       (DataOutVector[RegisterIndex]),
+                    .DirtyBitOut   (DirtyBitOutVector[RegisterIndex])
                 );
+                // Debug output
+                    always_ff @(posedge clk) begin
+                        $display("[S1] REG:%0d(d):%0h(h) Dirty:%0b Value:%0h:", RegisterIndex, RegisterIndex, DirtyBitOutVector[RegisterIndex], DataOutVector[RegisterIndex]);
+                    end
+                //
             end
         end
     endgenerate
@@ -81,7 +86,7 @@ module RegisterFile #(
     // RegisterStallOut and Sync Generation
     wire   StallA = DirtyBitOutVector[ReadA_Address] && ReadA_En;
     wire   StallB = DirtyBitOutVector[ReadB_Address] && ReadB_En;
-    assign RegistersSync = ~(|DirtyBitOutVector);
+    assign RegistersSync = ~|DirtyBitOutVector;
     assign RegisterStallOut = StallA || StallB;
 
     // Read A decoder
