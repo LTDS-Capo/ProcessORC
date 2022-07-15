@@ -11,7 +11,7 @@ module CPU_TopLevel #(
     // Test Outputs
     output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
     output RegisterWriteEn_OUT,
-    output RegisterWriteAddr_OUT
+    output [3:0] RegisterWriteAddr_OUT
 );
     localparam REGISTERCOUNT = 16;
     localparam REGADDRBITWIDTH = $clog2(REGISTERCOUNT);
@@ -42,7 +42,7 @@ module CPU_TopLevel #(
 
         // Pipeline Buffer - Stage 0
             reg  [16:0] Stage0Buffer;
-            wire        Stage0BufferTrigger = clk_en || sync_rst;
+            wire        Stage0BufferTrigger = SystemEn && clk_en || sync_rst;
             wire [16:0] NextStage0Buffer = (sync_rst) ? 0 : {s0_InstructionValid, s0_InstructionOut};
             always_ff @(posedge clk) begin
                 if (Stage0BufferTrigger) begin
@@ -290,7 +290,7 @@ module CPU_TopLevel #(
 
             localparam S1BUFFERBITWIDTH = S1BUFFERINBITWIDTH_FUE + S1BUFFERINBITWIDTH_META + S1BUFFERINBITWIDTH_WRITEBACK;
             reg  [S1BUFFERBITWIDTH-1:0] Stage1Buffer;
-            wire                        Stage1BufferTrigger = clk_en || sync_rst;
+            wire                        Stage1BufferTrigger = SystemEn && clk_en || sync_rst;
             wire [S1BUFFERBITWIDTH-1:0] NextStage1Buffer = (sync_rst) ? 0 : {s1_FunctionalUnitEnable, s1_MetaDataIssue, s1_RegWriteIssue};
             always_ff @(posedge clk) begin
                 if (Stage1BufferTrigger) begin
@@ -319,13 +319,13 @@ module CPU_TopLevel #(
             wire s2_ALU0_Enable = s2_FunctionalUnitEnable[1];
             wire s2_ALU1_Enable = s2_FunctionalUnitEnable[0];
 
-            wire s2_MinorOpcode = s2_MetaDataIssue[((DATABITWIDTH*2)+4)-1:(DATABITWIDTH*2)];
-            wire s2_Data_A = s2_MetaDataIssue[(DATABITWIDTH*2)-1:DATABITWIDTH];
-            wire s2_Data_B = s2_MetaDataIssue[DATABITWIDTH-1:0];
+            wire              [3:0] s2_MinorOpcode = s2_MetaDataIssue[((DATABITWIDTH*2)+4)-1:(DATABITWIDTH*2)];
+            wire [DATABITWIDTH-1:0] s2_Data_A = s2_MetaDataIssue[(DATABITWIDTH*2)-1:DATABITWIDTH];
+            wire [DATABITWIDTH-1:0] s2_Data_B = s2_MetaDataIssue[DATABITWIDTH-1:0];
 
-            wire s2_RegWriteEn = s2_RegWriteIssue[REGADDRBITWIDTH+2];
-            wire s2_WriteBackSourceOut = s2_RegWriteIssue[(REGADDRBITWIDTH+2)-1:REGADDRBITWIDTH];
-            wire s2_RegWriteAddrOut = s2_RegWriteIssue[REGADDRBITWIDTH-1:0];
+            wire                       s2_RegWriteEn = s2_RegWriteIssue[REGADDRBITWIDTH+2];
+            wire                 [1:0] s2_WriteBackSourceOut = s2_RegWriteIssue[(REGADDRBITWIDTH+2)-1:REGADDRBITWIDTH];
+            wire [REGADDRBITWIDTH-1:0] s2_RegWriteAddrOut = s2_RegWriteIssue[REGADDRBITWIDTH-1:0];
         //
 
         // Program Counter (Ready for testing)
@@ -363,7 +363,7 @@ module CPU_TopLevel #(
             ) ALU_0 (
                 .Data_InA  (ALU0_Data_InA),
                 .Data_InB  (ALU0_Data_InB),
-                .ALU_Enable(ALU0_ALU_Enable),
+                .ALU_Enable(ALU0_Enable),
                 .Opcode    (ALU0_Opcode),
                 .ResultOut (ALU0_ResultOut)
             );
@@ -380,7 +380,7 @@ module CPU_TopLevel #(
             ) ALU_1 (
                 .Data_InA  (ALU1_Data_InA),
                 .Data_InB  (ALU1_Data_InB),
-                .ALU_Enable(ALU1_ALU_Enable),
+                .ALU_Enable(ALU1_Enable),
                 .Opcode    (ALU1_Opcode),
                 .ResultOut (ALU1_ResultOut)
             );
