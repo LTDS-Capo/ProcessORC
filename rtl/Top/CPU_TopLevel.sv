@@ -47,7 +47,7 @@ module CPU_TopLevel #(
     // Stage 1 
     // Notes: Decode
     // Inputs: s1_InstructionValid, s1_InstructionOut,
-    // Output Buffer: s2_BranchIssue, s2_ALU0Issue, s2_ALU1Issue, s2_RegWriteIssue
+    // Output Buffer: s2_FunctionalUnitEnable, s2_MetaDataIssue, s2_RegWriteIssue
         // Instruction Decoder (Ready For Testing)
             wire             [15:0] InstructionIn = s1_InstructionOut;
             wire                    InstructionInValid = s1_InstructionValid;
@@ -303,9 +303,9 @@ module CPU_TopLevel #(
         // s2_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
         // NEW:
-        // s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
-        // s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
-        // s1_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
+        // s2_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
+        // s2_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
+        // s2_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
     //
 
