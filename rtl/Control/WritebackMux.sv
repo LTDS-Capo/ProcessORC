@@ -1,15 +1,18 @@
 module WritebackMux #(
-    parameter DATABITWIDTH = 16
+    parameter DATABITWIDTH = 16,
+    parameter REGADDRBITWIDTH = 4
 )(
-    input                     RegAWriteEn,
-    input               [1:0] WritebackSource,
+    input                        RegAWriteEn,
+    input  [REGADDRBITWIDTH-1:0] RegWriteAddr,
+    input                  [1:0] WritebackSource,
 
-    input  [DATABITWIDTH-1:0] JumpAndLinkResultIn,
-    input  [DATABITWIDTH-1:0] ALU0ResultIn,
-    input  [DATABITWIDTH-1:0] ALU1ResultIn,
+    input     [DATABITWIDTH-1:0] JumpAndLinkResultIn,
+    input     [DATABITWIDTH-1:0] ALU0ResultIn,
+    input     [DATABITWIDTH-1:0] ALU1ResultIn,
 
-    output [DATABITWIDTH-1:0] WritebackResultOut,
-    output                    RegisterWriteEn
+    output    [DATABITWIDTH-1:0] WritebackResultOut,
+    output [REGADDRBITWIDTH-1:0] WritebackRegAddr,
+    output                       RegisterWriteEn
 );
     
     logic [DATABITWIDTH:0] Result_tmp;
@@ -23,6 +26,7 @@ module WritebackMux #(
     end
     
     assign WritebackResultOut = Result_tmp;
+    assign WritebackRegAddr = RegWriteAddr;
     assign RegisterWriteEn = RegAWriteEn;
 
 endmodule

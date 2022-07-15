@@ -38,6 +38,7 @@ module ProgramCounter #(
         end
     end
     
+    assign InstructionAddrOut = ProgramCounter;
     assign JumpAndLinkAddrOut = ProgramCounterPlusOne;
 
 endmodule

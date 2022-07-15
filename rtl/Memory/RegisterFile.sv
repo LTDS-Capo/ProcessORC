@@ -90,15 +90,6 @@ module RegisterFile #(
     assign RegistersSync = ~|DirtyBitOutVector;
     assign RegisterStallOut = StallA || StallB;
 
-    // Debug output
-        always_ff @(posedge clk) begin
-            $display("REGTEST - StallA:StallB     - %0b:%0b", StallA, StallB);
-            $display("REGTEST - ReadA_En:B_En     - %0b:%0b", ReadA_En, ReadB_En);
-            $display("REGTEST - DirtyBitOutVector - %016b", DirtyBitOutVector);
-        end
-    //
-
-
     // Read A decoder
     assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
     

@@ -10,8 +10,8 @@ module CPU_TopLevel #(
 
     // Test Outputs
     output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
-    output RegisterWriteEn_OUT,
-    output [3:0] RegisterWriteAddr_OUT
+    output                    RegisterWriteEn_OUT,
+    output              [3:0] RegisterWriteAddr_OUT
 );
     localparam REGISTERCOUNT = 16;
     localparam REGADDRBITWIDTH = $clog2(REGISTERCOUNT);
@@ -24,12 +24,21 @@ module CPU_TopLevel #(
 
     assign HaltOut = 1'b0;
 
+
+    // Debug output
+        always_ff @(posedge clk) begin
+            $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", RegisterWriteEn, s2_RegWriteAddrOut, WritebackResultOut);
+            $display("CPU - RegAAddr       - %0b", RegAAddr);
+        end
+    //
+
+
     // Stage 0 (Ready for testing)
     // Notes: Fetch
     // Inputs: SystemEn, StallEn, InstructionAddress
     // Output Buffer: s1_InstructionValid, s1_InstructionOut
         // Instruction ROM
-            wire [15:0] InstructionAddress = InstructionAddrOut;
+            wire [15:0] InstructionAddress = InstructionAddrOut[15:0];
             wire [15:0] s0_InstructionOut;
             InstructionROM InstROM (
                 .InstructionAddress(InstructionAddress),
@@ -53,6 +62,7 @@ module CPU_TopLevel #(
             wire        s1_InstructionValid = Stage0Buffer[16];
             wire [15:0] s1_InstructionOut = Stage0Buffer[15:0];
         //
+
         // Debug output
             always_ff @(posedge clk) begin
                 $display("SystemEn:StallEn - %0b:%0b", SystemEn, StallEn);
@@ -145,7 +155,7 @@ module CPU_TopLevel #(
             wire [REGADDRBITWIDTH-1:0] Mem_Write_Address = '0; // TEMPORARY 0s
             wire                       Mem_Write_En = '0; // TEMPORARY 0s
             wire    [DATABITWIDTH-1:0] Mem_Write_Data = '0; // TEMPORARY 0s
-            wire [REGADDRBITWIDTH-1:0] Write_Address = s2_RegWriteAddrOut;
+            wire [REGADDRBITWIDTH-1:0] Write_Address = WritebackRegAddr;
             wire                       Write_En = RegisterWriteEn;
             wire    [DATABITWIDTH-1:0] Write_Data = WritebackResultOut;
             wire                       RegistersSync;
@@ -265,6 +275,7 @@ module CPU_TopLevel #(
                 .RegAWriteEnIn          (Issue_RegAWriteEnIn),
                 .InstructionTagValid    (InstructionTagValid),
                 .InstructionTagIn       (InstructionTagIn),
+                .WritebackEnIn          (WritebackEnIn),
                 .WritebackRegAddr       (WritebackRegAddr),
                 .RegADataIn             (RegADataIn),
                 .RegBDataIn             (RegBDataIn),
@@ -397,22 +408,26 @@ module CPU_TopLevel #(
         //
 
         // Writeback Mux (Ready for testing)
-            wire                    WBMux_RegAWriteEn = s2_RegWriteEn;
-            wire              [1:0] WBMux_WritebackSource = s2_WriteBackSourceOut;
-            wire [DATABITWIDTH-1:0] JumpAndLinkResultIn = JumpAndLinkAddrOut;
-            wire [DATABITWIDTH-1:0] ALU0ResultIn = ALU0_ResultOut;
-            wire [DATABITWIDTH-1:0] ALU1ResultIn = ALU1_ResultOut;
-            wire [DATABITWIDTH-1:0] WritebackResultOut;
-            wire                    RegisterWriteEn;
+            wire                       WBMux_RegAWriteEn = s2_RegWriteEn;
+            wire [REGADDRBITWIDTH-1:0] WBMux_RegWriteAddr = s2_RegWriteAddrOut;
+            wire                 [1:0] WBMux_WritebackSource = s2_WriteBackSourceOut;
+            wire    [DATABITWIDTH-1:0] JumpAndLinkResultIn = JumpAndLinkAddrOut;
+            wire    [DATABITWIDTH-1:0] ALU0ResultIn = ALU0_ResultOut;
+            wire    [DATABITWIDTH-1:0] ALU1ResultIn = ALU1_ResultOut;
+            wire    [DATABITWIDTH-1:0] WritebackResultOut;
+            wire [REGADDRBITWIDTH-1:0] WritebackRegAddr;
+            wire                       RegisterWriteEn;
             WritebackMux #(
                 .DATABITWIDTH(16)
             ) WBMux (
                 .RegAWriteEn        (WBMux_RegAWriteEn),
+                .RegWriteAddr       (WBMux_RegWriteAddr),
                 .WritebackSource    (WBMux_WritebackSource),
                 .JumpAndLinkResultIn(JumpAndLinkResultIn),
                 .ALU0ResultIn       (ALU0ResultIn),
                 .ALU1ResultIn       (ALU1ResultIn),
                 .WritebackResultOut (WritebackResultOut),
+                .WritebackRegAddr   (WritebackRegAddr),
                 .RegisterWriteEn    (RegisterWriteEn)
             );
         //

@@ -62,7 +62,7 @@ module CPU_TopLevel_tb ();
 			//        \ | /
 			//         \|/
 			if (1'b1) begin
-
+                $display("RegEn:Addr:Data - %0b:%0h:%0h", RegisterWriteEn_OUT, RegisterWriteAddr_OUT, RegisterWriteData_OUT);
             	$display(">>>>>>> Count (%0d) <<<<<<<", Count);
 				$display("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 			end				
@@ -98,6 +98,10 @@ module CPU_TopLevel_tb ();
     
     wire SystemEn = Count > 7;
 
+    wire [15:0] RegisterWriteData_OUT;
+    wire        RegisterWriteEn_OUT;
+    wire  [3:0] RegisterWriteAddr_OUT;
+
     CPU_TopLevel #(
         .DATABITWIDTH(16)
     ) CPU (
@@ -106,9 +110,9 @@ module CPU_TopLevel_tb ();
         .sync_rst             (sync_rst),
         .SystemEn             (SystemEn),
         .HaltOut              (), // Not setup yet
-        .RegisterWriteData_OUT(), // DO NOT CONNECT
-        .RegisterWriteEn_OUT  (), // DO NOT CONNECT
-        .RegisterWriteAddr_OUT()  // DO NOT CONNECT
+        .RegisterWriteData_OUT(RegisterWriteData_OUT), // DO NOT CONNECT
+        .RegisterWriteEn_OUT  (RegisterWriteEn_OUT), // DO NOT CONNECT
+        .RegisterWriteAddr_OUT(RegisterWriteAddr_OUT)  // DO NOT CONNECT
     );
 
 
