@@ -5,26 +5,26 @@
             "label": "testBench",
             "type": "shell",
             "options": {
-                "cwd": "${workspaceFolder}/script/",
+                "cwd": "${workspaceFolder}/script/"
             },
             "windows": {
-                "command": "wsl bash ./simulate.sh ${fileBasename}",
+                "command": "wsl bash ./simulate.sh ${fileBasename}"
             },
             "linux": {
-                "command": "./simulate.sh ${fileBasename}",
+                "command": "./simulate.sh ${fileBasename}"
             },
             "presentation": {
                 "reveal": "always",
                 "focus": true,
                 "echo": false,
                 "clear": true,
-                "close": false,
+                "close": false
             },
             "problemMatcher": [],
             "group": {
                 "kind": "build",
-                "isDefault": true,
-            },
+                "isDefault": true
+            }
         }
     ]
 }

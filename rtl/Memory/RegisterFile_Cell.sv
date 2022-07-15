@@ -1,5 +1,6 @@
 module RegisterFile_Cell #(
-    parameter BITWIDTH = 16
+    parameter BITWIDTH = 16,
+    parameter REGADDRBITWIDTH = 4
 )(
     input clk,
     input clk_en,
@@ -15,6 +16,8 @@ module RegisterFile_Cell #(
 
     output [BITWIDTH-1:0] DataOut,
     output                DirtyBitOut,
+
+    input [REGADDRBITWIDTH-1:0] TEST_REGADDRIN
 );
 
     reg   [BITWIDTH-1:0] Register;

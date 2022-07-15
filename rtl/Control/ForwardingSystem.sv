@@ -1,7 +1,7 @@
 module ForwardingSystem #(
     parameter DATABITWIDTH = 16,
     parameter REGISTERCOUNT = 16,
-    parameter REGADDRBITWIDTH = 4,
+    parameter REGADDRBITWIDTH = 4
 )(
     input clk,
     input clk_en,
@@ -39,8 +39,8 @@ module ForwardingSystem #(
             end
         end
         // Check what forwards need to occur
-        wire Forward0toAEn = WriteAddressCheck[REGADDRBITWIDTH] && RegAReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegAAddr);
-        wire Forward0toBEn = WriteAddressCheck[REGADDRBITWIDTH] && RegBReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegBAddr);
+        wire Forward0toAEn = WriteAddressCheck[REGADDRBITWIDTH] && RegAReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegAAddr[REGADDRBITWIDTH-1:0]);
+        wire Forward0toBEn = WriteAddressCheck[REGADDRBITWIDTH] && RegBReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegBAddr[REGADDRBITWIDTH-1:0]);
         wire Forward1toAEn = Forward1Valid && RegAReadEn && (Forward1RegAddr == RegAAddr);
         wire Forward1toBEn = Forward1Valid && RegBReadEn && (Forward1RegAddr == RegBAddr);
     //
@@ -74,5 +74,6 @@ module ForwardingSystem #(
         end
         assign FwdBDataOut = NextBDataOut;
     //
+
 
 endmodule

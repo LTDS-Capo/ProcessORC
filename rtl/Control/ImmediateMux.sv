@@ -4,13 +4,15 @@ module ImmediateMux #(
     input                     ImmediateEn,
     input                     UpperImmediateEn,
  
+    input  [DATABITWIDTH-1:0] ADataIn,
+
     input  [DATABITWIDTH-1:0] BDataIn,
     input  [DATABITWIDTH-1:0] ImmediateIn, 
 
     output [DATABITWIDTH-1:0] BDataOut
 );
-    
-    wire [DATABITWIDTH-1:0] UpperImmediateResult = {ImmediateIn[DATABITWIDTH-1:(DATABITWIDTH/2)], BDataIn[(DATABITWIDTH/2)-1:0]};
+
+    wire [DATABITWIDTH-1:0] UpperImmediateResult = {ImmediateIn[DATABITWIDTH-1:(DATABITWIDTH/2)], ADataIn[(DATABITWIDTH/2)-1:0]};
 
     logic [DATABITWIDTH-1:0] NextBDataOut;
     wire  [1:0] NextBDataOutCondition;
