@@ -22,6 +22,7 @@ module CPU_TopLevel #(
     assign RegisterWriteEn_OUT = Write_En;
     assign RegisterWriteAddr_OUT = Write_Address;
 
+    assign HaltOut = 1'b0;
 
     // Stage 0 (Ready for testing)
     // Notes: Fetch
@@ -42,7 +43,7 @@ module CPU_TopLevel #(
 
         // Pipeline Buffer - Stage 0
             reg  [16:0] Stage0Buffer;
-            wire        Stage0BufferTrigger = SystemEn && clk_en || sync_rst;
+            wire        Stage0BufferTrigger = (SystemEn && clk_en) || sync_rst;
             wire [16:0] NextStage0Buffer = (sync_rst) ? 0 : {s0_InstructionValid, s0_InstructionOut};
             always_ff @(posedge clk) begin
                 if (Stage0BufferTrigger) begin
@@ -54,6 +55,7 @@ module CPU_TopLevel #(
         //
         // Debug output
             always_ff @(posedge clk) begin
+                $display("SystemEn:StallEn - %0b:%0b", SystemEn, StallEn);
                 $display("State 0 Buffer - PC(d/h):InstValid:Inst - %0d/%0h:%0b:%0h", InstructionAddress, InstructionAddress, s0_InstructionValid, s0_InstructionOut);
             end
         //
@@ -290,7 +292,7 @@ module CPU_TopLevel #(
 
             localparam S1BUFFERBITWIDTH = S1BUFFERINBITWIDTH_FUE + S1BUFFERINBITWIDTH_META + S1BUFFERINBITWIDTH_WRITEBACK;
             reg  [S1BUFFERBITWIDTH-1:0] Stage1Buffer;
-            wire                        Stage1BufferTrigger = SystemEn && clk_en || sync_rst;
+            wire                        Stage1BufferTrigger = (SystemEn && clk_en) || sync_rst;
             wire [S1BUFFERBITWIDTH-1:0] NextStage1Buffer = (sync_rst) ? 0 : {s1_FunctionalUnitEnable, s1_MetaDataIssue, s1_RegWriteIssue};
             always_ff @(posedge clk) begin
                 if (Stage1BufferTrigger) begin

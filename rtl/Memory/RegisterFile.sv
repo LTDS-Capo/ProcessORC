@@ -57,6 +57,7 @@ module RegisterFile #(
         for (RegisterIndex = 0; RegisterIndex < REGISTERCOUNT; RegisterIndex = RegisterIndex + 1) begin : RegisterGeneration
             if (RegisterIndex == 0) begin
                 assign DataOutVector[RegisterIndex] = 0;
+                assign DirtyBitOutVector[RegisterIndex] = 1'b0;
             end
             else begin
                 wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && Tag_Request;
@@ -76,7 +77,7 @@ module RegisterFile #(
                 );
                 // Debug output
                     always_ff @(posedge clk) begin
-                        $display("[S1] REG:%0d(d):%0h(h) Dirty:%0b Value:%0h:", RegisterIndex, RegisterIndex, DirtyBitOutVector[RegisterIndex], DataOutVector[RegisterIndex]);
+                        $display("[S1] REG:%0d(d):%0h(h) Dirty:%0b Value:%0h", RegisterIndex, RegisterIndex, DirtyBitOutVector[RegisterIndex], DataOutVector[RegisterIndex]);
                     end
                 //
             end
@@ -88,6 +89,15 @@ module RegisterFile #(
     wire   StallB = DirtyBitOutVector[ReadB_Address] && ReadB_En;
     assign RegistersSync = ~|DirtyBitOutVector;
     assign RegisterStallOut = StallA || StallB;
+
+    // Debug output
+        always_ff @(posedge clk) begin
+            $display("REGTEST - StallA:StallB     - %0b:%0b", StallA, StallB);
+            $display("REGTEST - ReadA_En:B_En     - %0b:%0b", ReadA_En, ReadB_En);
+            $display("REGTEST - DirtyBitOutVector - %016b", DirtyBitOutVector);
+        end
+    //
+
 
     // Read A decoder
     assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;

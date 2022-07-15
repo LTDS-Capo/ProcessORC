@@ -96,18 +96,20 @@ module CPU_TopLevel_tb ();
     wire clk_en = Count > 4;
     wire sync_rst = Count == 1;
     
+    wire SystemEn = Count > 7;
 
-
-
-
-
-
-
-
-
-
-
-
+    CPU_TopLevel #(
+        .DATABITWIDTH(16)
+    ) CPU (
+        .clk                  (clk),
+        .clk_en               (clk_en),
+        .sync_rst             (sync_rst),
+        .SystemEn             (SystemEn),
+        .HaltOut              (), // Not setup yet
+        .RegisterWriteData_OUT(), // DO NOT CONNECT
+        .RegisterWriteEn_OUT  (), // DO NOT CONNECT
+        .RegisterWriteAddr_OUT()  // DO NOT CONNECT
+    );
 
 
 
