@@ -6,8 +6,6 @@ module WritebackMux #(
     input  [REGADDRBITWIDTH-1:0] RegWriteAddr,
     input                  [1:0] WritebackSource,
 
-    input                        JumpJumpAndLinkEn,
-
     input     [DATABITWIDTH-1:0] JumpAndLinkResultIn,
     input     [DATABITWIDTH-1:0] ALU0ResultIn,
     input     [DATABITWIDTH-1:0] ALU1ResultIn,
@@ -19,8 +17,8 @@ module WritebackMux #(
     
     logic  [DATABITWIDTH:0] Result_tmp;
     wire              [1:0] WritebackSourceCond;
-    assign                  WritebackSourceCond[0] = WritebackSource[0] || JumpJumpAndLinkEn;
-    assign                  WritebackSourceCond[1] = WritebackSource[1] && ~JumpJumpAndLinkEn;
+    assign                  WritebackSourceCond[0] = WritebackSource[0];
+    assign                  WritebackSourceCond[1] = WritebackSource[1];
     always_comb begin : ResultMux
         case (WritebackSourceCond)
             2'b01  : Result_tmp = JumpAndLinkResultIn;
@@ -31,7 +29,7 @@ module WritebackMux #(
     end
     
     assign WritebackResultOut = Result_tmp;
-    assign WritebackRegAddr = JumpJumpAndLinkEn ? 4'hF : RegWriteAddr;
-    assign RegisterWriteEn = RegAWriteEn || JumpJumpAndLinkEn;
+    assign WritebackRegAddr = RegWriteAddr;
+    assign RegisterWriteEn = RegAWriteEn;
 
 endmodule

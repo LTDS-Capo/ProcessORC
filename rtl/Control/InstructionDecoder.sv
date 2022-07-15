@@ -1,7 +1,7 @@
 module InstructionDecoder #(
     parameter DATABITWIDTH = 16
 )(
-    input                     sync_rst,
+    input                     clk,
     input              [15:0] InstructionIn,
     input                     InstructionInValid,
 
@@ -22,12 +22,10 @@ module InstructionDecoder #(
     output              [3:0] RegBAddr,
 
     output                    BranchStall,
-    output                    JumpEn,
-    output                    JumpJumpAndLinkEn
+    output                    JumpEn
 );
 
-    assign JumpEn = ~BranchStall && OperationBitVector[15];
-    assign JumpJumpAndLinkEn = ~BranchStall && JumpAndLinkEn;
+    assign JumpEn = ~BranchStall && ~JumpAndLinkEn && OperationBitVector[15];
 
     // Register Addresss Assignment
     wire   UpperAAddrEn = InstructionIn[15] && InstructionIn[12];
@@ -35,8 +33,8 @@ module InstructionDecoder #(
     logic [3:0] RegAAddr_tmp;
     wire  [1:0] NextRegAAddrCondition;
     wire        JumpAndLinkEn = OperationBitVector[14];
-    assign      NextRegAAddrCondition[0] = UpperAAddrEn && ~sync_rst;
-    assign      NextRegAAddrCondition[1] = JumpAndLinkEn && ~sync_rst;
+    assign      NextRegAAddrCondition[0] = UpperAAddrEn;
+    assign      NextRegAAddrCondition[1] = JumpAndLinkEn;
     always_comb begin : NextSOMETHINGMux
         case (NextRegAAddrCondition)
             2'b01  : RegAAddr_tmp = {InstructionIn[11:10], 2'b00};
@@ -57,7 +55,7 @@ module InstructionDecoder #(
         case (InstructionIn[13:12])
             2'b01  : ImmediateOut_tmp = {'0, InstructionIn[9:0]};
             2'b10  : ImmediateOut_tmp = {'0, InstructionIn[7:0], 8'h0}; 
-            2'b11  : ImmediateOut_tmp = {'1, InstructionIn[9:0]}; 
+            2'b11  : ImmediateOut_tmp = {{DATABITWIDTH-10{1'b1}}, InstructionIn[9:0]}; 
             default: ImmediateOut_tmp = {'0, InstructionIn[7:0]}; 
         endcase
     end
