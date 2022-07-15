@@ -296,12 +296,6 @@ module CPU_TopLevel #(
     // Notes: Execute - Short
     // In:
     // Out:
-        // OLD:
-        // s2_BranchIssue = {s1_BranchEn, s1_BranchComparisonValue, s1_BranchDest};
-        // s2_ALU0Issue = {s1_ALU0_Enable, s1_ALU0_MinorOpcode, s1_ALU0_Data_InA, s1_ALU0_Data_InB};
-        // s2_ALU1Issue = {s1_ALU1_Enable, s1_ALU1_MinorOpcode, s1_ALU1_Data_InA, s1_ALU1_Data_InB};
-        // s2_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
-
         // NEW:
         // s2_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
         // s2_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
