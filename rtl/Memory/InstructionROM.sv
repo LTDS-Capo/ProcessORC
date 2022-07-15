@@ -9,7 +9,7 @@ module InstructionROM (
             9'h000  : NextInstruction = 16'h0000;
             9'h001  : NextInstruction = 16'h0111; // INC r1 r1
             9'h002  : NextInstruction = 16'h0212; // INC r2 r2
-            9'h003  : NextInstruction = 16'hA100; // BZR r1 r0
+            9'h003  : NextInstruction = 16'hA400; // BZR r1 r0
             9'h004  : NextInstruction = 16'h0313; // INC r3 r3
             9'h005  : NextInstruction = 16'h0414; // INC r4 r4
             9'h006  : NextInstruction = 16'h0515; // INC r5 r5

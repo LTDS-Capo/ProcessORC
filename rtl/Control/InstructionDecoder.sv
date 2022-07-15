@@ -1,29 +1,33 @@
 module InstructionDecoder #(
     parameter DATABITWIDTH = 16
 )(
-    input         sync_rst,
-    input  [15:0] InstructionIn,
-    input         InstructionInValid,
+    input                     sync_rst,
+    input              [15:0] InstructionIn,
+    input                     InstructionInValid,
 
-    output        TagRequest,
-    output  [4:0] FunctionalUnitEnable,
-    output  [1:0] WritebackSource,
-    output  [3:0] MinorOpcodeOut,
+    output                    TagRequest,
+    output              [4:0] FunctionalUnitEnable,
+    output              [1:0] WritebackSource,
+    output              [3:0] MinorOpcodeOut,
 
-    output        ImmediateEn,
-    output        UpperImmediateEn,
+    output                    ImmediateEn,
+    output                    UpperImmediateEn,
     output [DATABITWIDTH-1:0] ImmediateOut,
 
-    output        RegAReadEn,
-    output        RegAWriteEn,
-    output  [3:0] RegAAddr,
+    output                    RegAReadEn,
+    output                    RegAWriteEn,
+    output              [3:0] RegAAddr,
 
-    output        RegBReadEn,
-    output  [3:0] RegBAddr,
+    output                    RegBReadEn,
+    output              [3:0] RegBAddr,
 
-    output        BranchStall
-
+    output                    BranchStall,
+    output                    JumpEn,
+    output                    JumpJumpAndLinkEn
 );
+
+    assign JumpEn = ~BranchStall && OperationBitVector[15];
+    assign JumpJumpAndLinkEn = ~BranchStall && JumpAndLinkEn;
 
     // Register Addresss Assignment
     wire   UpperAAddrEn = InstructionIn[15] && InstructionIn[12];
@@ -72,7 +76,7 @@ module InstructionDecoder #(
     // 10 - ALU 0 (Immediate)
     // 11 - ALU 1
 
-    logic [14:0] OperationBitVector;
+    logic [15:0] OperationBitVector;
     // OperationBitVector Bitmap
     // b0   - TagRequest
     // b5:1 - FunctionalUnitEnable
@@ -84,20 +88,21 @@ module InstructionDecoder #(
     // b12  - RegBReadEn
     // b13  - BranchStall
     // b14  - JumpAndLinkEn (Local for Reg A Addr)
+    // b15  - PCEn (Local for Unconditional Jump Optimization)
     wire BranchStall_tmp = ~(RegAAddr == 0);
     wire [4:0] InstructionConditon = {InstructionInValid, InstructionIn[15:12]};
     always_comb begin : InstructionDecoderDecoder
         casez (InstructionConditon)
-            5'b1_0000 : OperationBitVector = 15'b0_0_1_1_1_0_0_10_00001_0; // ALU O
-            5'b1_0001 : OperationBitVector = 15'b0_0_1_1_1_0_0_11_00010_0; // ALU 1
-            5'b1_0010 : OperationBitVector = 15'b0_0_1_0_1_0_0_00_00100_1; // Complex
-            5'b1_0011 : OperationBitVector = 15'b0_0_1_0_1_0_0_00_01000_1; // Memory
-            5'b1_1000 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_0_01_10000_0}; // J&L Reg
-            5'b1_1001 : OperationBitVector = {1'b1, BranchStall_tmp, 13'b0_1_0_0_1_01_10000_0}; // J&L Imm
-            5'b1_1010 : OperationBitVector = {1'b0, BranchStall_tmp, 13'b0_0_0_0_0_00_10000_0}; // Branch Reg
-            5'b1_1011 : OperationBitVector = {1'b0, BranchStall_tmp, 13'b0_0_0_0_1_00_10000_0}; // Branch Imm
-            5'b1_1110 : OperationBitVector = 15'b0_0_1_1_0_1_1_00_00000_0; // Upper Immediate
-            5'b1_11?? : OperationBitVector = 15'b0_0_1_1_0_0_1_00_00000_0; // Immediate
+            5'b1_0000 : OperationBitVector = 16'b00_0_1_1_1_0_0_10_00001_0; // ALU O
+            5'b1_0001 : OperationBitVector = 16'b00_0_1_1_1_0_0_11_00010_0; // ALU 1
+            5'b1_0010 : OperationBitVector = 16'b00_0_1_0_1_0_0_00_00100_1; // Complex
+            5'b1_0011 : OperationBitVector = 16'b00_0_1_0_1_0_0_00_01000_1; // Memory
+            5'b1_1000 : OperationBitVector = {2'b11, BranchStall_tmp, 7'b0_1_1_0_0_01, BranchStall_tmp, 5'b0000_0}; // J&L Reg
+            5'b1_1001 : OperationBitVector = {2'b11, BranchStall_tmp, 7'b0_1_1_0_1_01, BranchStall_tmp, 5'b0000_0}; // J&L Imm
+            5'b1_1010 : OperationBitVector = {2'b10, BranchStall_tmp, 7'b0_0_1_0_0_00, BranchStall_tmp, 5'b0000_0}; // Branch Reg
+            5'b1_1011 : OperationBitVector = {2'b10, BranchStall_tmp, 7'b0_0_1_0_1_00, BranchStall_tmp, 5'b0000_0}; // Branch Imm
+            5'b1_1110 : OperationBitVector = 16'b00_0_1_1_0_1_1_00_00000_0; // Upper Immediate
+            5'b1_11?? : OperationBitVector = 16'b00_0_1_1_0_0_1_00_00000_0; // Immediate
             default   : OperationBitVector = 0;
         endcase
     end

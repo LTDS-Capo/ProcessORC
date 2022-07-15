@@ -4,7 +4,7 @@ module CPU_TopLevel_tb ();
 	//          |
 	//        \ | /
 	//         \|/
-	localparam CycleLimit = 22;
+	localparam CycleLimit = 99;
 	
 	// Clock and reset initalization shiz
 	reg clk = 0;
@@ -62,7 +62,7 @@ module CPU_TopLevel_tb ();
 			//        \ | /
 			//         \|/
 			if (1'b1) begin
-                $display("RegEn:Addr:Data - %0b:%0h:%0h", RegisterWriteEn_OUT, RegisterWriteAddr_OUT, RegisterWriteData_OUT);
+                // $display("RegEn:Addr:Data - %0b:%0h:%0h", RegisterWriteEn_OUT, RegisterWriteAddr_OUT, RegisterWriteData_OUT);
             	$display(">>>>>>> Count (%0d) <<<<<<<", Count);
 				$display("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 			end				

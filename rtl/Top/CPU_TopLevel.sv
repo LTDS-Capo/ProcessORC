@@ -27,11 +27,12 @@ module CPU_TopLevel #(
 
     // Debug output
         always_ff @(posedge clk) begin
-            $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", RegisterWriteEn, s2_RegWriteAddrOut, WritebackResultOut);
-            $display("CPU - RegAAddr       - %0b", RegAAddr);
+            $display("CPU - Minor:DataA:B  - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
+            // $display("CPU - RegAAddr       - %0b", s1_RegWriteAddrOut);
+            $display("CPU - Jump:JJnL                 - %0b:%0b", JumpEn, JumpJumpAndLinkEn);
+            $display("CPU - PCEn:PC_Stall:Branch:Jump - %0b:%0b:%0b:%0b", PCEn, PC_StallEn, BranchEn, PC_JumpEn); 
         end
     //
-
 
     // Stage 0 (Ready for testing)
     // Notes: Fetch
@@ -65,7 +66,6 @@ module CPU_TopLevel #(
 
         // Debug output
             always_ff @(posedge clk) begin
-                $display("SystemEn:StallEn - %0b:%0b", SystemEn, StallEn);
                 $display("State 0 Buffer - PC(d/h):InstValid:Inst - %0d/%0h:%0b:%0h", InstructionAddress, InstructionAddress, s0_InstructionValid, s0_InstructionOut);
             end
         //
@@ -76,21 +76,23 @@ module CPU_TopLevel #(
     // Inputs: s1_InstructionValid, s1_InstructionOut,
     // Output Buffer: s2_FunctionalUnitEnable, s2_MetaDataIssue, s2_RegWriteIssue
         // Instruction Decoder (Ready For Testing)
-            wire             [15:0] InstructionIn = s1_InstructionOut;
-            wire                    InstructionInValid = s1_InstructionValid;
-            wire                    TagRequest;
-            wire              [4:0] FunctionalUnitEnable;
-            wire              [1:0] WritebackSource;
-            wire              [3:0] MinorOpcodeOut;
-            wire                    ImmediateEn;
-            wire                    UpperImmediateEn;
-            wire [DATABITWIDTH-1:0] ImmediateOut;
-            wire                    RegAReadEn;
-            wire                    RegAWriteEn;
-            wire              [3:0] RegAAddr;
-            wire                    RegBReadEn;
-            wire              [3:0] RegBAddr;
-            wire                    BranchStall;
+            wire                [15:0] InstructionIn = s1_InstructionOut;
+            wire                       InstructionInValid = s1_InstructionValid;
+            wire                       TagRequest;
+            wire                 [4:0] FunctionalUnitEnable;
+            wire                 [1:0] WritebackSource;
+            wire                 [3:0] MinorOpcodeOut;
+            wire                       ImmediateEn;
+            wire                       UpperImmediateEn;
+            wire    [DATABITWIDTH-1:0] ImmediateOut;
+            wire                       RegAReadEn;
+            wire                       RegAWriteEn;
+            wire [REGADDRBITWIDTH-1:0] RegAAddr;
+            wire                       RegBReadEn;
+            wire [REGADDRBITWIDTH-1:0] RegBAddr;
+            wire                       BranchStall;
+            wire                       JumpEn;
+            wire                       JumpJumpAndLinkEn;
             InstructionDecoder #(
                 .DATABITWIDTH(DATABITWIDTH)
             ) InstDecoder (
@@ -108,7 +110,9 @@ module CPU_TopLevel #(
                 .RegAAddr            (RegAAddr),
                 .RegBReadEn          (RegBReadEn),
                 .RegBAddr            (RegBAddr),
-                .BranchStall         (BranchStall)
+                .BranchStall         (BranchStall),
+                .JumpEn              (JumpEn),
+                .JumpJumpAndLinkEn   (JumpJumpAndLinkEn)
             );
         //
 
@@ -187,19 +191,19 @@ module CPU_TopLevel #(
         //
         
         // Forwarding (Ready For Testing)
-            wire RegAWriteEnIn = RegAWriteEn;
-            wire Fwd_RegAReadEn = RegAReadEn;
-            wire Fwd_RegAAddr = RegAAddr;
-            wire RegAData = ReadA_Data;
-            wire Fwd_RegBReadEn = RegBReadEn;
-            wire Fwd_RegBAddr = RegBAddr;
-            wire RegBData = ReadB_Data;
-            wire Forward0Data = WritebackResultOut;
-            wire Forward1Valid = '0; // TEMPORARY 0s
-            wire Forward1Data = '0; // TEMPORARY 0s
-            wire Forward1RegAddr = '0; // TEMPORARY 0s
-            wire FwdADataOut;
-            wire FwdBDataOut;
+            wire                       RegAWriteEnIn = RegAWriteEn;
+            wire                       Fwd_RegAReadEn = RegAReadEn;
+            wire [REGADDRBITWIDTH-1:0] Fwd_RegAAddr = RegAAddr;
+            wire    [DATABITWIDTH-1:0] RegAData = ReadA_Data;
+            wire                       Fwd_RegBReadEn = RegBReadEn;
+            wire [REGADDRBITWIDTH-1:0] Fwd_RegBAddr = RegBAddr;
+            wire    [DATABITWIDTH-1:0] RegBData = ReadB_Data;
+            wire    [DATABITWIDTH-1:0] Forward0Data = WritebackResultOut;
+            wire                       Forward1Valid = '0; // TEMPORARY 0s
+            wire    [DATABITWIDTH-1:0] Forward1Data = '0; // TEMPORARY 0s
+            wire [REGADDRBITWIDTH-1:0] Forward1RegAddr = '0; // TEMPORARY 0s
+            wire    [DATABITWIDTH-1:0] FwdADataOut;
+            wire    [DATABITWIDTH-1:0] FwdBDataOut;
             ForwardingSystem #(
                 .DATABITWIDTH   (DATABITWIDTH),
                 .REGISTERCOUNT  (REGISTERCOUNT),
@@ -249,7 +253,7 @@ module CPU_TopLevel #(
             wire                       InstructionTagValid = TagRequest;
             wire     [TAGBITWIDTH-1:0] InstructionTagIn = TagOut;
             wire                       WritebackEnIn = RegAWriteEn;
-            wire     [TAGBITWIDTH-1:0] WritebackRegAddrIn = RegAAddr;
+            wire [REGADDRBITWIDTH-1:0] WritebackRegAddrIn = RegAAddr;
             wire    [DATABITWIDTH-1:0] RegADataIn = FwdADataOut;
             wire    [DATABITWIDTH-1:0] RegBDataIn = BDataOut;
             wire                       s1_BranchEn;
@@ -276,15 +280,15 @@ module CPU_TopLevel #(
                 .InstructionTagValid    (InstructionTagValid),
                 .InstructionTagIn       (InstructionTagIn),
                 .WritebackEnIn          (WritebackEnIn),
-                .WritebackRegAddr       (WritebackRegAddr),
+                .WritebackRegAddr       (WritebackRegAddrIn),
                 .RegADataIn             (RegADataIn),
                 .RegBDataIn             (RegBDataIn),
                 .BranchEn               (s1_BranchEn),
                 .ALU0_Enable            (s1_ALU0_Enable),
                 .ALU1_Enable            (s1_ALU1_Enable),
                 .ALU_MinorOpcode        (s1_MinorOpcode),
-                .Data_A                 (s1_Data_A),
-                .Data_B                 (s1_Data_B),
+                .Data_A                 (s1_Data_InA),
+                .Data_B                 (s1_Data_InB),
                 .IssueCongestionStallOut(IssueCongestionStallOut),
                 .RegWriteEn             (s1_RegWriteEn),
                 .WriteBackSourceOut     (s1_WriteBackSourceOut),
@@ -298,7 +302,7 @@ module CPU_TopLevel #(
             localparam S1BUFFERINBITWIDTH_WRITEBACK = REGADDRBITWIDTH + 3;
 
             wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
-            wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
+            wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_InA, s1_Data_InB};
             wire [S1BUFFERINBITWIDTH_WRITEBACK-1:0] s1_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
             localparam S1BUFFERBITWIDTH = S1BUFFERINBITWIDTH_FUE + S1BUFFERINBITWIDTH_META + S1BUFFERINBITWIDTH_WRITEBACK;
@@ -347,6 +351,8 @@ module CPU_TopLevel #(
             wire                    BranchEn = s2_BranchEn;
             wire [DATABITWIDTH-1:0] ComparisonValue = s2_Data_A;
             wire [DATABITWIDTH-1:0] BranchDest = s2_Data_B;
+            wire                    PC_JumpEn = JumpEn;
+            wire [DATABITWIDTH-1:0] PC_JumpDest = s1_Data_InB;
             wire [DATABITWIDTH-1:0] InstructionAddrOut;
             wire [DATABITWIDTH-1:0] JumpAndLinkAddrOut;
             ProgramCounter #(
@@ -360,6 +366,8 @@ module CPU_TopLevel #(
                 .BranchEn          (BranchEn),
                 .ComparisonValue   (ComparisonValue),
                 .BranchDest        (BranchDest),
+                .JumpEn            (PC_JumpEn),
+                .JumpDest          (PC_JumpDest),
                 .InstructionAddrOut(InstructionAddrOut),
                 .JumpAndLinkAddrOut(JumpAndLinkAddrOut)
             );
@@ -411,6 +419,7 @@ module CPU_TopLevel #(
             wire                       WBMux_RegAWriteEn = s2_RegWriteEn;
             wire [REGADDRBITWIDTH-1:0] WBMux_RegWriteAddr = s2_RegWriteAddrOut;
             wire                 [1:0] WBMux_WritebackSource = s2_WriteBackSourceOut;
+            wire                       WBMux_JumpJumpAndLinkEn = JumpJumpAndLinkEn;
             wire    [DATABITWIDTH-1:0] JumpAndLinkResultIn = JumpAndLinkAddrOut;
             wire    [DATABITWIDTH-1:0] ALU0ResultIn = ALU0_ResultOut;
             wire    [DATABITWIDTH-1:0] ALU1ResultIn = ALU1_ResultOut;
@@ -423,6 +432,7 @@ module CPU_TopLevel #(
                 .RegAWriteEn        (WBMux_RegAWriteEn),
                 .RegWriteAddr       (WBMux_RegWriteAddr),
                 .WritebackSource    (WBMux_WritebackSource),
+                .JumpJumpAndLinkEn  (JumpJumpAndLinkEn),
                 .JumpAndLinkResultIn(JumpAndLinkResultIn),
                 .ALU0ResultIn       (ALU0ResultIn),
                 .ALU1ResultIn       (ALU1ResultIn),

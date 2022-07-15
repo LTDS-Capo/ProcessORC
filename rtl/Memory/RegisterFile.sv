@@ -63,7 +63,10 @@ module RegisterFile #(
                 wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && Tag_Request;
                 wire LocalMemWriteEn = MemWriteDecodeVector[RegisterIndex] && Mem_Write_En;
                 wire LocalWriteEn = WriteDecodeVector[RegisterIndex] && Write_En;
-                RegisterFile_Cell RegisterCell (
+                RegisterFile_Cell #(
+                    .BITWIDTH(DATABITWIDTH),
+                    .REGADDRBITWIDTH(REGADDRBITWIDTH)
+                ) RegisterCell (
                     .clk           (clk),
                     .clk_en        (clk_en),
                     .sync_rst      (sync_rst),
