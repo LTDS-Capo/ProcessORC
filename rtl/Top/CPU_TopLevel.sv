@@ -32,12 +32,12 @@ module CPU_TopLevel #(
             // $display("CPU - WBEn:Addr:Src   - %0b:%0h:%0h", WBMux_RegAWriteEn, WBMux_RegWriteAddr, WBMux_WritebackSource);
             // $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", Write_En, Write_Address, Write_Data);
             // $display("CPU - DecodedImm      - %0h", ImmediateOut);
-            // $display("CPU - ImmBDataIn:ImEn - %0h:%0b", BDataIn, ImmediateEn);
+            $display("CPU - ImmBDataIn:ImEn - %0h:%0b", BDataIn, ImmediateEn);
             // $display("CPU - ImmADataIn:UpEn - %0h:%0b", ADataIn, UpperImmediateEn);
-            // $display("CPU - MuxedImm        - %0h", BDataOut);
+            $display("CPU - MuxedImm        - %0h", BDataOut);
             // // $display("CPU - RegAAddr       - %0b", s1_RegWriteAddrOut);ImmediateOut
-            // $display("CPU -                 - %0b", JumpEn);
-            // $display("CPU - PCEn:Stl:Br:Jmp - %0b:%0b:%0b:%0b", PCEn, PC_StallEn, BranchEn, PC_JumpEn); 
+            $display("CPU - Compare:DestB:J - %0h:%0h:%0h", ComparisonValue, BranchDest, PC_JumpDest);
+            $display("CPU - PCEn:Stl:Br:Jmp - %0b:%0b:%0b:%0b", PCEn, PC_StallEn, BranchEn, PC_JumpEn); 
         end
     //
 
@@ -99,6 +99,7 @@ module CPU_TopLevel #(
             wire [REGADDRBITWIDTH-1:0] RegBAddr;
             wire                       BranchStall;
             wire                       JumpEn;
+            wire                       s1_JumpAndLinkEn;
             InstructionDecoder #(
                 .DATABITWIDTH(DATABITWIDTH)
             ) InstDecoder (
@@ -118,7 +119,8 @@ module CPU_TopLevel #(
                 .RegBReadEn          (RegBReadEn),
                 .RegBAddr            (RegBAddr),
                 .BranchStall         (BranchStall),
-                .JumpEn              (JumpEn)
+                .JumpEn              (JumpEn),
+                .JumpAndLinkEn       (s1_JumpAndLinkEn)
             );
         //
 
@@ -307,11 +309,11 @@ module CPU_TopLevel #(
         // Pipeline Buffer - Stage 1 (Ready For Testing)
             localparam S1BUFFERINBITWIDTH_FUE = 3;
             localparam S1BUFFERINBITWIDTH_META = (DATABITWIDTH * 2) + 4;
-            localparam S1BUFFERINBITWIDTH_WRITEBACK = REGADDRBITWIDTH + 3;
+            localparam S1BUFFERINBITWIDTH_WRITEBACK = REGADDRBITWIDTH + 4;
 
             wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
             wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_InA, s1_Data_InB};
-            wire [S1BUFFERINBITWIDTH_WRITEBACK-1:0] s1_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
+            wire [S1BUFFERINBITWIDTH_WRITEBACK-1:0] s1_RegWriteIssue = {s1_JumpAndLinkEn, s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
             localparam S1BUFFERBITWIDTH = S1BUFFERINBITWIDTH_FUE + S1BUFFERINBITWIDTH_META + S1BUFFERINBITWIDTH_WRITEBACK;
             reg  [S1BUFFERBITWIDTH-1:0] Stage1Buffer;
@@ -348,6 +350,7 @@ module CPU_TopLevel #(
             wire [DATABITWIDTH-1:0] s2_Data_A = s2_MetaDataIssue[(DATABITWIDTH*2)-1:DATABITWIDTH];
             wire [DATABITWIDTH-1:0] s2_Data_B = s2_MetaDataIssue[DATABITWIDTH-1:0];
 
+            wire                       s2_JumpAndLinkEn = s2_RegWriteIssue[REGADDRBITWIDTH+3];
             wire                       s2_RegWriteEn = s2_RegWriteIssue[REGADDRBITWIDTH+2];
             wire                 [1:0] s2_WriteBackSourceOut = s2_RegWriteIssue[(REGADDRBITWIDTH+2)-1:REGADDRBITWIDTH];
             wire [REGADDRBITWIDTH-1:0] s2_RegWriteAddrOut = s2_RegWriteIssue[REGADDRBITWIDTH-1:0];
@@ -425,6 +428,7 @@ module CPU_TopLevel #(
 
         // Writeback Mux (Ready for testing)
             wire                       WBMux_RegAWriteEn = s2_RegWriteEn;
+            wire                       WBMux_JumpAndLinkEn = s2_JumpAndLinkEn;
             wire [REGADDRBITWIDTH-1:0] WBMux_RegWriteAddr = s2_RegWriteAddrOut;
             wire                 [1:0] WBMux_WritebackSource = s2_WriteBackSourceOut;
             wire    [DATABITWIDTH-1:0] JumpAndLinkResultIn = JumpAndLinkAddrOut;
@@ -437,6 +441,7 @@ module CPU_TopLevel #(
                 .DATABITWIDTH(16)
             ) WBMux (
                 .RegAWriteEn        (WBMux_RegAWriteEn),
+                .JumpAndLinkEn      (WBMux_JumpAndLinkEn),
                 .RegWriteAddr       (WBMux_RegWriteAddr),
                 .WritebackSource    (WBMux_WritebackSource),
                 .JumpAndLinkResultIn(JumpAndLinkResultIn),

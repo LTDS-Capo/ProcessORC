@@ -3,6 +3,7 @@ module WritebackMux #(
     parameter REGADDRBITWIDTH = 4
 )(
     input                        RegAWriteEn,
+    input                        JumpAndLinkEn,
     input  [REGADDRBITWIDTH-1:0] RegWriteAddr,
     input                  [1:0] WritebackSource,
 
@@ -29,7 +30,7 @@ module WritebackMux #(
     end
     
     assign WritebackResultOut = Result_tmp;
-    assign WritebackRegAddr = RegWriteAddr;
+    assign WritebackRegAddr = JumpAndLinkEn ? 4'hf : RegWriteAddr;
     assign RegisterWriteEn = RegAWriteEn;
 
 endmodule

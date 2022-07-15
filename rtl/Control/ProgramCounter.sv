@@ -46,7 +46,7 @@ module ProgramCounter #(
 
     // Debug
         always_ff @(posedge clk) begin
-            $display();
+            $display("NextPCCondition - %0h", NextPCCondition);
         end
     //
 
