@@ -6,10 +6,10 @@ module InstructionROM (
     logic [15:0] NextInstruction;
     always_comb begin : NextInstructionMux
         case (InstructionAddress[8:0])
-            9'h001  : NextInstruction = 16'hC123; //  LI r1 #23
-            9'h002  : NextInstruction = 16'hE185; // LUI r1 #85
+            9'h001  : NextInstruction = 16'hC023; //  LI r1 #23
+            9'h002  : NextInstruction = 16'hE085; // LUI r1 #85
             9'h003  : NextInstruction = 16'hD733; // LLI r4 #333
-            9'h004  : NextInstruction = 16'hF300; // LNI r3 #0FF
+            9'h004  : NextInstruction = 16'hF000; // LNI r3 #0FF
             9'h005  : NextInstruction = 16'h900A; // JLI r0 #00A // Call
             9'h006  : NextInstruction = 16'h0000; // NOP
             9'h007  : NextInstruction = 16'h0000; // NOP

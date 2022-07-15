@@ -27,8 +27,15 @@ module CPU_TopLevel #(
 
     // Debug output
         always_ff @(posedge clk) begin
-            $display("CPU - Minor:DataA:B  - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
-            // $display("CPU - RegAAddr       - %0b", s1_RegWriteAddrOut);
+            $display("CPU - WBSource:AAddr  - %0h:%0h", WritebackSource, RegAAddr);
+            $display("CPU - Minor:DataA:B   - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
+            $display("CPU - WBEn:Addr:Src   - %0b:%0h:%0h", WBMux_RegAWriteEn, WBMux_RegWriteAddr, WBMux_WritebackSource);
+            $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", Write_En, Write_Address, Write_Data);
+            $display("CPU - DecodedImm      - %0h", ImmediateOut);
+            $display("CPU - ImmBDataIn:ImEn - %0h:%0b", BDataIn, ImmediateEn);
+            $display("CPU - ImmADataIn:UpEn - %0h:%0b", ADataIn, UpperImmediateEn);
+            $display("CPU - MuxedImm        - %0h", BDataOut);
+            // $display("CPU - RegAAddr       - %0b", s1_RegWriteAddrOut);ImmediateOut
             $display("CPU - Jump:JJnL                 - %0b:%0b", JumpEn, JumpJumpAndLinkEn);
             $display("CPU - PCEn:PC_Stall:Branch:Jump - %0b:%0b:%0b:%0b", PCEn, PC_StallEn, BranchEn, PC_JumpEn); 
         end
@@ -232,6 +239,7 @@ module CPU_TopLevel #(
             wire                    Imm_ImmediateEn = ImmediateEn;
             wire                    Imm_UpperImmediateEn = UpperImmediateEn;
             wire [DATABITWIDTH-1:0] BDataIn = FwdBDataOut;
+            wire [DATABITWIDTH-1:0] ADataIn = FwdADataOut;
             wire [DATABITWIDTH-1:0] ImmediateIn = ImmediateOut;
             wire [DATABITWIDTH-1:0] BDataOut;
             ImmediateMux #(
@@ -239,6 +247,7 @@ module CPU_TopLevel #(
             ) ImmMux (
                 .ImmediateEn     (Imm_ImmediateEn),
                 .UpperImmediateEn(Imm_UpperImmediateEn),
+                .ADataIn         (ADataIn),
                 .BDataIn         (BDataIn),
                 .ImmediateIn     (ImmediateIn),
                 .BDataOut        (BDataOut)

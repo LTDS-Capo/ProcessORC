@@ -49,7 +49,7 @@ module InstructionDecoder #(
     assign RegBAddr = InstructionIn[3:0];
 
     // Minor Opcode Assignment
-    assign MinorOpcodeOut = InstructionIn[7:4];
+    assign MinorOpcodeOut = ImmediateEn ? 4'h7 : InstructionIn[7:4];
 
     // Immediate Out Assignment
     logic [DATABITWIDTH:0] ImmediateOut_tmp;
@@ -101,8 +101,8 @@ module InstructionDecoder #(
             5'b1_1001 : OperationBitVector = {2'b11, BranchStall_tmp, 7'b0_1_1_0_1_01, BranchStall_tmp, 5'b0000_0}; // J&L Imm
             5'b1_1010 : OperationBitVector = {2'b10, BranchStall_tmp, 7'b0_0_1_0_0_00, BranchStall_tmp, 5'b0000_0}; // Branch Reg
             5'b1_1011 : OperationBitVector = {2'b10, BranchStall_tmp, 7'b0_0_1_0_1_00, BranchStall_tmp, 5'b0000_0}; // Branch Imm
-            5'b1_1110 : OperationBitVector = 16'b00_0_1_1_0_1_1_00_00000_0; // Upper Immediate
-            5'b1_11?? : OperationBitVector = 16'b00_0_1_1_0_0_1_00_00000_0; // Immediate
+            5'b1_1110 : OperationBitVector = 16'b00_0_0_1_1_1_1_10_00000_0; // Upper Immediate
+            5'b1_11?? : OperationBitVector = 16'b00_0_0_1_0_0_1_10_00000_0; // Immediate
             default   : OperationBitVector = 0;
         endcase
     end

@@ -26,6 +26,15 @@ module ForwardingSystem #(
     output    [DATABITWIDTH-1:0] FwdBDataOut
 );
     
+    // Debugger Stuff
+        always_ff @(posedge clk) begin
+            $display("FWD - WriteChk:Addr - %0b:%0h", WriteAddressCheck[REGADDRBITWIDTH], WriteAddressCheck[REGADDRBITWIDTH-1:0]);
+            $display("FWD - AddrA:B       - %0h:%0h", RegAAddr, RegBAddr);
+            $display("FWD - FwdA:B        - %0b:%0b", Forward0toAEn, Forward0toBEn);
+            $display("FWD - DataA:B       - %0h:%0h", FwdADataOut, FwdBDataOut);
+        end
+    //
+
     // Forward Checking  ("Forward Check" on block diagram)
     // Notes: Checks the incoming read operands
     //        to check if they need to be forwarded
@@ -39,8 +48,8 @@ module ForwardingSystem #(
             end
         end
         // Check what forwards need to occur
-        wire Forward0toAEn = WriteAddressCheck[REGADDRBITWIDTH] && RegAReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegAAddr);
-        wire Forward0toBEn = WriteAddressCheck[REGADDRBITWIDTH] && RegBReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegBAddr);
+        wire Forward0toAEn = WriteAddressCheck[REGADDRBITWIDTH] && RegAReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegAAddr[REGADDRBITWIDTH-1:0]);
+        wire Forward0toBEn = WriteAddressCheck[REGADDRBITWIDTH] && RegBReadEn && (WriteAddressCheck[REGADDRBITWIDTH-1:0] == RegBAddr[REGADDRBITWIDTH-1:0]);
         wire Forward1toAEn = Forward1Valid && RegAReadEn && (Forward1RegAddr == RegAAddr);
         wire Forward1toBEn = Forward1Valid && RegBReadEn && (Forward1RegAddr == RegBAddr);
     //
