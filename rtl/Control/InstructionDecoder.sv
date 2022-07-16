@@ -23,7 +23,7 @@ module InstructionDecoder #(
 
     output                    BranchStall,
     output                    JumpEn,
-    output                    JumpAndLinkEn,
+    output                    JumpAndLinkEn
 );
 
     assign JumpEn = ~BranchStall && ~JumpAndLink && OperationBitVector[15];
