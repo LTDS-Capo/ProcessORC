@@ -94,9 +94,11 @@ module RegisterFile #(
     assign RegisterStallOut = StallA || StallB;
 
     // Read A decoder
-    assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
+    // assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
+    assign ReadA_Data = DataOutVector[ReadA_Address];
     
     // Read B decoder
-    assign ReadB_Data = ReadB_En ? DataOutVector[ReadB_Address] : 0;
+    // assign ReadB_Data = ReadB_En ? DataOutVector[ReadB_Address] : 0;
+    assign ReadB_Data = DataOutVector[ReadB_Address];
 
 endmodule
