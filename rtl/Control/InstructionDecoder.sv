@@ -85,8 +85,8 @@ module InstructionDecoder #(
             5'b1_0001 : OperationBitVector = 16'b00_0_1_1_1_0_0_11_00010_0; // ALU 1
             5'b1_0010 : OperationBitVector = 16'b00_0_1_0_1_0_0_00_00100_1; // Complex
             5'b1_0011 : OperationBitVector = 16'b00_0_1_0_1_0_0_00_01000_1; // Memory
-            5'b1_1000 : OperationBitVector = {2'b11, BranchStall_tmp, 13'b1_1_1_0_0_01_10000_0}; // J&L Reg
-            5'b1_1001 : OperationBitVector = {2'b11, BranchStall_tmp, 13'b0_1_1_0_1_01_10000_0}; // J&L Imm
+            5'b1_1000 : OperationBitVector = {2'b11, 1'b1, 13'b1_1_1_0_0_01_10000_0}; // J&L Reg
+            5'b1_1001 : OperationBitVector = {2'b11, 1'b1, 13'b0_1_1_0_1_01_10000_0}; // J&L Imm
             5'b1_1010 : OperationBitVector = {2'b10, BranchStall_tmp, 7'b1_0_1_0_0_00, BranchStall_tmp, 5'b0000_0}; // Branch Reg
             5'b1_1011 : OperationBitVector = {2'b10, BranchStall_tmp, 7'b0_0_1_0_1_00, BranchStall_tmp, 5'b0000_0}; // Branch Imm
             5'b1_1110 : OperationBitVector = 16'b00_0_0_1_1_1_1_10_00000_0; // Upper Immediate

@@ -14,11 +14,11 @@ module ALU_Simple0 #(
     wire [BITWIDTH-1:0] XORResult = Data_InA ^ Data_InB;
     wire [BITWIDTH-1:0] ORResult = Data_InA | Data_InB;
 
-    wire [BITWIDTH:0] AddResultTmp = {1'b0, Data_InA} + {1'b0 Data_InB};
+    wire   [BITWIDTH:0] AddResultTmp = {1'b0, Data_InA} + {1'b0, Data_InB};
     wire [BITWIDTH-1:0] AddResult = AddResultTmp[BITWIDTH-1:0];
     wire [BITWIDTH-1:0] CarryCheckResult = {'0, AddResultTmp[BITWIDTH]};
 
-    wire [BITWIDTH:0] SubResultTmp = {1'b0, Data_InA} + {1'b0 Data_InB};
+    wire   [BITWIDTH:0] SubResultTmp = {1'b0, Data_InA} + {1'b0, Data_InB};
     wire [BITWIDTH-1:0] SubResult = SubResultTmp[BITWIDTH-1:0];
     wire [BITWIDTH-1:0] BorrowCheckResult = {'0, SubResultTmp[BITWIDTH]};
 

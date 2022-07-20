@@ -12,13 +12,13 @@ module InstructionROM (
             9'h004  : NextInstruction = 16'hF8FF; // LNI r8 #0FF
             9'h005  : NextInstruction = 16'h900A; // JLI r0 #00A // Call
             9'h006  : NextInstruction = 16'h0616; // INC r6 r6
-            9'h007  : NextInstruction = 16'h0000; // NOP
+            9'h007  : NextInstruction = 16'h0717; // NOP  // TEST Inc 7
             9'h008  : NextInstruction = 16'hB000; // BZI r0 #0 
             9'h009  : NextInstruction = 16'h0000;
             9'h00a  : NextInstruction = 16'h12C4; // BSF r2 r4
             9'h00b  : NextInstruction = 16'hA00F; // BZR r0 r15 // Return
             9'h00c  : NextInstruction = 16'h0515; // INC r5 r5
-            9'h00d  : NextInstruction = 16'h0000;
+            9'h00d  : NextInstruction = 16'h0919; // NOP  // TEST Inc 9
             9'h00e  : NextInstruction = 16'h0000;
             9'h00f  : NextInstruction = 16'h0000;
             // 9'h1FF : Next = SOMETHING; MAX ADDRESS FOR THIS ROM!!!!!!!!!!!!!!!
