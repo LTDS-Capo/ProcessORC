@@ -39,16 +39,8 @@ module RoundRobinPortPriority #(
     //
 
     // Bit Scaning & Reversing
-        // Reversing
-        genvar ReversingIndex;
-        wire [PORTCOUNT-1:0] ReversedPortACKVector;
-        generate
-            for (ReversingIndex = 0; ReversingIndex < PORTCOUNT; ReversingIndex = ReversingIndex + 1) begin : BitFlip
-                assign ReversedPortACKVector[ReversingIndex] = ShiftedPortACKVector[PORTCOUNT-ReversingIndex-1];
-            end
-        endgenerate
-        // Lowest Bit Isolation
-        wire [PORTCOUNT-1:0] IsolatedLowerBit = ReversedPortACKVector & -ReversedPortACKVector;
+        // Lowest 1 isolation
+        wire [PORTCOUNT-1:0] IsolatedLowerBit = ShiftedPortACKVector & -ShiftedPortACKVector;
         // Index Generation
         wire [PORTCOUNT-1:0] Bitmask [PORTADDRWIDTH-1:0];
         wire [PORTADDRWIDTH-1:0] BitScanResult;
@@ -86,7 +78,7 @@ module RoundRobinPortPriority #(
     //
 
     // Output Assignment
-        assign PortSelection = PriorityIndex - BitScanResult - 1;
+        assign PortSelection = BitScanResult + PriorityIndex;
     //
 
 endmodule
