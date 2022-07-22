@@ -85,7 +85,7 @@ module CPU_TopLevel #(
         // Instruction Decoder (Ready For Testing)
             wire                [15:0] InstructionIn = s1_InstructionOut;
             wire                       InstructionInValid = s1_InstructionValid;
-            wire                       TagRequest;
+            wire                       DirtyBitTrigger;
             wire                 [4:0] FunctionalUnitEnable;
             wire                 [1:0] WritebackSource;
             wire                 [3:0] MinorOpcodeOut;
@@ -106,7 +106,7 @@ module CPU_TopLevel #(
                 .clk                 (clk),
                 .InstructionIn       (InstructionIn),
                 .InstructionInValid  (InstructionInValid),
-                .TagRequest          (TagRequest),
+                .DirtyBitTrigger     (DirtyBitTrigger),
                 .FunctionalUnitEnable(FunctionalUnitEnable),
                 .WritebackSource     (WritebackSource), 
                 .MinorOpcodeOut      (MinorOpcodeOut),
@@ -142,22 +142,8 @@ module CPU_TopLevel #(
             );
         //
 
-        // Tagging (Ready For Testing)
-            wire                   TagREQ = TagRequest;
-            wire [TAGBITWIDTH-1:0] TagOut;
-            TaggingSystem #(
-                .TAGBITWIDTH(TAGBITWIDTH)
-            ) TaggingSys (
-                .clk     (clk),
-                .clk_en  (clk_en),
-                .sync_rst(sync_rst),
-                .TagREQ  (TagREQ),
-                .TagOut  (TagOut)
-            );
-        //
-
         // Regsiters (Ready For Testing)
-            wire                       Tag_Request = TagRequest;
+            wire                       Reg_DirtyBitTrigger = DirtyBitTrigger;
             wire [REGADDRBITWIDTH-1:0] ReadA_Address = RegAAddr;
             wire                       ReadA_En = RegAReadEn;
             wire    [DATABITWIDTH-1:0] ReadA_Data;
@@ -180,7 +166,7 @@ module CPU_TopLevel #(
                 .clk              (clk),
                 .clk_en           (clk_en),
                 .sync_rst         (sync_rst),
-                .Tag_Request      (Tag_Request),
+                .DirtyBitTrigger  (Reg_DirtyBitTrigger),
                 .ReadA_Address    (ReadA_Address),
                 .ReadA_En         (ReadA_En),
                 .ReadA_Data       (ReadA_Data),
@@ -260,8 +246,6 @@ module CPU_TopLevel #(
             wire                 [4:0] FunctionalUnitEnableIn = FunctionalUnitEnable;
             wire                 [1:0] WriteBackSourceIn = WritebackSource;
             wire                       Issue_RegAWriteEnIn = RegAWriteEn;
-            wire                       InstructionTagValid = TagRequest;
-            wire     [TAGBITWIDTH-1:0] InstructionTagIn = TagOut;
             wire                       WritebackEnIn = RegAWriteEn;
             wire [REGADDRBITWIDTH-1:0] WritebackRegAddrIn = RegAAddr;
             wire    [DATABITWIDTH-1:0] RegADataIn = FwdADataOut;
@@ -287,8 +271,6 @@ module CPU_TopLevel #(
                 .FunctionalUnitEnable   (FunctionalUnitEnableIn),
                 .WriteBackSourceIn      (WriteBackSourceIn),
                 .RegAWriteEnIn          (Issue_RegAWriteEnIn),
-                .InstructionTagValid    (InstructionTagValid),
-                .InstructionTagIn       (InstructionTagIn),
                 .WritebackEnIn          (WritebackEnIn),
                 .WritebackRegAddr       (WritebackRegAddrIn),
                 .RegADataIn             (RegADataIn),

@@ -5,7 +5,7 @@ module InstructionDecoder #(
     input              [15:0] InstructionIn,
     input                     InstructionInValid,
 
-    output                    TagRequest,
+    output                    DirtyBitTrigger,
     output              [4:0] FunctionalUnitEnable,
     output              [1:0] WritebackSource,
     output              [3:0] MinorOpcodeOut,
@@ -32,7 +32,7 @@ module InstructionDecoder #(
 
     // Register Addresss Assignment
     wire   UpperAAddrEn = InstructionIn[15] && InstructionIn[12];
-    assign RegAAddr = UpperAAddrEn ? {InstructionIn[11:10], 2'b00} : InstructionIn[11:8];
+    assign RegAAddr = UpperAAddrEn ? {InstructionIn[11:10], 1'b0, InstructionIn[14]} : InstructionIn[11:8];
 
     assign RegBAddr = InstructionIn[3:0];
 
@@ -66,7 +66,7 @@ module InstructionDecoder #(
 
     logic [15:0] OperationBitVector;
     // OperationBitVector Bitmap
-    // b0   - TagRequest
+    // b0   - DirtyBitTrigger
     // b5:1 - FunctionalUnitEnable
     // b7:6 - WritebackSource
     // b8   - ImmediateEn
@@ -94,7 +94,7 @@ module InstructionDecoder #(
             default   : OperationBitVector = 0;
         endcase
     end
-    assign TagRequest = OperationBitVector[0];
+    assign DirtyBitTrigger = OperationBitVector[0];
     assign FunctionalUnitEnable = OperationBitVector[5:1];
     assign WritebackSource = OperationBitVector[7:6];
     assign ImmediateEn = OperationBitVector[8];

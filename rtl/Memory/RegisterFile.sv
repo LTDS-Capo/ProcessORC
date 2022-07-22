@@ -7,7 +7,7 @@ module RegisterFile #(
     input clk_en,
     input sync_rst,
 
-    input                        Tag_Request,
+    input                        DirtyBitTrigger,
     input  [REGADDRBITWIDTH-1:0] ReadA_Address,
     input                        ReadA_En,
     output    [DATABITWIDTH-1:0] ReadA_Data,
@@ -60,7 +60,7 @@ module RegisterFile #(
                 assign DirtyBitOutVector[RegisterIndex] = 1'b0;
             end
             else begin
-                wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && Tag_Request;
+                wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && DirtyBitTrigger;
                 wire LocalMemWriteEn = MemWriteDecodeVector[RegisterIndex] && Mem_Write_En;
                 wire LocalWriteEn = WriteDecodeVector[RegisterIndex] && Write_En;
                 RegisterFile_Cell #(
