@@ -15,12 +15,24 @@ module FixedMemory #(
     output [DATABITWIDTH-1:0] DataOut
 );
 
+    // Store Data Alignment
+        logic [DATABITWIDTH-1:0] StoreValue_Tmp;
+        always_comb begin : DataInMux
+            case (MinorOpcodeIn[1:0])
+                2'b01  : StoreValue_Tmp = DataIn; // Store Word
+                2'b10  : StoreValue_Tmp = 16'hFFFF; // Store Double
+                2'b11  : StoreValue_Tmp = 16'hFFFF; // Store Quad
+                default: StoreValue_Tmp = DataAddrIn[0] ? {DataIn[7:0], DataRead[7:0]} : {DataRead[15:8], DataIn[7:0]} ; // Store Byte
+            endcase
+        end
+    //
+
     reg [DATABITWIDTH-1:0] DataMemory [511:0];
     wire [9:0] MemAddr = {DataAddrIn[9:1], 1'b0};
-    wire DataMemoryWriteTrigger = (~MinorOpcodeIn[3] && MinorOpcode[2] && clk_en);
+    wire DataMemoryWriteTrigger = (~MinorOpcodeIn[3] && MinorOpcodeIn[2] && clk_en);
     always_ff @(posedge clk) begin
         if (DataMemoryWriteTrigger) begin
-            DataMemory[MemAddr] <= DataIn;
+            DataMemory[MemAddr] <= StoreValue_Tmp;
         end
     end
     wire[DATABITWIDTH-1:0] DataRead = DataMemory[MemAddr];

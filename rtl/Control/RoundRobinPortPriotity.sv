@@ -25,7 +25,6 @@ module RoundRobinPortPriority #(
             end
             $display(" >> PortIndex     - %0d", PriorityIndex);
             $display(" >> ShiftedVec    - %04b", ShiftedPortACKVector);
-            $display(" >> ReversedVec   - %04b", ReversedPortACKVector);
             $display(" >> LowestBit     - %04b", IsolatedLowerBit);
             $display(" >> BitScanResult - %04b", BitScanResult);
         end

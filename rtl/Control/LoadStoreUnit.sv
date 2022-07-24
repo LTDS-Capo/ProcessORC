@@ -37,18 +37,6 @@ module LoadStoreUnit #(
 
 );
 
-    // Store Data Alignment
-        logic [DATABITWIDTH-1:0] StoreValue_Tmp;
-        always_comb begin : DataOutMux
-            case (MinorOpcodeIn[1:0])
-                2'b01  : StoreValue_Tmp = LoadStore_StoreValue; // Store Word
-                2'b10  : StoreValue_Tmp = 16'hFFFF; // Store Double
-                2'b11  : StoreValue_Tmp = 16'hFFFF; // Store Quad
-                default: StoreValue_Tmp = LoadStore_MemoryAddress[0] ? {LoadStore_StoreValue[7:0], 8'h00} : {'0, LoadStore_StoreValue[7:0]} ; // Store Byte
-            endcase
-        end
-    //
-
     // MemoryAddress Generation
         wire [DATABITWIDTH-1:0] MemoryAddress = LoadStore_MemoryAddress;
     //
@@ -80,24 +68,24 @@ module LoadStoreUnit #(
     // IOManager
         assign IOManager_ACK = ACKMask[1];
         assign IOManager_MinorOpcode = LoadStore_MinorOpcode;
-        assign IOManager_MemoryAddress = MemoryAddress;
-        assign IOManager_StoreValue = StoreValue_Tmp;
+        assign IOManager_MemoryAddress = IOManager_MemoryAddress;
+        assign IOManager_StoreValue = LoadStore_StoreValue;
         assign IOManager_DestinationRegister = LoadStore_DestinationRegister;
     //
 
     // Cache
         assign Cache_ACK = ACKMask[2];
         assign Cache_MinorOpcode = LoadStore_MinorOpcode;
-        assign Cache_MemoryAddress = MemoryAddress;
-        assign Cache_StoreValue = StoreValue_Tmp;
+        assign Cache_MemoryAddress = IOManager_MemoryAddress;
+        assign Cache_StoreValue = LoadStore_StoreValue;
         assign Cache_DestinationRegister = LoadStore_DestinationRegister;
     //
 
     // FixedMemory
         assign FixedMemory_ACK = ACKMask[0];
         assign FixedMemory_MinorOpcode = LoadStore_MinorOpcode;
-        assign FixedMemory_MemoryAddress = MemoryAddress;
-        assign FixedMemory_StoreValue = StoreValue_Tmp;
+        assign FixedMemory_MemoryAddress = IOManager_MemoryAddress;
+        assign FixedMemory_StoreValue = LoadStore_StoreValue;
         assign FixedMemory_DestinationRegister = LoadStore_DestinationRegister;
     //
 
