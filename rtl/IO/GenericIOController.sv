@@ -150,16 +150,4 @@ module GenericIOController (
     assign PortACK = OutputFlagBuffer[0];
     assign ResultData = OutputFlagBuffer[1] ? {15'b0, SelectedResult} : 0;
 
-    wire IOLogOut;
-    wire [7:0] LogTestIn = IO_Input[7:0];
-    GenericIOTest GenericIOTestTest (
-        .clk     (clk2p5),
-        .clk_en  (clk_en),
-        .sync_rst(sync_rst),
-        .TestIn  (LogTestIn),
-        .CountEn (IO_Output[1]),
-        .WriteEn (IO_Output[2]),
-        .LogOut  (TESTBIT)
-    );
-
 endmodule

@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
-module CPU_TopLevel_tb ();
+module CPU_tb ();
 	// Put dem localparams here bois
 	//          |
 	//        \ | /
 	//         \|/
-	localparam CycleLimit = 99;
+	localparam CycleLimit = 23;
 	
 	// Clock and reset initalization shiz
 	reg clk = 0;
@@ -102,9 +102,9 @@ module CPU_TopLevel_tb ();
     wire        RegisterWriteEn_OUT;
     wire  [3:0] RegisterWriteAddr_OUT;
 
-    CPU_TopLevel #(
+    CPU #(
         .DATABITWIDTH(16)
-    ) CPU (
+	) CPUTest (
         .clk                  (clk),
         .clk_en               (clk_en),
         .sync_rst             (sync_rst),

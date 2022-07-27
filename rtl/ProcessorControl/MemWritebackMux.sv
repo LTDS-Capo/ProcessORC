@@ -8,10 +8,10 @@ module MemWritebackMux #(
     input clk_en,
     input sync_rst,
 
-    output                       MemWritebackREQ    [INPUTPORTCOUNT-1:0],
-    input                        MemWritebackACK    [INPUTPORTCOUNT-1:0],
-    input     [DATABITWIDTH-1:0] MemWritebackDataIn [INPUTPORTCOUNT-1:0],
-    input  [REGADDRBITWIDTH-1:0] MemWritebackAddrIn [INPUTPORTCOUNT-1:0],
+    output [INPUTPORTCOUNT-1:0]                       MemWritebackREQ,
+    input  [INPUTPORTCOUNT-1:0]                       MemWritebackACK,
+    input  [INPUTPORTCOUNT-1:0]    [DATABITWIDTH-1:0] MemWritebackDataIn,
+    input  [INPUTPORTCOUNT-1:0] [REGADDRBITWIDTH-1:0] MemWritebackAddrIn,
 
     output                       RegWriteEn,
     output    [DATABITWIDTH-1:0] RegWriteData,
@@ -22,7 +22,7 @@ module MemWritebackMux #(
     wire  [PORTADDRWIDTH-1:0] PortSelection;
     RoundRobinPortPriority #(
         .PORTCOUNT    (INPUTPORTCOUNT),
-        .PORTADDRWIDTH(PORTADDRWIDTH),
+        .PORTADDRWIDTH(PORTADDRWIDTH)
     ) RRPortPriority (
         .clk          (clk),
         .clk_en       (clk_en),
@@ -37,7 +37,7 @@ module MemWritebackMux #(
         RequestMask[PortSelection] = 1'b1;
     end
 
-    assign MemWritebackREQ = MemWritebackACK & RequestMask;
+    assign MemWritebackREQ = MemWritebackACK && RequestMask;
     assign RegWriteEn = |MemWritebackACK;
     assign RegWriteData = MemWritebackDataIn[PortSelection];
     assign RegWriteAddr = MemWritebackAddrIn[PortSelection];

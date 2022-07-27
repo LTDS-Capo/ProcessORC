@@ -1,18 +1,22 @@
 module FixedMemory #(
-    parameter DATABITWIDTH = 16
+    parameter DATABITWIDTH = 16,
+    parameter REGADDRBITWIDTH = 4
 )(
     input clk,
     input clk_en,
 
-    output                    LoadStore_REQ,
-    input                     LoadStore_ACK,
-    input               [3:0] MinorOpcodeIn,
-    input  [DATABITWIDTH-1:0] DataAddrIn,
-    input  [DATABITWIDTH-1:0] DataIn,
+    output                       LoadStore_REQ,
+    input                        LoadStore_ACK,
+    input                  [3:0] MinorOpcodeIn,
+    input  [REGADDRBITWIDTH-1:0] DestRegisterIn,
+    input     [DATABITWIDTH-1:0] DataAddrIn,
+    input     [DATABITWIDTH-1:0] DataIn,
 
-    input                     Writeback_REQ,
-    output                    Writeback_ACK,
-    output [DATABITWIDTH-1:0] DataOut
+
+    input                        Writeback_REQ,
+    output                       Writeback_ACK,
+    output [REGADDRBITWIDTH-1:0] DestRegisterOut,
+    output    [DATABITWIDTH-1:0] DataOut
 );
 
     // Store Data Alignment
@@ -50,5 +54,7 @@ module FixedMemory #(
 
     assign LoadStore_REQ = Writeback_REQ || (LoadStore_ACK && DataMemoryWriteTrigger);
     assign Writeback_ACK = LoadStore_ACK && ~DataMemoryWriteTrigger;
+
+    assign DestRegisterOut = DestRegisterIn;
 
 endmodule

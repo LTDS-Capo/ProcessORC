@@ -33,7 +33,7 @@ module LoadStoreUnit #(
     output                 [3:0] FixedMemory_MinorOpcode,
     output    [DATABITWIDTH-1:0] FixedMemory_MemoryAddress,
     output    [DATABITWIDTH-1:0] FixedMemory_StoreValue,
-    output [REGADDRBITWIDTH-1:0] FixedMemory_DestinationRegister,
+    output [REGADDRBITWIDTH-1:0] FixedMemory_DestinationRegister
 
 );
 
@@ -68,7 +68,7 @@ module LoadStoreUnit #(
     // IOManager
         assign IOManager_ACK = ACKMask[1];
         assign IOManager_MinorOpcode = LoadStore_MinorOpcode;
-        assign IOManager_MemoryAddress = IOManager_MemoryAddress;
+        assign IOManager_MemoryAddress = LoadStore_MemoryAddress;
         assign IOManager_StoreValue = LoadStore_StoreValue;
         assign IOManager_DestinationRegister = LoadStore_DestinationRegister;
     //
@@ -76,7 +76,7 @@ module LoadStoreUnit #(
     // Cache
         assign Cache_ACK = ACKMask[2];
         assign Cache_MinorOpcode = LoadStore_MinorOpcode;
-        assign Cache_MemoryAddress = IOManager_MemoryAddress;
+        assign Cache_MemoryAddress = LoadStore_MemoryAddress;
         assign Cache_StoreValue = LoadStore_StoreValue;
         assign Cache_DestinationRegister = LoadStore_DestinationRegister;
     //
@@ -84,7 +84,7 @@ module LoadStoreUnit #(
     // FixedMemory
         assign FixedMemory_ACK = ACKMask[0];
         assign FixedMemory_MinorOpcode = LoadStore_MinorOpcode;
-        assign FixedMemory_MemoryAddress = IOManager_MemoryAddress;
+        assign FixedMemory_MemoryAddress = LoadStore_MemoryAddress;
         assign FixedMemory_StoreValue = LoadStore_StoreValue;
         assign FixedMemory_DestinationRegister = LoadStore_DestinationRegister;
     //
