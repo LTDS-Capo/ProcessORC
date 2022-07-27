@@ -619,7 +619,7 @@ module CPU #(
                 .dOUT    (s3_FixedMemoryFIFO_dOUT)
             );
             wire [REGADDRBITWIDTH-1:0] s3_FixedMemory_AddrOut = s3_FixedMemoryFIFO_dOUT[S3FMFIFOBITWIDTH-1:DATABITWIDTH];
-            wire    [DATABITWIDTH-1:0] s3_FixedMemory_dOUT = s3_FixedMemoryFIFO_dOUT[DATABITWIDTH-1:0];
+            wire    [DATABITWIDTH-1:0] s3_FixedMemory_dOut = s3_FixedMemoryFIFO_dOUT[DATABITWIDTH-1:0];
         //
 
         // Cache FIFO
@@ -641,7 +641,7 @@ module CPU #(
             assign                            MemWritebackACK[MEMWB_IOPORT] = 1'b0;
             wire   [MEMWB_INPUTPORTCOUNT-1:0] [DATABITWIDTH-1:0] MemWritebackDataIn;
             assign                            MemWritebackDataIn[MEMWB_COMPLEXALUPORT] = '0;
-            assign                            MemWritebackDataIn[MEMWB_FIXEDMEMPORT] = s3_FixedMemory_dOUT;
+            assign                            MemWritebackDataIn[MEMWB_FIXEDMEMPORT] = s3_FixedMemory_dOut;
             assign                            MemWritebackDataIn[MEMWB_CACHEPORT] = '0;
             assign                            MemWritebackDataIn[MEMWB_IOPORT] = '0;
             wire   [MEMWB_INPUTPORTCOUNT-1:0] [REGADDRBITWIDTH-1:0] MemWritebackAddrIn;

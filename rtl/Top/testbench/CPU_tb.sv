@@ -4,7 +4,7 @@ module CPU_tb ();
 	//          |
 	//        \ | /
 	//         \|/
-	localparam CycleLimit = 23;
+	localparam CycleLimit = 99;
 	
 	// Clock and reset initalization shiz
 	reg clk = 0;

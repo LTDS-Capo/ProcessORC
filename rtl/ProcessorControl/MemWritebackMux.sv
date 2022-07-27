@@ -37,7 +37,7 @@ module MemWritebackMux #(
         RequestMask[PortSelection] = 1'b1;
     end
 
-    assign MemWritebackREQ = MemWritebackACK && RequestMask;
+    assign MemWritebackREQ = MemWritebackACK & RequestMask;
     assign RegWriteEn = |MemWritebackACK;
     assign RegWriteData = MemWritebackDataIn[PortSelection];
     assign RegWriteAddr = MemWritebackAddrIn[PortSelection];

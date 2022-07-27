@@ -50,7 +50,7 @@ module FixedMemory #(
             default: DataOut_Tmp = DataAddrIn[0] ? {'0, DataRead[15:8]} : {'0, DataRead[7:0]} ; // Default is also case 0 - Load Byte
         endcase
     end
-    assign DataOut = DataOut_Tmp;
+    assign DataOut = (Writeback_REQ && Writeback_ACK) ? DataOut_Tmp : 0;
 
     assign LoadStore_REQ = Writeback_REQ || (LoadStore_ACK && DataMemoryWriteTrigger);
     assign Writeback_ACK = LoadStore_ACK && ~DataMemoryWriteTrigger;
