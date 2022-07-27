@@ -3,7 +3,7 @@ module TopLevelReset #(
     parameter RESETCYCLELENGTH = 16,
     parameter OPERATIONALWAITCYCLES = 25000,
     parameter INITIALIZEWAITCYCLES = 1024,
-    parameter CLOCKDOMAINS = 2
+    parameter CLOCKDOMAINS = 3
 )(
     input sys_clk, // Connect your fastest clock to this
     input clk_en,
@@ -33,7 +33,7 @@ module TopLevelReset #(
         ) FlagGen (
             .clk             (sys_clk),
             .clk_en          (clk_en),
-            .sync_rst_in     (async_rst_in),
+            .async_rst_in    (async_rst_in),
             .sync_rst_Trigger(sys_sync_rst_trigger),
             .SyncIn          (sys_SyncIn),
             .clk_en_out      (sys_clk_en_out),
@@ -48,8 +48,19 @@ module TopLevelReset #(
             for (DomainIndex = 0; DomainIndex < CLOCKDOMAINS; DomainIndex = DomainIndex + 1) begin : DomainControlGen
                 if (DomainIndex == (CLOCKDOMAINS-1)) begin
                     assign sys_rst_trigger[DomainIndex] = sync_rst_trigger[DomainIndex];
-                    assign clk_en_out[DomainIndex] = sys_clk_en_out; // Needs latch
-                    assign sync_rst_out[DomainIndex] = sys_sync_rst_out; // Needs cycle extender
+                    reg  clk_en_buffer;
+                    wire clk_en_bufferTrigger = (sys_clk_en_out && clk_en) || sys_sync_rst_out;
+                    wire Nextclk_en_buffer = sys_clk_en_out && ~sys_sync_rst_out;
+                    always_ff @(posedge sys_clk or posedge async_rst_in) begin
+                        if (async_rst_in) begin
+                            clk_en_buffer <= 0;
+                        end
+                        else if (clk_en_bufferTrigger) begin
+                            clk_en_buffer <= Nextclk_en_buffer;
+                        end
+                    end
+                    assign clk_en_out[DomainIndex] = clk_en_buffer;
+                    assign sync_rst_out[DomainIndex] = sys_sync_rst_out;
                     assign init_out[DomainIndex] = sys_init_out;
                 end
                 else begin
@@ -74,7 +85,5 @@ module TopLevelReset #(
             end
         endgenerate
     //
-
-
 
 endmodule

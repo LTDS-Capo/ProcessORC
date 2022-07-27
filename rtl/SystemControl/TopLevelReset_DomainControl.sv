@@ -1,3 +1,6 @@
+//             //
+// *VALIDATED* //
+//             //
 module TopLevelReset_DomainControl #(
     parameter RESETCYCLELENGTH = 16
 )(
@@ -59,8 +62,6 @@ module TopLevelReset_DomainControl #(
     //
 
     // sync_rst pulse extender
-        // TODO: 
-
         reg  ResetDelay;
         wire ResetDelayTrigger = clk_en;
         wire NextResetDelay = SysToTargetDataOut[1];
@@ -97,9 +98,9 @@ module TopLevelReset_DomainControl #(
                 ResetCycleCount <= NextResetCycleCount;
             end
         end
-        wire ResetCycleLimitMet = ResetCycleCount == RESETCYCLELENGTH;
+        wire ResetCycleLimitMet = ResetCycleCount == (RESETCYCLELENGTH - 1);
 
-        assign target_sync_rst = SyncRstActive;
+        assign target_sync_rst = SyncRstActive;// && ~ResetCycleLimitMet;
         wire sync_rst_end = SyncRstActive && ResetCycleLimitMet;
     //
 
@@ -114,9 +115,9 @@ module TopLevelReset_DomainControl #(
             else if (clk_en_bufferTrigger) begin
                 clk_en_buffer <= Nextclk_en_buffer;
             end
-       end
-       assign target_clk_en = clk_en_buffer;
-       wire target_clk_en_trigger = clk_en_buffer && SysToTargetDataOut[2];
+        end
+        assign target_clk_en = clk_en_buffer;
+        wire target_clk_en_trigger = SysToTargetDataOut[2];
     //
 
 

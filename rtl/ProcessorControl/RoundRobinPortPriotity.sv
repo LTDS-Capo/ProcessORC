@@ -1,6 +1,7 @@
 module RoundRobinPortPriority #(
     parameter PORTCOUNT = 4,
     parameter PORTADDRWIDTH = 2,
+    parameter ROUNDROBINEN = 1
 )(
     input clk,
     input clk_en,
