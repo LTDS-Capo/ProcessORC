@@ -12,6 +12,12 @@ module CPU #(
     output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
     output                    RegisterWriteEn_OUT,
     output              [3:0] RegisterWriteAddr_OUT
+
+
+
+    // IO Out Handshake
+
+    // IO In Handshake
 );
     localparam REGISTERCOUNT = 16;
     localparam REGADDRBITWIDTH = (REGISTERCOUNT == 1) ? 1 : $clog2(REGISTERCOUNT);
@@ -43,20 +49,20 @@ module CPU #(
             // $display("CPU - MuxedImm            - %0h", BDataOut);
             // // $display("CPU - RegAAddr       - %0b", s1_RegWriteAddrOut);ImmediateOut
             // $display("CPU - Compare:DestB:J     - %0h:%0h:%0h", ComparisonValue, BranchDest, PC_JumpDest);
-            $display("---------------------------------------------");
-            $display("CPU - LSREQ:ACK:Op:Dest   - %0b:%0b:%0h:%0h", s1_LoadStoreFIFO_dOutREQ, s1_LoadStoreFIFO_dOutACK, s2_LoadStore_MinorOpcode, s2_LoadStore_DestinationRegister);
-            $display("CPU - LSMemAddr:Data      - %0h:%0h", s2_LoadStore_MemoryAddress, s2_LoadStore_StoreValue);
-            $display("- - - - - - - - - - - - - - - - - - - - - - -");
-            $display("CPU - FMiREQ:ACK:Op:Dest  - %0b:%0b:%0h:%0h", FixedMemory_REQ, FixedMemory_ACK, FixedMemory_MinorOpcode, FixedMemory_DestinationRegister);
-            $display("CPU - FMiMemAddr:Data     - %0h:%0h", FixedMemory_MemoryAddress, FixedMemory_StoreValue);
-            $display("- - - - - - - - - - - - - - - - - - - - - - -");
-            $display("CPU - FMoMemREQ:ACK       - %0h:%0h", FixedMem_Writeback_REQ, FixedMem_Writeback_ACK);
-            $display("CPU - FMoMemAddr:Data     - %0h:%0h", FixedMem_DestRegisterOut, FixedMem_DataOut);
-            $display("- - - - - - - - - - - - - - - - - - - - - - -");
-            $display("CPU - FIFI1iREQ:ACK:Data  - %0b:%0b:%0h", s3_FixedMemoryFIFO_dInREQ, s3_FixedMemoryFIFO_dInACK, s3_FixedMemoryFIFO_dIN);
-            $display("---------------------------------------------");
-            $display("CPU - FIFO1oREQ:ACK:Data  - %0b:%0b:%0h", s3_FixedMemoryFIFO_dOutREQ, s3_FixedMemoryFIFO_dOutACK, s3_FixedMemoryFIFO_dOUT);
-            $display("---------------------------------------------");
+            // $display("---------------------------------------------");
+            // $display("CPU - LSREQ:ACK:Op:Dest   - %0b:%0b:%0h:%0h", s1_LoadStoreFIFO_dOutREQ, s1_LoadStoreFIFO_dOutACK, s2_LoadStore_MinorOpcode, s2_LoadStore_DestinationRegister);
+            // $display("CPU - LSMemAddr:Data      - %0h:%0h", s2_LoadStore_MemoryAddress, s2_LoadStore_StoreValue);
+            // $display("- - - - - - - - - - - - - - - - - - - - - - -");
+            // $display("CPU - FMiREQ:ACK:Op:Dest  - %0b:%0b:%0h:%0h", FixedMemory_REQ, FixedMemory_ACK, FixedMemory_MinorOpcode, FixedMemory_DestinationRegister);
+            // $display("CPU - FMiMemAddr:Data     - %0h:%0h", FixedMemory_MemoryAddress, FixedMemory_StoreValue);
+            // $display("- - - - - - - - - - - - - - - - - - - - - - -");
+            // $display("CPU - FMoMemREQ:ACK       - %0h:%0h", FixedMem_Writeback_REQ, FixedMem_Writeback_ACK);
+            // $display("CPU - FMoMemAddr:Data     - %0h:%0h", FixedMem_DestRegisterOut, FixedMem_DataOut);
+            // $display("- - - - - - - - - - - - - - - - - - - - - - -");
+            // $display("CPU - FIFI1iREQ:ACK:Data  - %0b:%0b:%0h", s3_FixedMemoryFIFO_dInREQ, s3_FixedMemoryFIFO_dInACK, s3_FixedMemoryFIFO_dIN);
+            // $display("---------------------------------------------");
+            // $display("CPU - FIFO1oREQ:ACK:Data  - %0b:%0b:%0h", s3_FixedMemoryFIFO_dOutREQ, s3_FixedMemoryFIFO_dOutACK, s3_FixedMemoryFIFO_dOUT);
+            // $display("---------------------------------------------");
             $display("CPU - StallReg:Issue      - %0b:%0b", RegisterStallIn, IssueCongestionStallIn);
             $display("CPU - PCEn:Stl:Br:Jmp     - %0b:%0b:%0b:%0b", PCEn, PC_StallEn, BranchEn, PC_JumpEn); 
         end
@@ -239,7 +245,7 @@ module CPU #(
                 .Forward1Data   (Forward1Data),
                 .Forward1RegAddr(Forward1RegAddr),
                 .FwdADataOut    (FwdADataOut),
-                .FwdBDataOut    (FwdBDataOut),
+                .FwdBDataOut    (FwdBDataOut)
             );
         //
 
@@ -540,7 +546,7 @@ module CPU #(
                 .FixedMemory_MinorOpcode        (FixedMemory_MinorOpcode),
                 .FixedMemory_MemoryAddress      (FixedMemory_MemoryAddress),
                 .FixedMemory_StoreValue         (FixedMemory_StoreValue),
-                .FixedMemory_DestinationRegister(FixedMemory_DestinationRegister),
+                .FixedMemory_DestinationRegister(FixedMemory_DestinationRegister)
             );
 
         //

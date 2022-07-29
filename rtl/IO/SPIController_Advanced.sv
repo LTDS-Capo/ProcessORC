@@ -56,6 +56,12 @@ module SPIController_Advanced #(
             //  r0  [10] -    [10] - Command Padding Enable [Padds 1 bit of X after Read/Write Command]
             //  r0  [11] -    [11] - Command Polarity [If 0 - Read Command is a 0, If 1 Read Command is a 1]
             //  r0  [12] -    [12] - MSB First Enable
+            // TODO:
+            //  r0  [13] -    [13] - Chip Select
+            //  r0  [14] -    [14] - Clock Select b0
+            //  r0  [15] -    [15] - Clock Select b1
+            //  r0  [16] -    [16] - Clock Select b2
+            // TODO:
             //  r1 [7:0] - [23:16] - Data Length - 1 [Max Length 32]
             //  r1[15:8] - [31:24] - Address Length - 1 [Max Length 32]
             // Configuration Register
