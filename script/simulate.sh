@@ -12,7 +12,7 @@ else
     mkdir -p $tmp
     rm $tmp/*
     incdirlist=$(find $rtl/ -not -path */testbench -and -type d -exec echo "-I {}" \; )
-    filelist="$(find $rtl/ -name $1) $(find $rtl/ -not -path */testbench/* -and \( -iname *.v -o -iname *.vh -o -iname *.sv \) )"
+    filelist="$(find $rtl/ -name $1) $(find $rtl/ -not -path */testbench/* -and \( -iname *.v -o -iname *.vh -o -iname *.sv \) -and -not -iname *_TopLevel.sv )"
     sv2v -E always -E logic -E unbasedunsized $incdirlist $filelist > "$tmp/$toplevel.sv"
     cp $mypath/../rom/* $tmp/
     cd $tmp/

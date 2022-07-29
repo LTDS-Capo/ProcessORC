@@ -1,10 +1,10 @@
 `timescale 1ns / 1ps
-module CPU_TopLevel_tb ();
+module RoundRobinPortPriority_tb ();
 	// Put dem localparams here bois
 	//          |
 	//        \ | /
 	//         \|/
-	localparam CycleLimit = 99;
+	localparam CycleLimit = 22;
 	
 	// Clock and reset initalization shiz
 	reg clk = 0;
@@ -62,7 +62,7 @@ module CPU_TopLevel_tb ();
 			//        \ | /
 			//         \|/
 			if (1'b1) begin
-                // $display("RegEn:Addr:Data - %0b:%0h:%0h", RegisterWriteEn_OUT, RegisterWriteAddr_OUT, RegisterWriteData_OUT);
+                $display("ACKVec:Sel - %04b:%02b", PortACKVector, PortSelection);
             	$display(">>>>>>> Count (%0d) <<<<<<<", Count);
 				$display("^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 			end				
@@ -96,24 +96,31 @@ module CPU_TopLevel_tb ();
     wire clk_en = Count > 4;
     wire sync_rst = Count == 1;
     
-    wire SystemEn = Count > 7;
+    wire [3:0] PortACKVector = Count[3:0];
+    wire [1:0] PortSelection;
 
-    wire [15:0] RegisterWriteData_OUT;
-    wire        RegisterWriteEn_OUT;
-    wire  [3:0] RegisterWriteAddr_OUT;
-
-    CPU_TopLevel #(
-        .DATABITWIDTH(16)
-    ) CPU (
-        .clk                  (clk),
-        .clk_en               (clk_en),
-        .sync_rst             (sync_rst),
-        .SystemEn             (SystemEn),
-        .HaltOut              (), // Not setup yet
-        .RegisterWriteData_OUT(RegisterWriteData_OUT), // DO NOT CONNECT
-        .RegisterWriteEn_OUT  (RegisterWriteEn_OUT), // DO NOT CONNECT
-        .RegisterWriteAddr_OUT(RegisterWriteAddr_OUT)  // DO NOT CONNECT
+    RoundRobinPortPriority #(
+        .PORTCOUNT    (4),
+        .PORTADDRWIDTH(2),
+    ) RRPortPriority (
+        .clk          (clk),
+        .clk_en       (clk_en),
+        .sync_rst     (sync_rst),
+        .PortACKVector(PortACKVector),
+        .PortSelection(PortSelection)
     );
+
+
+// localparam ADDRBITWIDTH = (BITWIDTH == 1) ? 1 : $clog2(BITWIDTH);
+
+
+
+
+
+
+
+
+
 
 
 

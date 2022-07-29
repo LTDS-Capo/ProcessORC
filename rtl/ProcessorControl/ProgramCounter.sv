@@ -42,12 +42,12 @@ module ProgramCounter #(
     end
     
     assign InstructionAddrOut = ProgramCounter;
-    assign JumpAndLinkAddrOut = ProgramCounterPlusOne;
+    assign JumpAndLinkAddrOut = ProgramCounter - 1;
 
-    // Debug
-        always_ff @(posedge clk) begin
-            $display("NextPCCondition - %0h", NextPCCondition);
-        end
-    //
+    // // Debug
+    //     always_ff @(posedge clk) begin
+    //         $display("NextPCCondition - %0h", NextPCCondition);
+    //     end
+    // //
 
 endmodule

@@ -34,7 +34,8 @@ module InstructionIssue #(
         // TODO:
 
     // Memory Out (Load Store Unit)
-        // TODO:
+    input                         LoadStore_REQ,
+    output                        LoadStore_ACK,
 
     // Stall out
     output  IssueCongestionStallOut,
@@ -44,7 +45,6 @@ module InstructionIssue #(
     output                 [1:0] WriteBackSourceOut,
     output [REGADDRBITWIDTH-1:0] RegWriteAddrOut
 );
-    assign IssueCongestionStallOut = 0;
 
     // Branch output assignments
     assign BranchEn = FunctionalUnitEnable[4];
@@ -64,5 +64,11 @@ module InstructionIssue #(
     assign WriteBackSourceOut = WriteBackSourceIn;
     assign RegWriteAddrOut = WritebackRegAddr;
     assign RegWriteEn = WritebackEnIn;
+
+    // Stall Flag
+    assign IssueCongestionStallOut = LoadStore_ACK && ~LoadStore_REQ;
+
+    // Load Store Unit Control
+    assign LoadStore_ACK = FunctionalUnitEnable[3];
 
 endmodule

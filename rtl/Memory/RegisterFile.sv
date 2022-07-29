@@ -7,7 +7,7 @@ module RegisterFile #(
     input clk_en,
     input sync_rst,
 
-    input                        Tag_Request,
+    input                        DirtyBitTrigger,
     input  [REGADDRBITWIDTH-1:0] ReadA_Address,
     input                        ReadA_En,
     output    [DATABITWIDTH-1:0] ReadA_Data,
@@ -60,7 +60,7 @@ module RegisterFile #(
                 assign DirtyBitOutVector[RegisterIndex] = 1'b0;
             end
             else begin
-                wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && Tag_Request;
+                wire LocalDirtyBitSet = DirtyBitDecodeVector[RegisterIndex] && DirtyBitTrigger;
                 wire LocalMemWriteEn = MemWriteDecodeVector[RegisterIndex] && Mem_Write_En;
                 wire LocalWriteEn = WriteDecodeVector[RegisterIndex] && Write_En;
                 RegisterFile_Cell #(
@@ -94,9 +94,11 @@ module RegisterFile #(
     assign RegisterStallOut = StallA || StallB;
 
     // Read A decoder
-    assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
+    // assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
+    assign ReadA_Data = DataOutVector[ReadA_Address];
     
     // Read B decoder
-    assign ReadB_Data = ReadB_En ? DataOutVector[ReadB_Address] : 0;
+    // assign ReadB_Data = ReadB_En ? DataOutVector[ReadB_Address] : 0;
+    assign ReadB_Data = DataOutVector[ReadB_Address];
 
 endmodule
