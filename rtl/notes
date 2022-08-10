@@ -1,13 +1,22 @@
+
+// Change to 4 bytes per IO type, 2 byte command, 2 byte value.
+
+
+
+
+
+// Have a register tracking system in IO manager, so the devices do not need to track it.
+
   0-15  : Timers x8
- 16-47  : GPIO x32
- 48-51  : PWM x4
+ 16-47  : GPIO x32 (allow for port concatenation??)
+ 48-51  : PWM/SigmaDelta x4 ///// Expand to 16?
  52-63  : SPI 0 (2 Chip Selects)
  64-75  : SPI 1 (2 Chip Selects)
  76-87  : I2C 0
  88-100 : I2C 1
 101-111 : RESERVED
 112-119 : Clk Config (4x 2 bytes per clk)
-120-127 : System Info
+120-127 : System Info /// This should NOT be in IO
 -----------------------------------------------
 12 bytes per SPI interface x2
 12 bytes per I2C interface x2

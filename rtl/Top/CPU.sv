@@ -40,9 +40,9 @@ module CPU #(
     // Debug output
         always_ff @(posedge clk) begin
             // $display("CPU - WBSource:AAddr  - %0h:%0h", WritebackSource, RegAAddr);
-            // $display("CPU - Minor:DataA:B   - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
+            $display("CPU - Minor:DataA:B   - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
             // $display("CPU - WBEn:Addr:Src   - %0b:%0h:%0h", WBMux_RegAWriteEn, WBMux_RegWriteAddr, WBMux_WritebackSource);
-            // $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", Write_En, Write_Address, Write_Data);
+            $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", Write_En, Write_Address, Write_Data);
             // $display("CPU - DecodedImm      - %0h", ImmediateOut);
             // $display("CPU - ImmBDataIn:ImEn     - %0h:%0b", BDataIn, ImmediateEn);
             // $display("CPU - ImmADataIn:UpEn - %0h:%0b", ADataIn, UpperImmediateEn);

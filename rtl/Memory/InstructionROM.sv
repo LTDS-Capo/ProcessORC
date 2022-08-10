@@ -6,27 +6,28 @@ module InstructionROM (
     logic [15:0] NextInstruction;
     always_comb begin : NextInstructionMux
         case (InstructionAddress[8:0])
-            // Register Map
-            // r1: MemPointer
-            // r2: Fib Value 1
-            // r3: Fib Value 2
-            // r4: Memory Echo
-            9'h001  : NextInstruction = 16'h0170; // MOV r1 r0
-            9'h002  : NextInstruction = 16'h0270; // MOV r2 r0
-            9'h003  : NextInstruction = 16'hC301; // LLI r3 #01
-            9'h004  : NextInstruction = 16'h0470; // MOV r4 r0
-            9'h005  : NextInstruction = 16'h3251; // STW r2 r1 : LoopStart
-            9'h006  : NextInstruction = 16'h3411; // LDW r4 r1
-            9'h007  : NextInstruction = 16'h0111; // INC r1 r1
-            9'h008  : NextInstruction = 16'h0302; // ADD r3 r2
-            9'h009  : NextInstruction = 16'h3351; // STW r3 r1
-            9'h00a  : NextInstruction = 16'h3411; // LDW r4 r1
-            9'h00b  : NextInstruction = 16'h0111; // INC r1 r1
-            9'h00c  : NextInstruction = 16'h0203; // ADD r2 r3 
-            9'h00d  : NextInstruction = 16'hB005; // BZI r0 #05
-            9'h00e  : NextInstruction = 16'h0000;
-            9'h00f  : NextInstruction = 16'h0000;
-            // 9'h1FF : Next = SOMETHING; MAX ADDRESS FOR THIS ROM!!!!!!!!!!!!!!!
+9'd001 : NextInstruction = 16'hb00e; //call main
+9'd002 : NextInstruction = 16'h0000; //print:
+9'd003 : NextInstruction = 16'h0000; //hlt:
+9'd004 : NextInstruction = 16'h0000; //hlt:
+9'd005 : NextInstruction = 16'hb005; //call hlt
+9'd006 : NextInstruction = 16'h0000; //nop
+9'd007 : NextInstruction = 16'h0000; //foo:
+9'd008 : NextInstruction = 16'hc100; //set r1 0
+9'd009 : NextInstruction = 16'h010d; //r1 += r13
+9'd010 : NextInstruction = 16'h010c; //r1 += r12
+9'd011 : NextInstruction = 16'h0e71; //add r14, r13, r12
+9'd012 : NextInstruction = 16'hb005; //call hlt
+9'd013 : NextInstruction = 16'h0000; //nop
+9'd014 : NextInstruction = 16'h0000; //main:
+9'd015 : NextInstruction = 16'hcd07; //mov r13, #7
+9'd016 : NextInstruction = 16'hcc0b; //mov r12, #11
+9'd017 : NextInstruction = 16'hb008; //call foo
+9'd018 : NextInstruction = 16'h0000; //nop
+9'd019 : NextInstruction = 16'h0d7e; //mov r13, r14
+9'd020 : NextInstruction = 16'hb003; //call print
+9'd021 : NextInstruction = 16'h0000; //nop
+            //9'h1FF : Next = SOMETHING; MAX ADDRESS FOR THIS ROM!!!!!!!!!!!!!!!
             default: NextInstruction = 0; // Default is also case 0
         endcase
     end
