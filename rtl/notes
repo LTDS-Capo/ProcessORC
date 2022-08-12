@@ -2,13 +2,19 @@
 // Change to 4 bytes per IO type, 2 byte command, 2 byte value.
 0-7     - Clk Config
 8-11    - 4 Byte Timer Interface [2 byte command, 2 byte value]
-12-63   - GPIO (Set1, Set0, Clear, Write, Read, Pulse[Length]) - In, Out, OutEn
-64-127  - 16x General Purpose Command Ports [1 byte command, 3 byte value]
+12-127  - 116x General Purpose Command Ports
 
 
-
-
-
+GPIO (Set1, Set0, Clear, Write, Read, Pulse[Length], set clock) - In, Out, OutEn
+// NonPulse
+  [15:13] Command
+  [12:10] IOAddr
+    [9:1] *Ignore*
+      [0] WriteValue
+// Pulse
+  [15:13] Command
+  [12:10] IOAddr
+    [9:0] PulseLength
 
 
 
