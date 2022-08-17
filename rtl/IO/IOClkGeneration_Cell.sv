@@ -2,7 +2,6 @@ module IOClkGeneration_Cell (
     input sys_clk,
     input clk_en,
     input sync_rst,
-    input async_rst,
 
     input src_clk0,
     input src_clk1,
@@ -22,7 +21,7 @@ module IOClkGeneration_Cell (
     // > [15:16] - clk source
         reg  [7:0] ConfigUpperRegister;
         wire       ConfigUpperRegisterTrigger = (ConfigWriteEnUpper && clk_en) || sync_rst;
-        wire [7:0] NextConfigUpperRegister = (sync_rst) ? 0 : SOMETHING;
+        wire [7:0] NextConfigUpperRegister = (sync_rst) ? 0 : ConfigInput[15:0];
         always_ff @(posedge sys_clk) begin
             if (ConfigUpperRegisterTrigger) begin
                 ConfigUpperRegister <= NextConfigUpperRegister;
@@ -30,7 +29,7 @@ module IOClkGeneration_Cell (
         end
         reg  [7:0] ConfigLowerRegister;
         wire       ConfigLowerRegisterTrigger = (ConfigWriteEnLower && clk_en) || sync_rst;
-        wire [7:0] NextConfigLowerRegister = (sync_rst) ? 0 : SOMETHING;
+        wire [7:0] NextConfigLowerRegister = (sync_rst) ? 0 : ConfigInput[7:0];
         always_ff @(posedge sys_clk) begin
             if (ConfigLowerRegisterTrigger) begin
                 ConfigLowerRegister <= NextConfigLowerRegister;
@@ -68,7 +67,7 @@ module IOClkGeneration_Cell (
     //
 
     // Config FIFO [Only updates on an UpperWrite]
-        wire [15:0] CDC_dIn = {Rx_DV, Rx_D};
+        wire [15:0] CDC_dIn = ConfigOutput;
         wire [15:0] CDC_dOut;
         wire        NewConfig;
         FIFO_ClockDomainCrosser #(

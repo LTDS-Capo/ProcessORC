@@ -2,7 +2,6 @@ module IOClkGeneration (
     input sys_clk,
     input clk_en,
     input sync_rst,
-    input async_rst,
 
     input src_clk0,
     input src_clk1,
@@ -47,28 +46,26 @@ module IOClkGeneration (
         genvar ClkGen;
         generate
             for (ClkGen = 0; ClkGen < 4; ClkGen = ClkGen + 1) begin : ClkDivisionGeneration
-                wire        Local_ConfigWriteEnUpper = ClkDecoder && ConfigWriteEnUpper;
-                wire        Local_ConfigWriteEnLower = ClkDecoder && ConfigWriteEnLower;
-                wire [15:0] ConfigInput = DataIn;
-                wire [15:0] ConfigOutput;
+                wire        Local_ConfigWriteEnUpper = ClkDecoder[ClkGen] && ConfigWriteEnUpper;
+                wire        Local_ConfigWriteEnLower = ClkDecoder[ClkGen] && ConfigWriteEnLower;
+                wire [15:0] LocalConfigOutput;
                 wire        divided_clk;
                 wire  [1:0] divided_clk_sel;
                 IOClkGeneration_Cell ClkDivisionGen (
                     .sys_clk           (sys_clk),
                     .clk_en            (clk_en),
                     .sync_rst          (sync_rst),
-                    .async_rst         (async_rst),
                     .src_clk0          (src_clk0),
                     .src_clk1          (src_clk1),
                     .src_clk2          (src_clk2),
                     .ConfigWriteEnUpper(Local_ConfigWriteEnUpper),
                     .ConfigWriteEnLower(Local_ConfigWriteEnLower),
                     .ConfigInput       (ConfigInput),
-                    .ConfigOutput      (ConfigOutput),
+                    .ConfigOutput      (LocalConfigOutput),
                     .divided_clk       (divided_clk),
                     .divided_clk_sel   (divided_clk_sel)
                 );
-                assign ConfigOutputs[ClkGen] = ConfigOutput;
+                assign ConfigOutputs[ClkGen] = LocalConfigOutput;
                 assign divided_clks[ClkGen] = divided_clk;
                 assign ConfigSelOutputs[ClkGen] = divided_clk_sel;
             end

@@ -43,7 +43,8 @@ module FIFO_ClockDomainCrosser #(
             Buffer[WritePointer] <= dIN;
         end
     end
-    wire [BITWIDTH-1:0] ReadData = (dOutACK && dOutREQ) ? Buffer[ReadPointer] : 0;
+    // wire [BITWIDTH-1:0] ReadData = (dOutACK && dOutREQ) ? Buffer[ReadPointer] : 0;
+    wire [BITWIDTH-1:0] ReadData = dOutACK ? Buffer[ReadPointer] : 0;
 
     // Write Address and Grey Code control
     wire FullFlag;

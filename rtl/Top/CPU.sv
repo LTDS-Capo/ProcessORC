@@ -8,16 +8,19 @@ module CPU #(
     input  SystemEn,
     output HaltOut, // TODO:
 
-    // Test Outputs
-    output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
-    output                    RegisterWriteEn_OUT,
-    output              [3:0] RegisterWriteAddr_OUT
-
-
+    // Memory Flashing
 
     // IO Out Handshake
 
     // IO In Handshake
+
+
+
+
+    // Test Outputs
+    output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
+    output                    RegisterWriteEn_OUT,
+    output              [3:0] RegisterWriteAddr_OUT    
 );
     localparam REGISTERCOUNT = 16;
     localparam REGADDRBITWIDTH = (REGISTERCOUNT == 1) ? 1 : $clog2(REGISTERCOUNT);
@@ -276,7 +279,6 @@ module CPU #(
             wire                 [3:0] MinorOpcode = MinorOpcodeOut;
             wire                 [4:0] FunctionalUnitEnableIn = FunctionalUnitEnable;
             wire                 [1:0] WriteBackSourceIn = WritebackSource;
-            wire                       Issue_RegAWriteEnIn = RegAWriteEn;
             wire                       WritebackEnIn = RegAWriteEn;
             wire [REGADDRBITWIDTH-1:0] WritebackRegAddrIn = RegAAddr;
             wire    [DATABITWIDTH-1:0] RegADataIn = FwdADataOut;
@@ -303,7 +305,6 @@ module CPU #(
                 .MinorOpcode            (MinorOpcode),
                 .FunctionalUnitEnable   (FunctionalUnitEnableIn),
                 .WriteBackSourceIn      (WriteBackSourceIn),
-                .RegAWriteEnIn          (Issue_RegAWriteEnIn),
                 .WritebackEnIn          (WritebackEnIn),
                 .WritebackRegAddr       (WritebackRegAddrIn),
                 .RegADataIn             (RegADataIn),
@@ -413,7 +414,7 @@ module CPU #(
             wire [DATABITWIDTH-1:0] InstructionAddrOut;
             wire [DATABITWIDTH-1:0] JumpAndLinkAddrOut;
             ProgramCounter #(
-                .DATABITWIDTH(16)
+                .DATABITWIDTH(DATABITWIDTH)
             ) PC (
                 .clk               (clk),
                 .clk_en            (clk_en),
@@ -597,11 +598,6 @@ module CPU #(
     // In:
     // Out:
         // Cache Controller
-            // TODO:
-
-        //
-
-        // IO Manager
             // TODO:
 
         //

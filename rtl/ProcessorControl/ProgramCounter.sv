@@ -34,7 +34,7 @@ module ProgramCounter #(
     always_comb begin : NextRegMux
         case (NextPCCondition)
             2'b01  : NextProgramCounter = ProgramCounterPlusOne;
-            2'b10  : NextProgramCounter = RelativeEn ? (ProgramCounter + JumpDest) : (JumpDest + BranchOffset);
+            2'b10  : NextProgramCounter = JumpRelativeEn ? (ProgramCounter + JumpDest) : (JumpDest + JumpOffset);
             2'b11  : NextProgramCounter = RelativeEn ? (ProgramCounter + BranchDest) : (BranchDest + BranchOffset);
             default: NextProgramCounter = '0; // Default is also case 0
         endcase

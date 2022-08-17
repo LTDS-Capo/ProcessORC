@@ -7,18 +7,18 @@ module IOCommandInterface #(
     input clk_en,
     input sync_rst,
 
-    input                            IOInACK,
-    output                           IOInREQ,
-    input                            LoadEnIn,
-    input                            StoreEnIn,
-    input          [BUFFERCOUNT-1:0] WordEn,
-    input         [DATABITWIDTH-1:0] DataIn,
+    input                          IOInACK,
+    output                         IOInREQ,
+    input                          LoadEnIn,
+    input                          StoreEnIn,
+    input        [BUFFERCOUNT-1:0] WordEn,
+    input       [DATABITWIDTH-1:0] DataIn,
 
-    output                           IOOutACK,
-    input                            IOOutREQ,
-    output                           LoadEnOut, 
-    output                           StoreEnOut,
-    output   [(PORTBYTEWIDTH*8)-1:0] DataOut
+    output                         IOOutACK,
+    input                          IOOutREQ,
+    output                         LoadEnOut, 
+    output                         StoreEnOut,
+    output [(PORTBYTEWIDTH*8)-1:0] DataOut
 );
 
     genvar BufferIndex;
