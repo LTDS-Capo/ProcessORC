@@ -9,10 +9,14 @@ module ProgramCounter #(
     input                     StallEn,
 
     input                     BranchEn,
+    input                     RelativeEn,
+    input  [DATABITWIDTH-1:0] BranchOffset,
     input  [DATABITWIDTH-1:0] ComparisonValue,
     input  [DATABITWIDTH-1:0] BranchDest,
 
     input                     JumpEn,
+    input                     JumpRelativeEn,
+    input  [DATABITWIDTH-1:0] JumpOffset,
     input  [DATABITWIDTH-1:0] JumpDest,
 
     output [DATABITWIDTH-1:0] InstructionAddrOut,
@@ -30,8 +34,8 @@ module ProgramCounter #(
     always_comb begin : NextRegMux
         case (NextPCCondition)
             2'b01  : NextProgramCounter = ProgramCounterPlusOne;
-            2'b10  : NextProgramCounter = JumpDest;
-            2'b11  : NextProgramCounter = BranchDest;
+            2'b10  : NextProgramCounter = RelativeEn ? (ProgramCounter + JumpDest) : (JumpDest + BranchOffset);
+            2'b11  : NextProgramCounter = RelativeEn ? (ProgramCounter + BranchDest) : (BranchDest + BranchOffset);
             default: NextProgramCounter = '0; // Default is also case 0
         endcase
     end

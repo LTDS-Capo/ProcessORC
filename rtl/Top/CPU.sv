@@ -125,6 +125,8 @@ module CPU #(
             wire                       RegBReadEn;
             wire [REGADDRBITWIDTH-1:0] RegBAddr;
             wire                       BranchStall;
+            wire                       s1_RelativeEn;
+            wire    [DATABITWIDTH-1:0] s1_BranchOffset;
             wire                       JumpEn;
             wire                       s1_JumpAndLinkEn;
             InstructionDecoder #(
@@ -146,6 +148,8 @@ module CPU #(
                 .RegBReadEn          (RegBReadEn),
                 .RegBAddr            (RegBAddr),
                 .BranchStall         (BranchStall),
+                .RelativeEn          (s1_RelativeEn),
+                .BranchOffset        (s1_BranchOffset),
                 .JumpEn              (JumpEn),
                 .JumpAndLinkEn       (s1_JumpAndLinkEn)
             );
@@ -320,11 +324,11 @@ module CPU #(
         //
 
         // Pipeline Buffer - Stage 1 (Ready For Testing)
-            localparam S1BUFFERINBITWIDTH_FUE = 3;
+            localparam S1BUFFERINBITWIDTH_FUE = DATABITWIDTH + 4;
             localparam S1BUFFERINBITWIDTH_META = (DATABITWIDTH * 2) + 4;
             localparam S1BUFFERINBITWIDTH_WRITEBACK = REGADDRBITWIDTH + 4;
 
-            wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
+            wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable, s1_RelativeEn, s1_BranchOffset};
             wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_InA, s1_Data_InB};
             wire [S1BUFFERINBITWIDTH_WRITEBACK-1:0] s1_RegWriteIssue = {s1_JumpAndLinkEn, s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
@@ -381,9 +385,11 @@ module CPU #(
             // s2_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
             // s2_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
             // s2_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
-            wire s2_BranchEn = s2_FunctionalUnitEnable[2];
-            wire s2_ALU0_Enable = s2_FunctionalUnitEnable[1];
-            wire s2_ALU1_Enable = s2_FunctionalUnitEnable[0];
+            wire                    s2_BranchEn = s2_FunctionalUnitEnable[DATABITWIDTH+3];
+            wire                    s2_ALU0_Enable = s2_FunctionalUnitEnable[DATABITWIDTH+2];
+            wire                    s2_ALU1_Enable = s2_FunctionalUnitEnable[DATABITWIDTH+1];
+            wire                    s2_RelativeEn = s2_FunctionalUnitEnable[DATABITWIDTH];
+            wire [DATABITWIDTH-1:0] s2_BranchOffset = s2_FunctionalUnitEnable[DATABITWIDTH-1:0];
 
             wire              [3:0] s2_MinorOpcode = s2_MetaDataIssue[((DATABITWIDTH*2)+4)-1:(DATABITWIDTH*2)];
             wire [DATABITWIDTH-1:0] s2_Data_A = s2_MetaDataIssue[(DATABITWIDTH*2)-1:DATABITWIDTH];
@@ -415,9 +421,13 @@ module CPU #(
                 .PCEn              (PCEn),
                 .StallEn           (PC_StallEn),
                 .BranchEn          (BranchEn),
+                .RelativeEn        (s2_RelativeEn),
+                .BranchOffset      (s2_BranchOffset),
                 .ComparisonValue   (ComparisonValue),
                 .BranchDest        (BranchDest),
                 .JumpEn            (PC_JumpEn),
+                .JumpRelativeEn    (s1_RelativeEn),
+                .JumpOffset        (s1_BranchOffset),
                 .JumpDest          (PC_JumpDest),
                 .InstructionAddrOut(InstructionAddrOut),
                 .JumpAndLinkAddrOut(JumpAndLinkAddrOut)
