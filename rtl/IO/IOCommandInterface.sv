@@ -11,7 +11,6 @@ module IOCommandInterface #(
     output                         CommandInREQ,
     input                    [3:0] MinorOpcodeIn,
     input       [DATABITWIDTH-1:0] DataAddrIn,
-    input        [BUFFERCOUNT-1:0] WordEn,
     input       [DATABITWIDTH-1:0] DataIn,
 
     output                         CommandOutACK,

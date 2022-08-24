@@ -23,10 +23,8 @@ module CommandController #(
 
     input                          CommandACK,
     output                         CommandREQ,
-    // input                          CommandLoadEn, // ToDo: Generate this with a decode from MinorOpcode
-    // input                          CommandStoreEn, // ToDo: Generate this with a decode from MinorOpcode
     input                    [3:0] MinorOpcodeIn,
-    input       [DATABITWIDTH-1:0] CommandAddressIn,
+    input       [DATABITWIDTH-1:0] CommandAddressIn_Offest,
     input       [DATABITWIDTH-1:0] CommandDataIn,
     input                    [3:0] CommandDestReg,
 
@@ -47,6 +45,10 @@ module CommandController #(
     output                   [3:0] IODestRegOut,
     output [(PORTBYTEWIDTH*8)-1:0] IODataOut
 );
+
+    localparam BUFFERINDEXBITWIDTH = (BUFFERCOUNT == 1) ? 1 : $clog2(BUFFERCOUNT);
+    wire CommandLoadEn = ~MinorOpcodeIn[2];
+    wire CommandStoreEn = MinorOpcodeIn[2];
 
     // Clock Selection
         wire       ClockUpdate = CLOCKCOMMAND_OPCODE == CommandDataIn[CLOCKCOMMAND_TARGETTOSYSBITWIDTH-1:CLOCKCOMMAND_LSB];
@@ -79,12 +81,12 @@ module CommandController #(
         //   - Loads
         //   - Responses (Takes priority)
         local REGRESPONSEBITWIDTH = (DATABITWIDTH >= (PORTBYTEWIDTH*8)) ? (PORTBYTEWIDTH*8) : DATABITWIDTH;
-        wire                           LocalResponseACK;
-        wire                           LocalResponseREQ = (TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1] && WritebackREQ) || ~TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1];
-        assign                         WritebackACK = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1] ? LocalResponseACK : (CommandACK && CommandLoadEn);
-        assign                         WritebackDestReg = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1] ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg;
-        wire   [(PORTBYTEWIDTH*8)-1:0] WritebackDataOut_Tmp = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1] ? TargetToSysCDC_dOut[(PORTBYTEWIDTH*8)-1:0] : LoadBuffer;
-        assign                         WritebackDataOut = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1] ? {'0, WritebackDataOut_Tmp[REGRESPONSEBITWIDTH-1:0]} : ; // ToDo: Element Select.....
+        wire                             LocalResponseACK;
+        wire                             LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;
+        assign                           WritebackACK = LocalIORegResponse ? LocalResponseACK : (CommandACK && CommandLoadEn);
+        assign                           WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg;
+        wire   [BUFFERINDEXBITWIDTH-1:0] LoadIndex = CommandAddressIn_Offest[BUFFERINDEXBITWIDTH-1:0];
+        assign                           WritebackDataOut = LocalIORegResponse ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadVector[LoadIndex];
     //
 
     // Data Store Buffer System
@@ -92,17 +94,16 @@ module CommandController #(
         wire   SysCommandREQ;
         wire LocalCommandACK;
         wire LocalCommandREQ;
-        // ElementEn Gen
-            localparam DATAINDEXBITWIDTH = ((DATABITWIDTH/8) == 1) ? 1 : $clog2((DATABITWIDTH/8));
-            localparam BUFFERINDEXBITWIDTH = (BUFFERCOUNT == 1) ? 1 : $clog2(BUFFERCOUNT);
-            localparam ELEMENTADDRUPPER = DATAINDEXBITWIDTH + BUFFERINDEXBITWIDTH;
-            logic [BUFFERCOUNT-1:0] ElementDecoder;
-            always_comb begin
-                ElementDecoder = 0;
-                ElementDecoder[DataAddrIn[ELEMENTADDRUPPER-1:DATAINDEXBITWIDTH]] = 1'b1;
-            end
-            wire [BUFFERCOUNT-1:0] SysWordEn = ElementDecoder;
-        // 
+        // // ElementEn Gen
+        //     localparam DATAINDEXBITWIDTH = ((DATABITWIDTH/8) == 1) ? 1 : $clog2((DATABITWIDTH/8));
+        //     localparam ELEMENTADDRUPPER = DATAINDEXBITWIDTH + BUFFERINDEXBITWIDTH;
+        //     logic [BUFFERCOUNT-1:0] ElementDecoder;
+        //     always_comb begin
+        //         ElementDecoder = 0;
+        //         ElementDecoder[CommandAddressIn_Offest[ELEMENTADDRUPPER-1:DATAINDEXBITWIDTH]] = 1'b1;
+        //     end
+        //     wire [BUFFERCOUNT-1:0] SysWordEn = ElementDecoder;
+        // // 
         wire [(PORTBYTEWIDTH*8)-1:0] LocalCommandData;
         IOCommandInterface #(
             .DATABITWIDTH (DATABITWIDTH),
@@ -115,8 +116,7 @@ module CommandController #(
             .CommandInACK (SysCommandACK),
             .CommandInREQ (SysCommandREQ),
             .MinorOpcodeIn(MinorOpcodeIn),
-            .DataAddrIn   (CommandAddressIn),
-            .WordEn       (SysWordEn),
+            .DataAddrIn   (CommandAddressIn_Offest),
             .DataIn       (CommandDataIn),
             .CommandOutACK(LocalCommandACK),
             .CommandOutREQ(LocalCommandREQ),
@@ -155,7 +155,22 @@ module CommandController #(
                 LoadBuffer <= NextLoadBuffer;
             end
         end
-        assign WritebackDataOut = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1] ? LoadBuffer : TargetToSysCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
+        genvar BufferIndex;
+        wire [BUFFERCOUNT-1:0][DATABITWIDTH-1:0] LoadVector;
+        generate
+            for (BufferIndex == 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : LoadIndexGen
+                if (BufferIndex == (BUFFERCOUNT - 1)) begin
+                    localparam LOADLOWERBITWIDTH = BufferIndex * DATABITWIDTH;
+                    localparam LOADUPPERBITWIDTH = PORTBYTEWIDTH * 8;
+                    assign LoadVector[BufferIndex] = {'0, LoadBuffer[LOADUPPERBITWIDTH-1:LOADLOWERBITWIDTH]};
+                end
+                else begin
+                    localparam LOADLOWERBITWIDTH = BufferIndex * DATABITWIDTH;
+                    localparam LOADUPPERBITWIDTH = (BufferIndex + 1) * DATABITWIDTH;
+                    assign LoadVector[BufferIndex] = LoadBuffer[LOADUPPERBITWIDTH-1:LOADLOWERBITWIDTH];
+                end
+            end
+        endgenerate
     //
 
     // Target to Sys FIFO CDC
@@ -163,6 +178,7 @@ module CommandController #(
         wire                           TargetResponseREQ;
         wire [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dIn = {IORegResponseFlag, IODestRegIn, IODataIn};
         wire [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dOut;
+        wire LocalIORegResponse = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1];
         FIFO_ClockDomainCrosser #(
             .BITWIDTH(TARGETTOSYSBITWIDTH),
             .DEPTH   (8),
