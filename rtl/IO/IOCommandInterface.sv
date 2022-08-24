@@ -18,42 +18,76 @@ module IOCommandInterface #(
     output [(PORTBYTEWIDTH*8)-1:0] DataOut
 );
 
+// Command Active & Hankshakes
+    reg  Active;
+    wire ActiveTrigger = (CommandOutACK && CommandOutREQ && clk_en) || (CommandInACK && CommandInREQ && clk_en) || sync_rst;
+    wire UpperByteEn;
+    // ByteEn Gen
+        generate
+            if (DATABITWIDTH == 64) begin
+                assign UpperByteEn = MinorOpcodeIn[1:0] == 2'b11;
+            end
+            else if (DATABITWIDTH == 32) begin
+                assign UpperByteEn = MinorOpcodeIn[1:0] >= 2'b10;
+            end
+            else if (DATABITWIDTH == 16) begin
+                assign UpperByteEn = MinorOpcodeIn[1:0] >= 2'b01;
+            end
+            else if (DATABITWIDTH == 8) begin
+                assign UpperByteEn = 1'b1;
+            end
+        endgenerate
+    //
+    wire NextActive = CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && ~sync_rst;
+    always_ff @(posedge clk) begin
+        if (ActiveTrigger) begin
+            Active <= NextActive;
+        end
+    end
+
+    assign CommandOutACK = Active;
+    assign CommandInREQ = ~Active;
+//
+
+// WordEn
+    localparam DATAINDEXBITWIDTH = ((DATABITWIDTH/8) == 1) ? 1 : $clog2((DATABITWIDTH/8));
+    localparam BUFFERINDEXBITWIDTH = (BUFFERCOUNT == 1) ? 1 : $clog2(BUFFERCOUNT);
+    localparam ELEMENTADDRUPPER = DATAINDEXBITWIDTH + BUFFERINDEXBITWIDTH;
+    logic [BUFFERCOUNT-1:0] WordEn;
+    always_comb begin
+        WordEn = 0;
+        WordEn[DataAddrIn[ELEMENTADDRUPPER-1:DATAINDEXBITWIDTH]] = 1'b1;
+    end
+// 
+
+// Loop that generates
     genvar BufferIndex;
-    wire [BUFFERCOUNT-1:0][DATABITWIDTH-1:0] DataOutTmp;
+    wire [(DATABITWIDTH*BUFFERCOUNT)-1:0] DataOutTmp;
     generate
         for (BufferIndex = 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : ByteBufferGeneration
-            localparam UPPERBITINDEX = (BufferIndex + 1) * DATABITWIDTH;
-            localparam LOWERBITINDEX = BufferIndex * DATABITWIDTH;
-            if (BufferIndex == (BUFFERCOUNT-1)) begin
-                // Smaller bytes left than data width... example 8bit port on 16b system
-                // standard pass through
-                assign DataOutTmp[BufferIndex] = {'0, DataIn};
-            end
-            else begin
-                reg  [DATABITWIDTH-1:0] DataBuffer;
-                wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInACK && clk_en) || sync_rst;
-                wire [DATABITWIDTH-1:0] NextDataBuffer = (sync_rst) ? 0 : DataIn;
-                always_ff @(posedge clk) begin
-                    if (DataBufferTrigger) begin
-                        DataBuffer <= NextDataBuffer;
-                    end
+            reg  [DATABITWIDTH-1:0] DataBuffer;
+            wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInREQ && CommandInACK && clk_en) || sync_rst;
+            wire [DATABITWIDTH-1:0] NextDataBuffer = (sync_rst) ? 0 : NextDataBuffer_Tmp;
+            always_ff @(posedge clk) begin
+                if (DataBufferTrigger) begin
+                    DataBuffer <= NextDataBuffer;
                 end
-                assign DataOutTmp[BufferIndex] = DataBuffer;
             end
+            wire [DATABITWIDTH-1:0] NextDataBuffer_Tmp;
+            IOStoreDataAlignment #(
+                .DATABITWIDTH(DATABITWIDTH)
+            ) DataAligment (
+                .MinorOpcodeIn(MinorOpcodeIn),
+                .DataAddrIn   (DataAddrIn),
+                .DataIn       (DataIn),
+                .ReadData     (DataBuffer),
+                .DataOut      (NextDataBuffer_Tmp)
+            );
+            localparam OUTPUTINDEXUPPERBIT = (BufferIndex + 1) * DATABITWIDTH;
+            localparam OUTPUTINDEXLOWERBIT = BufferIndex * DATABITWIDTH;
+            assign DataOutTmp[OUTPUTINDEXUPPERBIT-1:OUTPUTINDEXLOWERBIT] = DataBuffer;
         end
     endgenerate
-
-    generate
-        if (BUFFERCOUNT == 1) begin
-            assign DataOut = DataOutTmp;
-            assign CommandOutACK = CommandInACK;
-            assign CommandInREQ = CommandOutREQ;
-        end
-        else begin
-            assign DataOut = DataOutTmp;
-            assign CommandOutACK = WordEn[BUFFERCOUNT-1] && CommandInACK;
-            assign CommandInREQ = WordEn[BUFFERCOUNT-1] ? CommandOutREQ : CommandInACK;
-        end
-    endgenerate
+    assign DataOut = DataOutTmp[(PORTBYTEWIDTH*8)-1:0];
 
 endmodule

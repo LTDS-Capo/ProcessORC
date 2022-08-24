@@ -13,13 +13,17 @@ module TopLevelReset_FlagGen #(
 
     input sync_rst_Trigger,
 
-    input SyncIn [CLOCKDOMAINS-2:0],
+    input SyncIn [CLOCKDOMAINS-1:0],
 
     output clk_en_out,
     output sync_rst_out,
-    output init_out
+    output init_out,
+
+    output TESTBIT
 );
     
+    assign TESTBIT = SyncWait;
+
     localparam CYCLELIMIT = RESETWAITCYCLES + OPERATIONALWAITCYCLES + INITIALIZEWAITCYCLES + 1;
     localparam OPERATIONALCYCLELIMIT =  RESETWAITCYCLES + OPERATIONALWAITCYCLES;
     localparam RESETCYCLELIMIT = RESETWAITCYCLES;
@@ -29,9 +33,9 @@ module TopLevelReset_FlagGen #(
     localparam CYCLEBITWIDTH = $clog2(CYCLELIMIT);
 
     // async_rst_in Trigger
-        reg  [7:0] AsyncRstCapture;
+        reg  [7:0] AsyncRstCapture = '0;
         wire       AsyncRstCaptureTrigger = clk_en;
-        wire       AsyncRstDetection = ~(|AsyncRstCapture);
+        wire       AsyncRstDetection = AsyncRstCapture == 0;
         wire [7:0] NextAsyncRstCapture;
         assign NextAsyncRstCapture[0] = AsyncRstDetection;
         assign NextAsyncRstCapture[1] = AsyncRstCapture[0] || AsyncRstDetection;
@@ -106,7 +110,20 @@ module TopLevelReset_FlagGen #(
         generate
             for (SyncIndex = 0; SyncIndex < CLOCKDOMAINS; SyncIndex = SyncIndex + 1) begin : SyncBufferGen
                 if (SyncIndex == (CLOCKDOMAINS-1)) begin
-                    assign SyncVector[SyncIndex] = 1'b1;
+                    reg  SyncBuffer;
+                    wire SyncBufferTrigger = (SyncClear && clk_en) || (SyncIn[SyncIndex] && SyncWait && clk_en) || (sync_rst_Trigger && clk_en);
+                    wire NextSyncBuffer = SyncIn[SyncIndex] && ~SyncClear && ~sync_rst_Trigger;
+                    always_ff @(posedge clk or posedge async_rst_in) begin
+                        if (async_rst_in) begin
+                            SyncBuffer <= 0;
+                        end
+                        else if (SyncBufferTrigger) begin
+                            SyncBuffer <= NextSyncBuffer;
+                        end
+                    end
+                    assign SyncVector[SyncIndex] = SyncBuffer;
+                    
+                    // assign SyncVector[SyncIndex] = 1'b1;
                 end
                 else begin
                     reg  SyncBuffer;

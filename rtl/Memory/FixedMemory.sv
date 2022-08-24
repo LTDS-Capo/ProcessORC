@@ -18,6 +18,7 @@ module FixedMemory #(
     output [REGADDRBITWIDTH-1:0] DestRegisterOut,
     output    [DATABITWIDTH-1:0] DataOut
 );
+    // ToDo: Make fully parameterizable based on DATABITWIDTH.
 
     // Store Data Alignment
         logic [DATABITWIDTH-1:0] StoreValue_Tmp;
@@ -41,20 +42,22 @@ module FixedMemory #(
     end
     wire[DATABITWIDTH-1:0] DataRead = DataMemory[MemAddr];
 
-    logic [DATABITWIDTH-1:0] DataOut_Tmp;
-    always_comb begin : DataOutMux
-        case (MinorOpcodeIn[1:0])
-            2'b01  : DataOut_Tmp = DataRead; // Load Word
-            2'b10  : DataOut_Tmp = 16'hFFFF; // Load Double
-            2'b11  : DataOut_Tmp = 16'hFFFF; // Load Quad
-            default: DataOut_Tmp = DataAddrIn[0] ? {'0, DataRead[15:8]} : {'0, DataRead[7:0]} ; // Default is also case 0 - Load Byte
-        endcase
-    end
-    assign DataOut = (Writeback_REQ && Writeback_ACK) ? DataOut_Tmp : 0;
+    // Load Data Alignment
+        logic [DATABITWIDTH-1:0] DataOut_Tmp;
+        always_comb begin : DataOutMux
+            case (MinorOpcodeIn[1:0])
+                2'b01  : DataOut_Tmp = DataRead; // Load Word
+                2'b10  : DataOut_Tmp = 16'hFFFF; // Load Double
+                2'b11  : DataOut_Tmp = 16'hFFFF; // Load Quad
+                default: DataOut_Tmp = DataAddrIn[0] ? {'0, DataRead[15:8]} : {'0, DataRead[7:0]} ; // Default is also case 0 - Load Byte
+            endcase
+        end
+    //
 
+
+    assign DataOut = (Writeback_REQ && Writeback_ACK) ? DataOut_Tmp : 0;
     assign LoadStore_REQ = Writeback_REQ || (LoadStore_ACK && DataMemoryWriteTrigger);
     assign Writeback_ACK = LoadStore_ACK && ~DataMemoryWriteTrigger;
-
     assign DestRegisterOut = DestRegisterIn;
 
 endmodule
