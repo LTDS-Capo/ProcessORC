@@ -90,7 +90,8 @@ module RegisterFile #(
     // RegisterStallOut and Sync Generation
     wire   StallA = DirtyBitOutVector[ReadA_Address] && ReadA_En;
     wire   StallB = DirtyBitOutVector[ReadB_Address] && ReadB_En;
-    assign RegistersSync = ~|DirtyBitOutVector;
+    // assign RegistersSync = ~|DirtyBitOutVector;
+    assign RegistersSync = DirtyBitOutVector == 0;
     assign RegisterStallOut = StallA || StallB;
 
     // Read A decoder

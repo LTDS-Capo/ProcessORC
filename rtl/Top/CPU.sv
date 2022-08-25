@@ -6,7 +6,7 @@ module CPU #(
     input sync_rst,
 
     input  SystemEn,
-    output HaltOut, // TODO:
+    output HaltOut,
 
     // Memory Flashing
 
@@ -36,8 +36,6 @@ module CPU #(
     assign RegisterWriteData_OUT = Write_Data;
     assign RegisterWriteEn_OUT = Write_En;
     assign RegisterWriteAddr_OUT = Write_Address;
-
-    assign HaltOut = 1'b0;
 
 
     // Debug output
@@ -131,7 +129,8 @@ module CPU #(
             wire                       s1_RelativeEn;
             wire    [DATABITWIDTH-1:0] s1_BranchOffset;
             wire                       JumpEn;
-            wire                       s1_JumpAndLinkEn;
+            wire                       s1_JumpAndLinkEn;,
+            wire                       HaltEn;
             InstructionDecoder #(
                 .DATABITWIDTH(DATABITWIDTH)
             ) InstDecoder (
@@ -154,7 +153,8 @@ module CPU #(
                 .RelativeEn          (s1_RelativeEn),
                 .BranchOffset        (s1_BranchOffset),
                 .JumpEn              (JumpEn),
-                .JumpAndLinkEn       (s1_JumpAndLinkEn)
+                .JumpAndLinkEn       (s1_JumpAndLinkEn),
+                .HaltEn              (HaltEn)
             );
         //
 
@@ -163,6 +163,7 @@ module CPU #(
             wire BranchStallIn = BranchStall;
             wire RegisterStallIn = RegisterStall;
             wire IssueCongestionStallIn = IssueCongestionStallOut;
+            wire Halted;
             wire StallEn;
             StallControl StallCtl (
                 .clk                   (clk),
@@ -172,6 +173,8 @@ module CPU #(
                 .BranchStallIn         (BranchStallIn),
                 .RegisterStallIn       (RegisterStallIn),
                 .IssueCongestionStallIn(IssueCongestionStallIn),
+                .HaltStallIn           (HaltEn),
+                .Halted                (Halted), 
                 .StallEn               (StallEn)
             );
         //
@@ -216,6 +219,7 @@ module CPU #(
                 .RegistersSync    (RegistersSync),
                 .RegisterStallOut (RegisterStall)
             );
+            assign HaltOut = RegistersSync && StallEn && Halted;
         //
 
         // Forwarding (Ready For Testing)

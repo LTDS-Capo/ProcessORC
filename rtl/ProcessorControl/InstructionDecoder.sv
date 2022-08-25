@@ -25,8 +25,12 @@ module InstructionDecoder #(
     output                    RelativeEn,
     output [DATABITWIDTH-1:0] BranchOffset,
     output                    JumpEn,
-    output                    JumpAndLinkEn
+    output                    JumpAndLinkEn,
+
+    output                    HaltEn
 );
+    wire   [7:0] HaltingComparison = {InstructionIn[15:12], InstructionIn[7:4]}; 
+    assign       HaltEn = (HaltingComparison == 8'h2F) && InstructionInValid;
 
     assign JumpEn = ~BranchStall && ~JumpAndLink && OperationBitVector[15];
     wire   JumpAndLink = OperationBitVector[14];

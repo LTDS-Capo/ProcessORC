@@ -8,7 +8,9 @@ module StallControl (
     input  BranchStallIn,
     input  RegisterStallIn,
     input  IssueCongestionStallIn,
+    input  HaltStallIn,
 
+    output Halted,
     output StallEn
 );
     
@@ -21,6 +23,16 @@ module StallControl (
         end
     end
 
-    assign StallEn = BranchStallDelay || RegisterStallIn || IssueCongestionStallIn;
+    reg  HaltCapture;
+    wire HaltCaptureTrigger = (~HaltCapture && clk_en) || sync_rst;
+    wire NextHaltCapture = HaltStallIn && ~sync_rst;
+    always_ff @(posedge clk) begin
+        if (HaltCaptureTrigger) begin
+            HaltCapture <= NextHaltCapture;
+        end
+    end
+
+    assign Halted = HaltCapture;
+    assign StallEn = BranchStallDelay || RegisterStallIn || IssueCongestionStallIn || HaltStallIn || HaltCapture;
 
 endmodule
