@@ -81,9 +81,9 @@ module CommandController #(
         // Loads: Forward to Writeback Handshake
         // Stores: Forward to SysToTargetCDC
         logic CommandREQ_Tmp;
-        wire  [1:0] NextCaseCondition = {CommandStaleLoadEn, CommandLoadEn};
-        always_comb begin : NextSOMETHINGMux
-            case (NextCaseCondition)
+        wire  [1:0] CommandREQCondition = {CommandStaleLoadEn, CommandLoadEn};
+        always_comb begin : CommandREQConditionMux
+            case (CommandREQCondition)
                 2'b01  : CommandREQ_Tmp = LocalCommandREQ_Tmp;
                 2'b10  : CommandREQ_Tmp = WritebackREQ && ~LocalResponseACK;
                 2'b11  : CommandREQ_Tmp = '0;
@@ -114,8 +114,8 @@ module CommandController #(
     //
 
     // Data Store Buffer System
-        wire   SysCommandACK = CommandACK && CommandStoreEn;
-        wire   SysCommandREQ;
+        wire SysCommandACK = CommandACK && CommandStoreEn;
+        wire SysCommandREQ;
         wire LocalCommandACK_Tmp;
         wire LocalCommandREQ_Tmp;
         wire LocalCommandREQ = (LocalCommandREQ_Tmp && ~CommandLoadEn) || ClockUpdate_Tmp; 
@@ -162,7 +162,7 @@ module CommandController #(
         );
     //
 
-    // Data Load Buffer System
+    // Data Load Buffer System - // ToDo: Make this update on a store command - nahhhh,,, only if someone bitches
         reg  [(PORTBYTEWIDTH*8)-1:0] LoadBuffer;
         wire                         LoadBufferTrigger = (TargetResponseACK && TargetResponseREQ && clk_en) || sync_rst;
         wire [(PORTBYTEWIDTH*8)-1:0] NextLoadBuffer = (sync_rst) ? 0 : TargetToSysCDC_dOut[(PORTBYTEWIDTH*8)-1:0];

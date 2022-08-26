@@ -25,13 +25,13 @@ module IOCommandInterface #(
     // ByteEn Gen
         generate
             if (DATABITWIDTH == 64) begin
-                assign UpperByteEn = MinorOpcodeIn[1:0] == 2'b11;
+                assign UpperByteEn = (MinorOpcodeIn[1:0] == 2'b11) || ((MinorOpcodeIn[1:0] == 2'b10) && DataAddrIn[2]) || ((MinorOpcodeIn[1:0] == 2'b01) && DataAddrIn[2] && DataAddrIn[1]) || ((MinorOpcodeIn[1:0] == 2'b00) && DataAddrIn[2] && DataAddrIn[1] && DataAddrIn[0]);
             end
             else if (DATABITWIDTH == 32) begin
-                assign UpperByteEn = MinorOpcodeIn[1:0] >= 2'b10;
+                assign UpperByteEn = (MinorOpcodeIn[1:0] >= 2'b10) || ((MinorOpcodeIn[1:0] == 2'b01) && DataAddrIn[1]) || ((MinorOpcodeIn[1:0] == 2'b00) && DataAddrIn[1] && DataAddrIn[0]);
             end
             else if (DATABITWIDTH == 16) begin
-                assign UpperByteEn = MinorOpcodeIn[1:0] >= 2'b01;
+                assign UpperByteEn = (MinorOpcodeIn[1:0] >= 2'b01) || DataAddrIn[0];
             end
             else if (DATABITWIDTH == 8) begin
                 assign UpperByteEn = 1'b1;
@@ -60,11 +60,11 @@ module IOCommandInterface #(
     end
 // 
 
-// Loop that generates
+// Buffers
     genvar BufferIndex;
     wire [(DATABITWIDTH*BUFFERCOUNT)-1:0] DataOutTmp;
     generate
-        for (BufferIndex = 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : ByteBufferGeneration
+        for (BufferIndex = 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : BufferGeneration
             reg  [DATABITWIDTH-1:0] DataBuffer;
             wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInREQ && CommandInACK && clk_en) || sync_rst;
             wire [DATABITWIDTH-1:0] NextDataBuffer = (sync_rst) ? 0 : NextDataBuffer_Tmp;
@@ -89,5 +89,6 @@ module IOCommandInterface #(
         end
     endgenerate
     assign DataOut = DataOutTmp[(PORTBYTEWIDTH*8)-1:0];
+//
 
 endmodule

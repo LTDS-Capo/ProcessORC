@@ -37,7 +37,7 @@ module IOLoadDataAlignment #(
             always_comb begin : DataMux
                 case (MinorOpcodeIn[1:0])
                     2'b01  : LoadValue_Tmp = WordSelect; // Store Word
-                    2'b10  : LoadValue_Tmp = DataAddrIn[3] ? {DataIn[31:0], DataIn[31:0]} : {DataIn[63:32], DataIn[31:0]} ; // Store Double
+                    2'b10  : LoadValue_Tmp = DataAddrIn[3] ? {'0, DataIn[63:32]} : {'0, DataIn[31:0]} ; // Store Double
                     2'b11  : LoadValue_Tmp = DataIn; // Store Quad
                     default: LoadValue_Tmp = ByteSelect; // Store Byte
                 endcase

@@ -129,7 +129,7 @@ module CPU #(
             wire                       s1_RelativeEn;
             wire    [DATABITWIDTH-1:0] s1_BranchOffset;
             wire                       JumpEn;
-            wire                       s1_JumpAndLinkEn;,
+            wire                       s1_JumpAndLinkEn;
             wire                       HaltEn;
             InstructionDecoder #(
                 .DATABITWIDTH(DATABITWIDTH)

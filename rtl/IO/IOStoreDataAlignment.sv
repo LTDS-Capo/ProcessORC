@@ -14,7 +14,7 @@ module IOStoreDataAlignment #(
         if (DATABITWIDTH == 64) begin
             logic [DATABITWIDTH-1:0] ByteSelect;
             always_comb begin : ByteSelectMux
-                case (DataAddrIn[1:0])
+                case (DataAddrIn[2:0])
                     3'b001 : ByteSelect = {ReadData[63:16], DataIn[7:0], ReadData[7:0]};
                     3'b010 : ByteSelect = {ReadData[63:24], DataIn[7:0], ReadData[15:0]};
                     3'b011 : ByteSelect = {ReadData[63:32], DataIn[7:0], ReadData[23:0]};
@@ -38,7 +38,7 @@ module IOStoreDataAlignment #(
             always_comb begin : DataMux
                 case (MinorOpcodeIn[1:0])
                     2'b01  : StoreValue_Tmp = WordSelect; // Store Word
-                    2'b10  : StoreValue_Tmp = DataAddrIn[3] ? {DataIn[31:0], ReadData[31:0]} : {ReadData[63:32], DataIn[31:0]} ; // Store Double
+                    2'b10  : StoreValue_Tmp = DataAddrIn[2] ? {DataIn[31:0], ReadData[31:0]} : {ReadData[63:32], DataIn[31:0]} ; // Store Double
                     2'b11  : StoreValue_Tmp = DataIn; // Store Quad
                     default: StoreValue_Tmp = ByteSelect; // Store Byte
                 endcase
@@ -61,7 +61,7 @@ module IOStoreDataAlignment #(
                 case (MinorOpcodeIn[1:0])
                     2'b01  : StoreValue_Tmp = DataAddrIn[1] ? {DataIn[15:0], ReadData[15:0]} : {ReadData[31:16], DataIn[15:0]} ; // Store Word
                     2'b10  : StoreValue_Tmp = DataIn; // Store Double
-                    2'b11  : StoreValue_Tmp = 32'hFFFF; // Store Quad
+                    2'b11  : StoreValue_Tmp = 32'hFFFF_FFFF; // Store Quad
                     default: StoreValue_Tmp = ByteSelect; // Store Byte
                 endcase
             end
@@ -75,7 +75,7 @@ module IOStoreDataAlignment #(
                     2'b01  : StoreValue_Tmp = DataIn; // Store Word
                     2'b10  : StoreValue_Tmp = 16'hFFFF; // Store Double
                     2'b11  : StoreValue_Tmp = 16'hFFFF; // Store Quad
-                    default: StoreValue_Tmp = DataAddrIn[0] ? {DataIn[7:0], ReadData[7:0]} : {ReadData[15:8], DataIn[7:0]} ; // Store Byte
+                    default: StoreValue_Tmp = DataAddrIn[0] ? {DataIn[7:0], ReadData[7:0]} : {ReadData[15:8], DataIn[7:0]}; // Store Byte
                 endcase
             end
             assign DataOut = StoreValue_Tmp;
