@@ -1,8 +1,6 @@
 //* Four Byte Interface Timers *//
 module FBI_Timers #(
-    parameter DATABITWIDTH = 16,
-    parameter PORTBYTEWIDTH = 4, // Multiple of 2s only for now
-    parameter BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : ((PORTBYTEWIDTH * 8) / DATABITWIDTH)
+    parameter DATABITWIDTH = 16
 )(
     input clk,
     input clk_en,
@@ -10,10 +8,8 @@ module FBI_Timers #(
 
     input                     IOInACK,
     output                    IOInREQ,
-    input               [3:0] RegisterDestIn,
-    input                     LoadEnIn,
-    input                     StoreEnIn,             
-    input   [BUFFERCOUNT-1:0] WordEn,
+    input               [3:0] MinorOpcodeIn,
+    input  [DATABITWIDTH-1:0] DataAddrIn,
     input  [DATABITWIDTH-1:0] DataIn,
 
     output       [7:0]        TimerOutACK,
@@ -30,32 +26,33 @@ module FBI_Timers #(
     // [31] Command
     // > 0 : Clear(Store)/Check(Load)
     // > 1 : Set(Store)/Wait(Load)
-    
-    // Interface Manager
+
+    // Interface Manager (For stores)
+        localparam PORTBYTEWIDTH = 4; // Multiple of 2s only for now
+        localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : ((PORTBYTEWIDTH * 8) / DATABITWIDTH);
         wire                         TimerACK;
         wire                         TimerREQ = TimerREQArray[TimerDataOut[30:28]];
-        wire                         LoadEn;
-        wire                         StoreEn;
+        wire                   [3:0] MinorOpcodeOut;
+        wire                         LoadEn = ~MinorOpcodeOut[2];
+        wire                         StoreEn = MinorOpcodeOut[2];
         wire [(PORTBYTEWIDTH*8)-1:0] TimerDataOut;
         IOCommandInterface #(
             .DATABITWIDTH (DATABITWIDTH),
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
             .BUFFERCOUNT  (BUFFERCOUNT)
         ) IOInterface (
-            .clk       (clk),
-            .clk_en    (clk_en),
-            .sync_rst  (sync_rst),
-            .IOInACK   (IOInACK),
-            .IOInREQ   (IOInREQ),
-            .LoadEnIn  (LoadEnIn),
-            .StoreEnIn (StoreEnIn),
-            .WordEn    (WordEn),
-            .DataIn    (DataIn),
-            .IOOutACK  (TimerACK),
-            .IOOutREQ  (TimerREQ),
-            .LoadEnOut (LoadEn),
-            .StoreEnOut(StoreEn),
-            .DataOut   (TimerDataOut)
+            .clk           (clk),
+            .clk_en        (clk_en),
+            .sync_rst      (sync_rst),
+            .CommandInACK  (IOInACK),
+            .CommandInREQ  (IOInREQ),
+            .MinorOpcodeIn (MinorOpcodeIn),
+            .DataAddrIn    (DataAddrIn),
+            .DataIn        (DataIn),
+            .CommandOutACK (TimerACK),
+            .CommandOutREQ (TimerREQ),
+            .MinorOpcodeOut(MinorOpcodeOut),
+            .DataOut       (TimerDataOut)
         );
     //
 

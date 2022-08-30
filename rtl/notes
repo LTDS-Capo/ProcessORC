@@ -1,3 +1,20 @@
+// IO Config data
+Byte Width,
+Name,
+8bit ID,
+Module Name,
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Change to 4 bytes per IO type, 2 byte command, 2 byte value.
 0-7     - Clk Config
@@ -15,6 +32,11 @@ GPIO (Set1, Set0, Clear, Write, Read, Pulse[Length], set clock) - In, Out, OutEn
   [15:13] Command
   [12:10] IOAddr
     [9:0] PulseLength
+
+
+
+
+  
 
 
 

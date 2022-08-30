@@ -125,17 +125,18 @@ module CommandController #(
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
             .BUFFERCOUNT  (BUFFERCOUNT)
         ) StoreBuffer (
-            .clk          (sys_clk),
-            .clk_en       (clk_en),
-            .sync_rst     (sync_rst),
-            .CommandInACK (SysCommandACK),
-            .CommandInREQ (SysCommandREQ),
-            .MinorOpcodeIn(MinorOpcodeIn),
-            .DataAddrIn   (CommandAddressIn_Offest),
-            .DataIn       (CommandDataIn),
-            .CommandOutACK(LocalCommandACK_Tmp),
-            .CommandOutREQ(LocalCommandREQ),
-            .DataOut      (LocalCommandData)
+            .clk           (sys_clk),
+            .clk_en        (clk_en),
+            .sync_rst      (sync_rst),
+            .CommandInACK  (SysCommandACK),
+            .CommandInREQ  (SysCommandREQ),
+            .MinorOpcodeIn (MinorOpcodeIn),
+            .DataAddrIn    (CommandAddressIn_Offest),
+            .DataIn        (CommandDataIn),
+            .CommandOutACK (LocalCommandACK_Tmp),
+            .CommandOutREQ (LocalCommandREQ),
+            .MinorOpcodeOut(), // Do Not Connect
+            .DataOut       (LocalCommandData)
         );
     //
 

@@ -1,6 +1,6 @@
 module IOCommandInterface #(
     parameter DATABITWIDTH = 16,
-    parameter PORTBYTEWIDTH = 8, // Multiple of 2s only for now
+    parameter PORTBYTEWIDTH = 8,
     parameter BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : ((PORTBYTEWIDTH * 8) / DATABITWIDTH)
 )(
     input clk,
@@ -15,6 +15,7 @@ module IOCommandInterface #(
 
     output                         CommandOutACK,
     input                          CommandOutREQ,
+    output                   [3:0] MinorOpcodeOut,
     output [(PORTBYTEWIDTH*8)-1:0] DataOut
 );
 
@@ -45,8 +46,17 @@ module IOCommandInterface #(
         end
     end
 
-    assign CommandOutACK = Active;
+    reg  [3:0] MinorOpcodeBuffer;
+    wire [3:0] NextMinorOpcodeBuffer = (sync_rst) ? 0 : MinorOpcodeIn;
+    always_ff @(posedge clk) begin
+        if (ActiveTrigger) begin
+            MinorOpcodeBuffer <= NextMinorOpcodeBuffer;
+        end
+    end
+
     assign CommandInREQ = ~Active;
+    assign MinorOpcodeOut = MinorOpcodeBuffer;
+    assign CommandOutACK = Active;
 //
 
 // WordEn

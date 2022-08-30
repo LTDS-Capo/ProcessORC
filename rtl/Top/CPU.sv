@@ -5,17 +5,25 @@ module CPU #(
     input clk_en,
     input sync_rst,
 
+    // Control and Status
     input  SystemEn,
     output HaltOut,
 
     // Memory Flashing
 
     // IO Out Handshake
+    output                    IOOutACK,
+    input                     IOOutREQ,
+    output              [3:0] IOMinorOpcode,
+    output [DATABITWIDTH-1:0] IOOutAddress,
+    output [DATABITWIDTH-1:0] IOOutData,
+    output              [3:0] IOOutDestReg,
 
     // IO In Handshake
-
-
-
+    input                     IOInACK,
+    output                    IOInREQ,
+    input               [3:0] IOInDestReg,
+    input  [DATABITWIDTH-1:0] IOInData,
 
     // Test Outputs
     output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
@@ -513,12 +521,6 @@ module CPU #(
             wire     [DATABITWIDTH-1:0] s2_LoadStore_MemoryAddress = s1_LoadStoreFIFO_dOUT[S2LSUMAUPPERLIMIT-1:S2LSUSVUPPERLIMIT];
             wire     [DATABITWIDTH-1:0] s2_LoadStore_StoreValue = s1_LoadStoreFIFO_dOUT[S2LSUSVUPPERLIMIT-1:REGADDRBITWIDTH];
             wire  [REGADDRBITWIDTH-1:0] s2_LoadStore_DestinationRegister = s1_LoadStoreFIFO_dOUT[REGADDRBITWIDTH-1:0];
-            wire                       IOManager_REQ = 1'b0;
-            wire                       IOManager_ACK;
-            wire                 [3:0] IOManager_MinorOpcode;
-            wire    [DATABITWIDTH-1:0] IOManager_MemoryAddress;
-            wire    [DATABITWIDTH-1:0] IOManager_StoreValue;
-            wire [REGADDRBITWIDTH-1:0] IOManager_DestinationRegister;
             wire                       Cache_REQ = 1'b0;
             wire                       Cache_ACK;
             wire                 [3:0] Cache_MinorOpcode;
@@ -544,12 +546,12 @@ module CPU #(
                 .LoadStore_MemoryAddress        (s2_LoadStore_MemoryAddress),
                 .LoadStore_StoreValue           (s2_LoadStore_StoreValue),
                 .LoadStore_DestinationRegister  (s2_LoadStore_DestinationRegister),
-                .IOManager_REQ                  (IOManager_REQ),
-                .IOManager_ACK                  (IOManager_ACK),
-                .IOManager_MinorOpcode          (IOManager_MinorOpcode),
-                .IOManager_MemoryAddress        (IOManager_MemoryAddress),
-                .IOManager_StoreValue           (IOManager_StoreValue),
-                .IOManager_DestinationRegister  (IOManager_DestinationRegister),
+                .IOManager_REQ                  (IOOutREQ),
+                .IOManager_ACK                  (IOOutACK),
+                .IOManager_MinorOpcode          (IOMinorOpcode),
+                .IOManager_MemoryAddress        (IOOutAddress),
+                .IOManager_StoreValue           (IOOutData),
+                .IOManager_DestinationRegister  (IOOutDestReg),
                 .Cache_REQ                      (Cache_REQ),
                 .Cache_ACK                      (Cache_ACK),
                 .Cache_MinorOpcode              (Cache_MinorOpcode),
@@ -654,17 +656,17 @@ module CPU #(
             assign                            MemWritebackACK[MEMWB_COMPLEXALUPORT] = 1'b0;
             assign                            MemWritebackACK[MEMWB_FIXEDMEMPORT] = s3_FixedMemoryFIFO_dOutACK;
             assign                            MemWritebackACK[MEMWB_CACHEPORT] = 1'b0;
-            assign                            MemWritebackACK[MEMWB_IOPORT] = 1'b0;
+            assign                            MemWritebackACK[MEMWB_IOPORT] = IOInACK;
             wire   [MEMWB_INPUTPORTCOUNT-1:0] [DATABITWIDTH-1:0] MemWritebackDataIn;
             assign                            MemWritebackDataIn[MEMWB_COMPLEXALUPORT] = '0;
             assign                            MemWritebackDataIn[MEMWB_FIXEDMEMPORT] = s3_FixedMemory_dOut;
             assign                            MemWritebackDataIn[MEMWB_CACHEPORT] = '0;
-            assign                            MemWritebackDataIn[MEMWB_IOPORT] = '0;
+            assign                            MemWritebackDataIn[MEMWB_IOPORT] = IOInData;
             wire   [MEMWB_INPUTPORTCOUNT-1:0] [REGADDRBITWIDTH-1:0] MemWritebackAddrIn;
             assign                            MemWritebackAddrIn[MEMWB_COMPLEXALUPORT] = '0;
             assign                            MemWritebackAddrIn[MEMWB_FIXEDMEMPORT] = s3_FixedMemory_AddrOut;
             assign                            MemWritebackAddrIn[MEMWB_CACHEPORT] = '0;
-            assign                            MemWritebackAddrIn[MEMWB_IOPORT] = '0;
+            assign                            MemWritebackAddrIn[MEMWB_IOPORT] = IOInDestReg;
             wire                              MemWBMux_RegWriteEn;
             wire           [DATABITWIDTH-1:0] MemWBMux_RegWriteData;
             wire        [REGADDRBITWIDTH-1:0] MemWBMux_RegWriteAddr;
@@ -685,6 +687,7 @@ module CPU #(
                 .RegWriteData      (MemWBMux_RegWriteData),
                 .RegWriteAddr      (MemWBMux_RegWriteAddr)
             );
+            assign IOInREQ = MemWritebackREQ[MEMWB_IOPORT];
         //
     //
 

@@ -29,7 +29,7 @@ module IOClkGeneration (
 
     // divided_clk Config bits
     // >  [13:0] - clk division
-    // > [15:24] - clk source
+    // > [15:16] - clk source
 
     // Config Decoder
         logic [3:0] ClkDecoder;

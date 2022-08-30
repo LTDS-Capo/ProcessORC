@@ -9,13 +9,13 @@ module TopLevelReset #(
     input clk_en,
     input async_rst_in,
 
-    input  clks [CLOCKDOMAINS-2:0], // Sys_clk is your highest clock input.
+    input  [CLOCKDOMAINS-2:0] clks, // Sys_clk is your highest clock input.
 
-    input  sync_rst_trigger [CLOCKDOMAINS-1:0],
+    input  [CLOCKDOMAINS-1:0] sync_rst_trigger,
 
-    output clk_en_out [CLOCKDOMAINS-1:0],
-    output sync_rst_out [CLOCKDOMAINS-1:0],
-    output init_out [CLOCKDOMAINS-1:0],
+    output [CLOCKDOMAINS-1:0] clk_en_out,
+    output [CLOCKDOMAINS-1:0] sync_rst_out,
+    output [CLOCKDOMAINS-1:0] init_out,
 
     output TESTBIT
 );
