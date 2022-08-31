@@ -1,9 +1,9 @@
 // IO Config data
-Byte Width,
-Name,
-8bit ID,
-Module Name,
+  > Byte Width,
+  > Name,
+  > Module Name,
 
+8bit ID, ??
 
 
 

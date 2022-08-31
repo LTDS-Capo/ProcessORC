@@ -10,6 +10,11 @@ module CPU #(
     output HaltOut,
 
     // Memory Flashing
+    input                    InstFlashEn,
+    input                    DataFlashEn,
+    input              [9:0] FlashAddr,
+    input [DATABITWIDTH-1:0] FlashData,
+
 
     // IO Out Handshake
     output                    IOOutACK,
@@ -84,10 +89,19 @@ module CPU #(
         // Instruction ROM
             wire [15:0] InstructionAddress = InstructionAddrOut[15:0];
             wire [15:0] s0_InstructionOut;
-            InstructionROM InstROM (
-                .InstructionAddress(InstructionAddress),
-                .InstructionOut    (s0_InstructionOut)
+            InstructionMemory InstMem (
+                .clk          (clk),
+                .clk_en       (clk_en),
+                .FlashEn      (InstFlashEn),
+                .FlashAddr    (FlashAddr),
+                .FlashData    (FlashData),
+                .ReadAddressIn(InstructionAddress),
+                .DataOut      (s0_InstructionOut)
             );
+            // InstructionROM InstROM (
+            //     .InstructionAddress(InstructionAddress),
+            //     .InstructionOut    (s0_InstructionOut)
+            // );
         //
 
         // Instruction Valid Generation
@@ -585,6 +599,9 @@ module CPU #(
             ) FixedMem (
                 .clk            (clk),
                 .clk_en         (clk_en),
+                .FlashEn        (DataFlashEn),
+                .FlashAddr      (FlashAddr),
+                .FlashData      (FlashData),
                 .LoadStore_REQ  (FixedMem_LoadStore_REQ),
                 .LoadStore_ACK  (FixedMem_LoadStore_ACK),
                 .MinorOpcodeIn  (FixedMem_MinorOpcodeIn),

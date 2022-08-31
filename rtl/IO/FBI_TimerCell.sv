@@ -1,28 +1,32 @@
-module FBI_TimerCell (
+module FBI_TimerCell #(
+    parameter DATABITWIDTH = 16
+)(
     input clk,
     input clk_en,
     input sync_rst,
 
-    input  [31:0] CounterIn,
+    input              [31:0] CounterIn,
 
-    input         TimerInACK,
-    output        TimerInREQ,
-    input  [31:0] ComparisonValueIn,
-    input   [3:0] RegisterDestIn,
-    input         TimerSet,
-    input         TimerClear,
-    input         TimerCheck,
-    input         TimerWait,
+    input                     TimerInACK,
+    output                    TimerInREQ,
+    input              [31:0] ComparisonValueIn,
+    input               [3:0] MinorOpcodeIn,
+    input  [DATABITWIDTH-1:0] CommandAddressIn,
+    input               [3:0] RegisterDestIn,
+    input                     TimerSet,
+    input                     TimerClear,
+    input                     TimerCheck,
+    input                     TimerWait,
 
-    output        TimerOutACK,
-    input         TimerOutREQ,
-    output [31:0] TimerDataOut,
-    output  [3:0] RegisterDestOut
+    output                    TimerOutACK,
+    input                     TimerOutREQ,
+    output [DATABITWIDTH-1:0] TimerDataOut, // TODO: Load Alignment
+    output              [3:0] RegisterDestOut
 );
     
     // Active
         reg  Active;
-        wire ActiveTrigger = (TimerElapsed && TimerInACK && clk_en) || (TimerClear && TimerInACK && clk_en) || (TimerSet && TimerInACK && clk_en) || sync_rst;
+        wire ActiveTrigger = (TimerElapsed && clk_en) || (TimerClear && TimerInACK && clk_en) || (TimerSet && TimerInACK && clk_en) || sync_rst;
         wire NextActive = TimerSet && ~sync_rst;
         always_ff @(posedge clk) begin
             if (ActiveTrigger) begin
@@ -73,7 +77,7 @@ module FBI_TimerCell (
         end
         // Output Data ACK Buffer
         reg  [31:0] OutputDataBuffer;
-        wire        OutputDataBufferTrigger = (TimerACKCondition && TimerInREQ && clk_en) || sync_rst;
+        wire        OutputDataBufferTrigger = (TimerACKCondition && clk_en) || sync_rst;
         wire [31:0] TempTimerDifference = CounterIn - ComparisonValue;
         wire [31:0] NextOutputDataBuffer = (TimerCheck && Active) ? TempTimerDifference : '0;
         always_ff @(posedge clk) begin
@@ -103,7 +107,8 @@ module FBI_TimerCell (
         // Output Assignments
         assign TimerInREQ = ~(TimerElapsed && WaitBuffer) && ~(WaitBuffer && TimerWait) && ~ACKOutWait;
         assign TimerOutACK = ACKOutWait;
-        assign TimerDataOut = (TimerCheck && Active) ? OutputDataBuffer : '0;
+        // assign TimerDataOut = (TimerCheck && Active) ? OutputDataBuffer : '0;
+        assign TimerDataOut = OutputDataBuffer;
         assign RegisterDestOut = RegDestACKBuffer;
     // 
 

@@ -5,6 +5,11 @@ module FixedMemory #(
     input clk,
     input clk_en,
 
+    // Flashing Input
+    input        FlashEn,
+    input  [9:0] FlashAddr,
+    input [15:0] FlashData,
+
     output                       LoadStore_REQ,
     input                        LoadStore_ACK,
     input                  [3:0] MinorOpcodeIn,
@@ -32,15 +37,16 @@ module FixedMemory #(
         end
     //
 
-    reg [DATABITWIDTH-1:0] DataMemory [511:0];
-    wire [9:0] MemAddr = {DataAddrIn[9:1], 1'b0};
-    wire DataMemoryWriteTrigger = (~MinorOpcodeIn[3] && MinorOpcodeIn[2] && clk_en);
+    reg  [DATABITWIDTH-1:0] DataMemory [511:0];
+    wire              [8:0] MemAddr = FlashEn ? FlashAddr[9:1] : {DataAddrIn[9:1]};
+    wire                    DataMemoryWriteTrigger = (~MinorOpcodeIn[3] && MinorOpcodeIn[2] && LoadStore_ACK && clk_en) || (FlashEn && clk_en);
+    wire [DATABITWIDTH-1:0] NextStoreData = FlashEn ? FlashData : StoreValue_Tmp;
     always_ff @(posedge clk) begin
         if (DataMemoryWriteTrigger) begin
             DataMemory[MemAddr] <= StoreValue_Tmp;
         end
     end
-    wire[DATABITWIDTH-1:0] DataRead = DataMemory[MemAddr];
+    wire[DATABITWIDTH-1:0] DataRead = DataMemoryWriteTrigger ? '0 : DataMemory[DataAddrIn[9:1]];
 
     // Load Data Alignment
         logic [DATABITWIDTH-1:0] DataOut_Tmp;
@@ -55,8 +61,8 @@ module FixedMemory #(
     //
 
 
-    assign DataOut = (Writeback_REQ && Writeback_ACK) ? DataOut_Tmp : 0;
-    assign LoadStore_REQ = Writeback_REQ || (LoadStore_ACK && DataMemoryWriteTrigger);
+    assign DataOut = DataOut_Tmp;
+    assign LoadStore_REQ = (~MinorOpcodeIn[3] && MinorOpcodeIn[2]) ? LoadStore_ACK : Writeback_REQ;
     assign Writeback_ACK = LoadStore_ACK && ~DataMemoryWriteTrigger;
     assign DestRegisterOut = DestRegisterIn;
 

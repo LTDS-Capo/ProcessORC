@@ -1,14 +1,11 @@
 // 32'b[0000_0][000]_0000_0000_0000_0000_0000_0000
 module CommandController #(
     parameter PORTBYTEWIDTH = 4,
-    parameter PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH),
     parameter CLOCKCOMMAND_LSB = 27,
     parameter CLOCKCOMMAND_MSB = 31,
     parameter CLOCKCOMMAND_OPCODE = 5'h1F,
     parameter CLOCKCOMMAND_CLKSELLSB = 24,
-    parameter DATABITWIDTH = 16,
-    parameter ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0,
-    parameter BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK)
+    parameter DATABITWIDTH = 16
 )(
     input sys_clk,
     input clk_en,
@@ -47,8 +44,11 @@ module CommandController #(
     output                   [3:0] IODestRegOut,
     output [(PORTBYTEWIDTH*8)-1:0] IODataOut
 );
-
+    localparam PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH);
+    localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
+    localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
     localparam BUFFERINDEXBITWIDTH = (BUFFERCOUNT == 1) ? 1 : $clog2(BUFFERCOUNT);
+    
     wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3];
     wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
     wire CommandStoreEn = MinorOpcodeIn[2];
