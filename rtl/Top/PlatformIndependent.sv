@@ -34,7 +34,6 @@ module PlatformIndependent #(
         .init_out
     );
 
-    // ToDo: Have a skip for the MemoryMapped Range
     SystemFlasher #(
         .MEMMAPSTARTADDR(),
         .MEMMAPENDADDR()

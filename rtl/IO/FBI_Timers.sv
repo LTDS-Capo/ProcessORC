@@ -52,6 +52,7 @@ module FBI_Timers #(
             .CommandOutACK (TimerACK),
             .CommandOutREQ (TimerREQ),
             .MinorOpcodeOut(MinorOpcodeOut),
+            .DataAddrOut   (), // Do Not Connect
             .DataOut       (TimerDataOut)
         );
     //

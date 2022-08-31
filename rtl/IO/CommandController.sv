@@ -136,6 +136,7 @@ module CommandController #(
             .CommandOutACK (LocalCommandACK_Tmp),
             .CommandOutREQ (LocalCommandREQ),
             .MinorOpcodeOut(), // Do Not Connect
+            .DataAddrOut   (), // Do Not Connect
             .DataOut       (LocalCommandData)
         );
     //

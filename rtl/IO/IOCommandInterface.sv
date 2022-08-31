@@ -16,6 +16,7 @@ module IOCommandInterface #(
     output                         CommandOutACK,
     input                          CommandOutREQ,
     output                   [3:0] MinorOpcodeOut,
+    output      [DATABITWIDTH-1:0] DataAddrOut,
     output [(PORTBYTEWIDTH*8)-1:0] DataOut
 );
 
@@ -54,8 +55,17 @@ module IOCommandInterface #(
         end
     end
 
+    reg  [DATABITWIDTH-1:0] AddrBuffer;
+    wire [DATABITWIDTH-1:0] NextAddrBuffer = (sync_rst) ? 0 : DataAddrIn;
+    always_ff @(posedge clk) begin
+        if (ActiveTrigger) begin
+            AddrBuffer <= NextAddrBuffer;
+        end
+    end
+
     assign CommandInREQ = ~Active;
     assign MinorOpcodeOut = MinorOpcodeBuffer;
+    assign DataAddrOut = AddrBuffer;
     assign CommandOutACK = Active;
 //
 

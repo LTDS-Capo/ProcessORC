@@ -1,4 +1,6 @@
-module IOClkGeneration_Cell (
+module IOClkGeneration_Cell #(
+    parameter DATABITWIDTH = 16
+)(
     input sys_clk,
     input clk_en,
     input sync_rst,
@@ -8,50 +10,48 @@ module IOClkGeneration_Cell (
     input src_clk1,
     input src_clk2,
 
-    input         ConfigWriteEnUpper,
-    input         ConfigWriteEnLower,
-    input  [15:0] ConfigInput,
-    output [15:0] ConfigOutput,
+    input                     ConfigACK,
+    output                    ConfigREQ,
+    input                     LoadEn,
+    input              [15:0] ConfigWordIn,
+    input               [3:0] ConfigRegDestIn,
 
-    output        divided_clk,
-    output  [1:0] divided_clk_sel
+    output                    ResponseACK,
+    input                     ResponseREQ,
+    output              [3:0] ResponseRegDestOut,
+    output [DATABITWIDTH-1:0] ResponseDataOut,
+
+    output                    divided_clk,
+    output              [1:0] divided_clk_sel
 );
 
-    // Config Register - sys_clk
-    // >  [13:0] - clk division
-    // > [15:16] - clk source
-        reg  [7:0] ConfigUpperRegister;
-        wire       ConfigUpperRegisterTrigger = (ConfigWriteEnUpper && clk_en) || sync_rst;
-        wire [7:0] NextConfigUpperRegister = (sync_rst) ? 0 : ConfigInput[15:0];
+    // Command Active Reg
+        reg  Active;
+        wire ActiveTrigger = (ConfigACK && ConfigREQ && ~LoadEn) || (ConfigACK && LocalConfigREQ && ~LoadEn && clk_en) || sync_rst;
+        wire NextActive = ~Active && ~sync_rst;
         always_ff @(posedge sys_clk) begin
-            if (ConfigUpperRegisterTrigger) begin
-                ConfigUpperRegister <= NextConfigUpperRegister;
+            if (ActiveTrigger) begin
+                Active <= NextActive;
             end
         end
-        reg  [7:0] ConfigLowerRegister;
-        wire       ConfigLowerRegisterTrigger = (ConfigWriteEnLower && clk_en) || sync_rst;
-        wire [7:0] NextConfigLowerRegister = (sync_rst) ? 0 : ConfigInput[7:0];
-        always_ff @(posedge sys_clk) begin
-            if (ConfigLowerRegisterTrigger) begin
-                ConfigLowerRegister <= NextConfigLowerRegister;
-            end
-        end
-        wire [13:0] ClockDivisor_sys = {ConfigUpperRegister[5:0], ConfigLowerRegister};
-        wire  [1:0] ClockSelect_sys = ConfigUpperRegister[7:6];
-        assign      ConfigOutput = {ConfigUpperRegister, ConfigUpperRegister};
+        assign ConfigREQ = LoadEn ? ResponseREQ : (LocalConfigREQ && Active);
+        assign ResponseACK = ConfigACK && LoadEn;
     //
 
-    // Configuration Submit Delay
-        reg  [1:0] ConfigSubmitDelay;
-        wire ConfigSubmitDelayTrigger = clk_en || sync_rst;
-        wire NextConfigSubmitDelay = ConfigUpperRegisterTrigger && ~sync_rst;
+    // Config Register - sys_clk
+        reg  [15:0] ConfigRegister;
+        wire        ConfigRegisterTrigger = (ConfigACK && ConfigREQ && ~LoadEn && clk_en) || sync_rst;
+        wire [15:0] NextConfigRegister = (sync_rst) ? 0 : ConfigWordIn;
         always_ff @(posedge sys_clk) begin
-            if (ConfigSubmitDelayTrigger) begin
-                ConfigSubmitDelay[0] <= NextConfigSubmitDelay;
-                ConfigSubmitDelay[1] <= ConfigSubmitDelay[0] && ~sync_rst;
+            if (ConfigRegisterTrigger) begin
+                ConfigRegister <= NextConfigRegister;
             end
         end
-        wire ConfigSubmit = ConfigSubmitDelay[1];
+
+        wire   [13:0] ClockDivisor_sys = ConfigRegister[13:0];
+        wire    [1:0] ClockSelect_sys = ConfigRegister[15:14];
+        assign        ResponseDataOut = {'0, ConfigRegister};
+        assign        ResponseRegDestOut = ConfigRegDestIn;
     //
 
     // clk Mux
@@ -68,7 +68,9 @@ module IOClkGeneration_Cell (
     //
 
     // Config FIFO [Only updates on an UpperWrite]
-        wire [15:0] CDC_dIn = ConfigOutput;
+        wire        LocalConfigACK = ~LoadEn && ConfigACK;
+        wire        LocalConfigREQ;
+        wire [15:0] CDC_dIn = ConfigRegister;
         wire [15:0] CDC_dOut;
         wire        NewConfig;
         FIFO_ClockDomainCrosser #(
@@ -78,8 +80,8 @@ module IOClkGeneration_Cell (
         ) SysToTarget (
             .rst    (async_rst),
             .w_clk  (sys_clk),
-            .dInACK (ConfigSubmit),
-            .dInREQ (), // Do Not Connect
+            .dInACK (LocalConfigACK),
+            .dInREQ (LocalConfigREQ),
             .dIN    (CDC_dIn),
             .r_clk  (divided_clk_src),
             .dOutACK(NewConfig),
@@ -125,6 +127,4 @@ module IOClkGeneration_Cell (
         assign divided_clk = clkFF;
         assign divided_clk_sel = ClockSelect_Divided;
     //
-
-
 endmodule
