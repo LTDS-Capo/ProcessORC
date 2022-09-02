@@ -36,6 +36,7 @@ module IOClkGeneration #(
         wire  [3:0] REQSelectArray = ConfigREQArray & StoreDecoder;
         wire        ClockREQ = |REQSelectArray;
         wire [15:0] ClockDataOut;
+        wire  [3:0] MinorOpcodeOut;
         wire [15:0] DataAddrOut;
         IOCommandInterface #(
             .DATABITWIDTH (DATABITWIDTH),
@@ -52,7 +53,7 @@ module IOClkGeneration #(
             .DataIn        (CommandDataIn),
             .CommandOutACK (ClockACK),
             .CommandOutREQ (ClockREQ),
-            .MinorOpcodeOut(), // Do Not Connect
+            .MinorOpcodeOut(MinorOpcodeOut), // Do Not Connect
             .DataAddrOut   (DataAddrOut),
             .DataOut       (ClockDataOut)
         );
@@ -111,6 +112,8 @@ module IOClkGeneration #(
                     .ConfigACK         (LocalConfigACK),
                     .ConfigREQ         (LocalConfigREQ),
                     .LoadEn            (LoadEn),
+                    .MinorOpcodeIn     (MinorOpcodeOut),
+                    .DataAddrIn_Offest (DataAddrOut),
                     .ConfigWordIn      (ClockDataOut),
                     .ConfigRegDestIn   (CommandDestReg),
                     .ResponseACK       (WritebackACK[ClkGen]),

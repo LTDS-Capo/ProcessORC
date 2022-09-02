@@ -9,9 +9,9 @@ module PlatformIndependent #(
     input src_clk1,
     input src_clk2,
 
-// $GEN$ IOGen(Version, TopPorts)
+// $$GEN$$ IOGen(TopPorts)
 
-// $GENEND$
+// $$GENEND$$
 
     input  [3:0] TESTBITS_IN,
     output [3:0] TESTBITS_OUT
@@ -38,7 +38,7 @@ module PlatformIndependent #(
             .sync_rst_trigger(sync_rst_trigger),
             .clk_en_out      (clk_en_out),
             .sync_rst_out    (sync_rst_out),
-            .init_out        (init_out),
+            .init_out        (init_out)
         );
     //
 
@@ -105,7 +105,7 @@ module PlatformIndependent #(
     //
 
     // IO Interfaces
-        // $GEN$ IOGen(Version, #TOTALIOBYTES, Top)
+        // $$GEN$$ IOGen(Top)
             IOManager #(
                 .IOBASEADDR  (384),
                 .TOTALIOBYTES(128)
@@ -142,7 +142,7 @@ module PlatformIndependent #(
             );
             // Module Generation
 
-        // $GENEND$
+        // $$GENEND$$
     //
 
 

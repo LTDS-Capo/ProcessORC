@@ -27,7 +27,7 @@ module IOManager_PreGen #(
     output              [3:0] WritebackDestReg,
     output [DATABITWIDTH-1:0] WritebackDataOut,
 
-// $GEN$ IOGen(Version, #TOTALIOBYTES, Ports)
+// $$GEN$$ IOGen(Ports)
     // $TEMPLATE$
     output       EXAMPLE_IO_Clk,
     input        EXAMPLE_IO_ACK,
@@ -40,18 +40,22 @@ module IOManager_PreGen #(
     input  [3:0] EXAMPLE_IO_DestRegIn,
     output [3:0] EXAMPLE_IO_DestRegOut,
     input  [#:0] EXAMPLE_IO_DataIn,
-    output [#:0] EXAMPLE_IO_DataOut,
+    output [#:0] EXAMPLE_IO_DataOut
     // $ENDTEMPLATE$
-// $GENEND$
+// $$GENEND$$
 );
     
     localparam TOTALIODEVICES = IODEVICES + 2; // 1 for Timers, 1 for Clocks
     localparam TOTALIORESPONSES = IORESPONSES + 12; // 8 for Timers, 4 for Clocks
     localparam PORTADDRWIDTH = $clog2(TOTALIORESPONSES);
-    wire LoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire StoreEn = MinorOpcodeIn[2];
+    wire                                          LoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    wire                                          StoreEn = MinorOpcodeIn[2];
+    wire [TOTALIORESPONSES-1:0]                   WritebackACKArray;
+    wire [TOTALIORESPONSES-1:0]                   WritebackREQArray;
+    wire [TOTALIORESPONSES-1:0]             [3:0] WritebackDestRegArray;
+    wire [TOTALIORESPONSES-1:0][DATABITWIDTH-1:0] WritebackDataOutArray;
 
-// Clocks  // TODO: Load Alignment
+// Clocks
     localparam CLOCKS_LOWERADDR = 0;
     localparam CLOCKS_UPPERADDR = 7;
     assign ClockEn = CommandAddressIn inside {[CLOCKS_UPPERADDR:CLOCKS_LOWERADDR]};
@@ -75,11 +79,11 @@ module IOManager_PreGen #(
         .MinorOpcodeIn          (MinorOpcodeIn),
         .CommandAddressIn_Offest(ClockAddressIn),
         .CommandDataIn          (CommandDataIn),
-        .CommandDestReg         (),
-        .WritebackACK           (),
-        .WritebackREQ           (),
-        .WritebackDestReg       (),
-        .WritebackDataOut       (),
+        .CommandDestReg         (CommandDestReg),
+        .WritebackACK           (WritebackACKArray[3:0]),
+        .WritebackREQ           (WritebackREQArray[3:0]),
+        .WritebackDestReg       (WritebackDestRegArray[3:0]),
+        .WritebackDataOut       (WritebackDataOutArray[3:0]),
         .divided_clk_out        (divided_clks),
         .divided_clk_sel_out    (divided_clk_sels)
     );
@@ -101,26 +105,21 @@ module IOManager_PreGen #(
         .sync_rst       (sync_rst),
         .IOInACK        (TimersCommandACK),
         .IOInREQ        (TimersCommandREQ),
+        .MinorOpcodeIn  (MinorOpcodeIn),
         .RegisterDestIn (CommandDestReg),
-        .LoadEnIn       (LoadEn),
-        .StoreEnIn      (StoreEn),
-        .WordEn         (),
+        .DataAddrIn     (Timers_AddressIn),
         .DataIn         (CommandDataIn),
-        .TimerOutACK    (),
-        .TimerOutREQ    (),
-        .TimerDataOut   (),
-        .RegisterDestOut()
+        .TimerOutACK    (WritebackACKArray[11:4]),
+        .TimerOutREQ    (WritebackREQArray[11:4]),
+        .RegisterDestOut(WritebackDestRegArray[11:4]),
+        .TimerDataOut   (WritebackDataOutArray[11:4])
     );
 
 //
 
 // IO Interfaces
-    // $GEN$ IOGen(Version, #TOTALIOBYTES, Controllers)
-        wire [TOTALIODEVICES-1:0]                   IOCommandREQArray;
-        wire [TOTALIODEVICES-1:0]                   WritebackACKArray;
-        wire [TOTALIODEVICES-1:0]                   WritebackREQArray;
-        wire [TOTALIODEVICES-1:0]             [3:0] WritebackDestRegArray;
-        wire [TOTALIODEVICES-1:0][DATABITWIDTH-1:0] WritebackDataOutArray;
+    // $$GEN$$ IOGen(Controllers)
+        wire [TOTALIODEVICES-1:0] IOCommandREQArray;
         // IO Port Controllers
             // $TEMPLATE$
             localparam EXAMPLE_IO_INDEX = 12; // Starts at 12
@@ -178,7 +177,8 @@ module IOManager_PreGen #(
             );
             // $ENDTEMPLATE$
         //
-    // $GENEND$
+    // $$GENEND$$
+
 
 //
 
@@ -199,7 +199,7 @@ module IOManager_PreGen #(
             .OutputACK (WritebackACK),
             .OutputREQ (WritebackREQ),
             .OutputData(WritebackDestReg),
-            .OutputAddr(WritebackDataOut),
+            .OutputAddr(WritebackDataOut)
         );
     //
 

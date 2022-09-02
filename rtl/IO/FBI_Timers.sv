@@ -9,13 +9,14 @@ module FBI_Timers #(
     input                     IOInACK,
     output                    IOInREQ,
     input               [3:0] MinorOpcodeIn,
+    input               [3:0] RegisterDestIn,
     input  [DATABITWIDTH-1:0] DataAddrIn,
     input  [DATABITWIDTH-1:0] DataIn,
 
     output       [7:0]        TimerOutACK,
     input        [7:0]        TimerOutREQ,
-    output       [7:0] [31:0] TimerDataOut,
-    output       [7:0]  [3:0] RegisterDestOut
+    output       [7:0]  [3:0] RegisterDestOut,
+    output       [7:0] [31:0] TimerDataOut
 );
 
     // [26:0] Wait time
@@ -35,6 +36,7 @@ module FBI_Timers #(
         wire                   [3:0] MinorOpcodeOut;
         wire                         LoadEn = ~MinorOpcodeOut[2];
         wire                         StoreEn = MinorOpcodeOut[2];
+        wire [(PORTBYTEWIDTH*8)-1:0] TimerAddrOut;
         wire [(PORTBYTEWIDTH*8)-1:0] TimerDataOut;
         IOCommandInterface #(
             .DATABITWIDTH (DATABITWIDTH),

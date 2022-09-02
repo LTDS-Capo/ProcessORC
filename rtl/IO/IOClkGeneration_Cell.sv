@@ -13,6 +13,8 @@ module IOClkGeneration_Cell #(
     input                     ConfigACK,
     output                    ConfigREQ,
     input                     LoadEn,
+    input               [3:0] MinorOpcodeIn,
+    input  [DATABITWIDTH-1:0] DataAddrIn_Offest,
     input              [15:0] ConfigWordIn,
     input               [3:0] ConfigRegDestIn,
 
@@ -50,7 +52,19 @@ module IOClkGeneration_Cell #(
 
         wire   [13:0] ClockDivisor_sys = ConfigRegister[13:0];
         wire    [1:0] ClockSelect_sys = ConfigRegister[15:14];
-        assign        ResponseDataOut = {'0, ConfigRegister};
+
+        wire [DATABITWIDTH-1:0] LoadAlignmentInput = {'0, ConfigRegister};
+        wire [DATABITWIDTH-1:0] ResponseDataOut_Tmp;
+        IOLoadDataAlignment #(
+            .DATABITWIDTH(DATABITWIDTH)
+        ) LoadAlignment (
+            .MinorOpcodeIn(MinorOpcodeIn),
+            .DataAddrIn   (DataAddrIn_Offest),
+            .DataIn       (LoadAlignmentInput),
+            .DataOut      (ResponseDataOut_Tmp)
+        );
+
+        assign        ResponseDataOut = ResponseDataOut_Tmp;
         assign        ResponseRegDestOut = ConfigRegDestIn;
     //
 
