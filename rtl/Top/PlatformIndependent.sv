@@ -9,9 +9,9 @@ module PlatformIndependent #(
     input src_clk1,
     input src_clk2,
 
-// $$GEN$$ IOGen(TopPorts)
+// $$GEN$$ IOGen_TopPorts(IO)
 
-// $$GENEND$$
+// $$ENDGEN$$
 
     input  [3:0] TESTBITS_IN,
     output [3:0] TESTBITS_OUT
@@ -105,7 +105,7 @@ module PlatformIndependent #(
     //
 
     // IO Interfaces
-        // $$GEN$$ IOGen(Top)
+        // $$GEN$$ IOGen_Top(IO)
             IOManager #(
                 .IOBASEADDR  (384),
                 .TOTALIOBYTES(128)
@@ -142,7 +142,7 @@ module PlatformIndependent #(
             );
             // Module Generation
 
-        // $$GENEND$$
+        // $$ENDGEN$$
     //
 
 

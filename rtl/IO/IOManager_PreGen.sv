@@ -1,10 +1,11 @@
 module IOManager_PreGen #(
     parameter IOBASEADDR = 384,
     parameter TOTALIOBYTES = 116, // 128 minus 8 for Clocks and 4 for Timers
-// $PARAMETERS$
+
+// $$GEN$$ gen_parameter(IO)
     parameter IODEVICES = 1,
     parameter IORESPONSES = 8,
-// $ENDPARAMETERS$
+// $$ENDGEN$$
 )(
     input sys_clk,
     input clk_en,
@@ -27,8 +28,8 @@ module IOManager_PreGen #(
     output              [3:0] WritebackDestReg,
     output [DATABITWIDTH-1:0] WritebackDataOut,
 
-// $$GEN$$ IOGen(Ports)
-    // $TEMPLATE$
+// $$GEN$$ IOGen_Ports
+    // $TEMPLATE$ Ports
     output       EXAMPLE_IO_Clk,
     input        EXAMPLE_IO_ACK,
     output       EXAMPLE_IO_REQ,
@@ -42,7 +43,7 @@ module IOManager_PreGen #(
     input  [#:0] EXAMPLE_IO_DataIn,
     output [#:0] EXAMPLE_IO_DataOut
     // $ENDTEMPLATE$
-// $$GENEND$$
+// $$ENDGEN$$
 );
     
     localparam TOTALIODEVICES = IODEVICES + 2; // 1 for Timers, 1 for Clocks
@@ -114,11 +115,10 @@ module IOManager_PreGen #(
         .RegisterDestOut(WritebackDestRegArray[11:4]),
         .TimerDataOut   (WritebackDataOutArray[11:4])
     );
-
 //
 
 // IO Interfaces
-    // $$GEN$$ IOGen(Controllers)
+    // $$GEN$$ IOGen_Controllers(IO)
         wire [TOTALIODEVICES-1:0] IOCommandREQArray;
         // IO Port Controllers
             // $TEMPLATE$
@@ -177,7 +177,7 @@ module IOManager_PreGen #(
             );
             // $ENDTEMPLATE$
         //
-    // $$GENEND$$
+    // $$ENDGEN$$
 
 
 //

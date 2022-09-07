@@ -6,6 +6,7 @@ module CommandController #(
     parameter CLOCKCOMMAND_OPCODE = 5'h1F,
     parameter CLOCKCOMMAND_CLKSELLSB = 24,
     parameter DATABITWIDTH = 16
+
 )(
     input sys_clk,
     input clk_en,
@@ -47,7 +48,6 @@ module CommandController #(
     localparam PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH);
     localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
     localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
-    localparam BUFFERINDEXBITWIDTH = (BUFFERCOUNT == 1) ? 1 : $clog2(BUFFERCOUNT);
     
     wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3];
     wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
@@ -102,15 +102,15 @@ module CommandController #(
         assign                           WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg;
         wire [DATABITWIDTH-1:0] LoadData_Tmp;
         IOLoadDataAlignment #(
-            .DATABITWIDTH(DATABITWIDTH)
+            .DATABITWIDTH(DATABITWIDTH),
+            .PORTBYTEWIDTH(PORTBYTEWIDTH)
         ) LoadDataAlignment (
             .MinorOpcodeIn(MinorOpcodeIn),
             .DataAddrIn   (CommandAddressIn_Offest),
-            .DataIn       (LoadVector[LoadIndex]),
+            .DataIn       (LoadBuffer),
             .DataOut      (LoadData_Tmp)
         );
-        wire   [BUFFERINDEXBITWIDTH-1:0] LoadIndex = CommandAddressIn_Offest[BUFFERINDEXBITWIDTH-1:0];
-        assign                           WritebackDataOut = LocalIORegResponse ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
+        assign WritebackDataOut = LocalIORegResponse ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
     //
 
     // Data Store Buffer System
@@ -125,19 +125,21 @@ module CommandController #(
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
             .BUFFERCOUNT  (BUFFERCOUNT)
         ) StoreBuffer (
-            .clk           (sys_clk),
-            .clk_en        (clk_en),
-            .sync_rst      (sync_rst),
-            .CommandInACK  (SysCommandACK),
-            .CommandInREQ  (SysCommandREQ),
-            .MinorOpcodeIn (MinorOpcodeIn),
-            .DataAddrIn    (CommandAddressIn_Offest),
-            .DataIn        (CommandDataIn),
-            .CommandOutACK (LocalCommandACK_Tmp),
-            .CommandOutREQ (LocalCommandREQ),
-            .MinorOpcodeOut(), // Do Not Connect
-            .DataAddrOut   (), // Do Not Connect
-            .DataOut       (LocalCommandData)
+            .clk            (sys_clk),
+            .clk_en         (clk_en),
+            .sync_rst       (sync_rst),
+            .CommandInACK   (SysCommandACK),
+            .CommandInREQ   (SysCommandREQ),
+            .MinorOpcodeIn  (MinorOpcodeIn),
+            .RegisterDestIn (CommandDestReg),
+            .DataAddrIn     (CommandAddressIn_Offest),
+            .DataIn         (CommandDataIn),
+            .CommandOutACK  (LocalCommandACK_Tmp),
+            .CommandOutREQ  (LocalCommandREQ),
+            .MinorOpcodeOut (), // Do Not Connect
+            .RegisterDestOut(), // Do Not Connect
+            .DataAddrOut    (), // Do Not Connect
+            .DataOut        (LocalCommandData)
         );
     //
 
@@ -173,22 +175,6 @@ module CommandController #(
                 LoadBuffer <= NextLoadBuffer;
             end
         end
-        genvar BufferIndex;
-        wire [BUFFERCOUNT-1:0][DATABITWIDTH-1:0] LoadVector;
-        generate
-            for (BufferIndex = 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : LoadIndexGen
-                if (BufferIndex == (BUFFERCOUNT - 1)) begin
-                    localparam LOADLOWERBITWIDTH = BufferIndex * DATABITWIDTH;
-                    localparam LOADUPPERBITWIDTH = PORTBYTEWIDTH * 8;
-                    assign LoadVector[BufferIndex] = {'0, LoadBuffer[LOADUPPERBITWIDTH-1:LOADLOWERBITWIDTH]};
-                end
-                else begin
-                    localparam LOADLOWERBITWIDTH = BufferIndex * DATABITWIDTH;
-                    localparam LOADUPPERBITWIDTH = (BufferIndex + 1) * DATABITWIDTH;
-                    assign LoadVector[BufferIndex] = LoadBuffer[LOADUPPERBITWIDTH-1:LOADLOWERBITWIDTH];
-                end
-            end
-        endgenerate
     //
 
     // Target to Sys FIFO CDC

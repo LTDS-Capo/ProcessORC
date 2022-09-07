@@ -1,7 +1,4 @@
-//* Four Byte Interface Timers *//
-module FBI_Timers #(
-    parameter DATABITWIDTH = 16
-)(
+module CommandTimers (
     input clk,
     input clk_en,
     input sync_rst,
@@ -18,7 +15,7 @@ module FBI_Timers #(
     output       [7:0]  [3:0] RegisterDestOut,
     output       [7:0] [31:0] TimerDataOut
 );
-
+    
     // [26:0] Wait time
     //   [27] PreScaler
     // > 0 : 1x
@@ -54,7 +51,7 @@ module FBI_Timers #(
             .CommandOutACK (TimerACK),
             .CommandOutREQ (TimerREQ),
             .MinorOpcodeOut(MinorOpcodeOut),
-            .DataAddrOut   (TimerAddrOut), // Do Not Connect
+            .DataAddrOut   (TimerAddrOut),
             .DataOut       (TimerDataOut_Tmp)
         );
     //
@@ -85,15 +82,19 @@ module FBI_Timers #(
         generate
             for (TimerIndex = 0; TimerIndex < 8; TimerIndex = TimerIndex + 1) begin : TimerGeneration
                 wire TimerACK_Local = TimerACK && (TimerIndex == TimerDataOut_Tmp[30:28]);
-                FBI_TimerCell (
+                CommandTimers_Cell #(
+                    .DATABITWIDTH(16)
+                )(
                     .clk              (clk),
                     .clk_en           (clk_en),
                     .sync_rst         (sync_rst),
                     .CounterIn        (CycleCounter),
                     .TimerInACK       (TimerACK),
                     .TimerInREQ       (TimerREQArray[TimerIndex]),
-                    .ComparisonValueIn(ComparisonValue),
-                    .RegisterDestIn   (RegisterDestIn),
+                    .ComparisonValueIn(ComparisonValue),        
+                    .MinorOpcodeIn    (MinorOpcodeOut),    
+                    .CommandAddressIn (TimerAddrOut),       
+                    .RegisterDestIn   (RegisterDestIn),     
                     .TimerSet         (CommandVector[3]),
                     .TimerClear       (CommandVector[2]),
                     .TimerCheck       (CommandVector[0]),
@@ -106,5 +107,7 @@ module FBI_Timers #(
             end
         endgenerate
     //
+
+
 
 endmodule

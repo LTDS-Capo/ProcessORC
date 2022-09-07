@@ -1,6 +1,7 @@
 module IOCommandInterface #(
     parameter DATABITWIDTH = 16,
     parameter PORTBYTEWIDTH = 8,
+    parameter REGADDRBITWIDTH = 4,
     parameter BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : ((PORTBYTEWIDTH * 8) / DATABITWIDTH)
 )(
     input clk,
@@ -10,12 +11,14 @@ module IOCommandInterface #(
     input                          CommandInACK,
     output                         CommandInREQ,
     input                    [3:0] MinorOpcodeIn,
+    input    [REGADDRBITWIDTH-1:0] RegisterDestIn,
     input       [DATABITWIDTH-1:0] DataAddrIn,
     input       [DATABITWIDTH-1:0] DataIn,
 
     output                         CommandOutACK,
     input                          CommandOutREQ,
     output                   [3:0] MinorOpcodeOut,
+    output   [REGADDRBITWIDTH-1:0] RegisterDestOut,
     output      [DATABITWIDTH-1:0] DataAddrOut,
     output [(PORTBYTEWIDTH*8)-1:0] DataOut
 );
@@ -55,6 +58,14 @@ module IOCommandInterface #(
         end
     end
 
+    reg  [REGADDRBITWIDTH-1:0] RegisterDestBuffer;
+    wire [REGADDRBITWIDTH-1:0] NextRegisterDestBuffer = (sync_rst) ? 0 : RegisterDestIn;
+    always_ff @(posedge clk) begin
+        if (ActiveTrigger) begin
+            RegisterDestBuffer <= NextRegisterDestBuffer;
+        end
+    end
+
     reg  [DATABITWIDTH-1:0] AddrBuffer;
     wire [DATABITWIDTH-1:0] NextAddrBuffer = (sync_rst) ? 0 : DataAddrIn;
     always_ff @(posedge clk) begin
@@ -65,6 +76,7 @@ module IOCommandInterface #(
 
     assign CommandInREQ = ~Active;
     assign MinorOpcodeOut = MinorOpcodeBuffer;
+    assign RegisterDestOut = RegisterDestBuffer;
     assign DataAddrOut = AddrBuffer;
     assign CommandOutACK = Active;
 //

@@ -67,9 +67,10 @@ module FBI_TimerCell #(
 
     // Output Control
         reg  ACKOutWait;
-        wire TimerACKCondition = (TimerCheck && TimerInREQ && TimerInACK) || (TimerWait && ~Active && TimerInREQ && TimerInACK) || (TimerElapsed && WaitBuffer);
-        wire ACKOutWaitTrigger = (TimerOutACK && TimerOutREQ && clk_en) || (TimerACKCondition && clk_en) || sync_rst;
-        wire NextACKOutWait = ~ACKOutWait && ~sync_rst;
+        wire TimerACKCondition = (TimerCheck && TimerInREQ && TimerInACK && clk_en) || (TimerWait && ~Active && TimerInREQ && TimerInACK && clk_en) || (TimerElapsed && WaitBuffer && clk_en);
+        wire ACKOutWaitTrigger = (TimerOutACK && TimerOutREQ && clk_en) || TimerACKCondition || sync_rst;
+        // wire NextACKOutWait = ~ACKOutWait && ~sync_rst;
+        wire NextACKOutWait = (TimerCheck || TimerWait) && ~sync_rst;
         always_ff @(posedge clk) begin
             if (ACKOutWaitTrigger) begin
                 ACKOutWait <= NextACKOutWait;
@@ -77,7 +78,7 @@ module FBI_TimerCell #(
         end
         // Output Data ACK Buffer
         reg  [31:0] OutputDataBuffer;
-        wire        OutputDataBufferTrigger = (TimerACKCondition && clk_en) || sync_rst;
+        wire        OutputDataBufferTrigger = TimerACKCondition || sync_rst;
         wire [31:0] TempTimerDifference = CounterIn - ComparisonValue;
         wire [31:0] NextOutputDataBuffer = (TimerCheck && Active) ? TempTimerDifference : '0;
         always_ff @(posedge clk) begin

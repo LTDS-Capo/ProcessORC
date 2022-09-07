@@ -37,7 +37,7 @@ module FixedMemory #(
         end
     //
 
-    (* ramstyle = "MLAB" *) reg  [DATABITWIDTH-1:0] DataMemory [511:0];
+    (* ramstyle = "MLAB" *) reg  [DATABITWIDTH-1:0] DataMemory [511:0] /* synthesis ramstyle = "MLAB" */;
     wire              [8:0] MemAddr = FlashEn ? FlashAddr[9:1] : {DataAddrIn[9:1]};
     wire                    DataMemoryWriteTrigger = (~MinorOpcodeIn[3] && MinorOpcodeIn[2] && LoadStore_ACK && clk_en) || (FlashEn && clk_en);
     wire [DATABITWIDTH-1:0] NextStoreData = FlashEn ? FlashData : StoreValue_Tmp;

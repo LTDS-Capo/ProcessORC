@@ -43,19 +43,21 @@ module IOClkGeneration #(
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
             .BUFFERCOUNT  (BUFFERCOUNT)
         ) IOInterface (
-            .clk           (clk),
-            .clk_en        (clk_en),
-            .sync_rst      (sync_rst),
-            .CommandInACK  (LocalCommandACK),
-            .CommandInREQ  (LocalCommandREQ),
-            .MinorOpcodeIn (MinorOpcodeIn),
-            .DataAddrIn    (CommandAddressIn_Offest),
-            .DataIn        (CommandDataIn),
-            .CommandOutACK (ClockACK),
-            .CommandOutREQ (ClockREQ),
-            .MinorOpcodeOut(MinorOpcodeOut), // Do Not Connect
-            .DataAddrOut   (DataAddrOut),
-            .DataOut       (ClockDataOut)
+            .clk            (clk),
+            .clk_en         (clk_en),
+            .sync_rst       (sync_rst),
+            .CommandInACK   (LocalCommandACK),
+            .CommandInREQ   (LocalCommandREQ),
+            .MinorOpcodeIn  (MinorOpcodeIn),
+            .RegisterDestIn (CommandDestReg),
+            .DataAddrIn     (CommandAddressIn_Offest),
+            .DataIn         (CommandDataIn),
+            .CommandOutACK  (ClockACK),
+            .CommandOutREQ  (ClockREQ),
+            .MinorOpcodeOut (MinorOpcodeOut),
+            .RegisterDestOut(), // Do Not Connect
+            .DataAddrOut    (DataAddrOut),
+            .DataOut        (ClockDataOut)
         );
         assign CommandREQ = LoadEn ? ConfigREQArray[LoadDecoder] : LocalCommandREQ;
     //

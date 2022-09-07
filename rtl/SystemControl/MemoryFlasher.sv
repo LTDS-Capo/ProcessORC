@@ -1,6 +1,6 @@
 module MemoryFlasher #(
     parameter MEMMAPSTARTADDR = 384,
-    parameter MEMMAPENDADDR = 511,
+    parameter MEMMAPENDADDR = 511
 )(
     input clk,
     input clk_en,
@@ -43,7 +43,7 @@ module MemoryFlasher #(
     wire   [1:0] NextFlashAddressCondition;
     wire   [8:0] MemMapStart = FINAL_MEMMAPSTARTADDR;
     wire   [8:0] MemMapEnd = FINAL_MEMMAPENDADDR;
-    wire  [10:0] MemMapCompareAddr = {2'b01, MemMapStart}
+    wire  [10:0] MemMapCompareAddr = {2'b01, MemMapStart};
     wire         MemMapSkipTrigger = FlashAddr == MemMapCompareAddr;
     assign NextFlashAddressCondition[0] = clk_en && ~sync_rst;
     assign NextFlashAddressCondition[1] = MemMapSkipTrigger && ~sync_rst;
