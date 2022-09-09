@@ -43,7 +43,7 @@ module IOClkGeneration #(
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
             .BUFFERCOUNT  (BUFFERCOUNT)
         ) IOInterface (
-            .clk            (sys_clk),
+            .clk            (clk),
             .clk_en         (clk_en),
             .sync_rst       (sync_rst),
             .CommandInACK   (LocalCommandACK),

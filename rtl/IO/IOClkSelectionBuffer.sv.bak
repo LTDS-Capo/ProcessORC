@@ -19,7 +19,7 @@ module IOClkSelectionBuffer (
     // Clock Select Buffer
         reg  [2:0] ClockSelectBuffer;
         wire       ClockSelectBufferTrigger = (ClockUpdate && clk_en) || sync_rst;
-        wire [2:0] NextClockSelectBuffer = (sync_rst) ? '0 : ClockSelect;
+        wire [2:0] NextClockSelectBuffer = (sync_rst) ? 0 : ClockSelect;
         always_ff @(posedge sys_clk) begin
             if (ClockSelectBufferTrigger) begin
                 ClockSelectBuffer <= NextClockSelectBuffer;

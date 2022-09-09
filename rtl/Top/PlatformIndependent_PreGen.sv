@@ -106,6 +106,18 @@ module PlatformIndependent #(
 
     // IO Interfaces
         // $$GEN$$ IOGen_Top(IO)
+            wire EXAMPLE_IO_Clk;
+            wire EXAMPLE_IO_ACK;
+            wire EXAMPLE_IO_REQ;
+            wire EXAMPLE_IO_CommandEn;
+            wire EXAMPLE_IO_ResponseRequested;
+            wire EXAMPLE_IO_CommandResponse;
+            wire EXAMPLE_IO_RegResponseFlag;
+            wire EXAMPLE_IO_MemResponseFlag;
+            wire EXAMPLE_IO_DestRegIn;
+            wire EXAMPLE_IO_DestRegOut;
+            wire EXAMPLE_IO_DataIn;
+            wire EXAMPLE_IO_DataOut;
             IOManager #(
                 .IOBASEADDR  (384),
                 .TOTALIOBYTES(128)
@@ -141,7 +153,7 @@ module PlatformIndependent #(
                 .EXAMPLE_IO_DataOut          (EXAMPLE_IO_DataOut)
             );
             // Module Generation
-
+                // Devices need flipped data/reg directions
         // $$ENDGEN$$
     //
 

@@ -19,8 +19,8 @@ module MemoryFlasher #(
     // Needs to support the fact that Data has 512 addresses of 16byte data...
     // Instructions have 1024 addresses of 16bit data...
 
-    localparam FINAL_MEMMAPSTARTADDR = MEMMAPSTARTADDR / 2;
-    localparam FINAL_MEMMAPENDADDR = (MEMMAPENDADDR - 1) / 2;
+    parameter FINAL_MEMMAPSTARTADDR = MEMMAPSTARTADDR / 2;
+    parameter FINAL_MEMMAPENDADDR = (MEMMAPENDADDR - 1) / 2;
 
     // Active Register
     reg  [1:0] Active;

@@ -54,8 +54,7 @@ module InstructionDecoder #(
     assign ImmediateCondition[1] = InstructionIn[13] || JumpEn || FunctionalUnitEnable[4];
     wire [DATABITWIDTH-1:0] SignedImmediate = (JumpEn || FunctionalUnitEnable[4]) ? {{DATABITWIDTH-10{InstructionIn[9]}}, InstructionIn[9:0]} : {{DATABITWIDTH-10{~OperationBitVector[15]}}, InstructionIn[9:0]};
     always_comb begin : ImmediateMux
-        // case (InstructionIn[13:12])
-		  case (ImmediateCondition)
+        case (InstructionIn[13:12])
             2'b01  : ImmediateOut_tmp = {'0, InstructionIn[9:0]};
             2'b10  : ImmediateOut_tmp = {'0, InstructionIn[7:0], 8'h0}; 
             2'b11  : ImmediateOut_tmp =  SignedImmediate;

@@ -1,11 +1,8 @@
-module IOManager_PreGen #(
+module IOManager_Test #(
+    parameter DATABITWIDTH = 16,
     parameter IOBASEADDR = 384,
     parameter TOTALIOBYTES = 116, // 128 minus 8 for Clocks and 4 for Timers
-
-// $$GEN$$ gen_parameter(IO)
-    parameter IODEVICES = 1,
-    parameter IORESPONSES = 8,
-// $$ENDGEN$$
+    parameter IODEVICES = 1
 )(
     input sys_clk,
     input clk_en,
@@ -28,26 +25,23 @@ module IOManager_PreGen #(
     output              [3:0] WritebackDestReg,
     output [DATABITWIDTH-1:0] WritebackDataOut,
 
-// $$GEN$$ IOGen_Ports
-    // $TEMPLATE$ Ports
-    output       EXAMPLE_IO_Clk,
-    input        EXAMPLE_IO_ACK,
-    output       EXAMPLE_IO_REQ,
-    output       EXAMPLE_IO_CommandEn,
-    output       EXAMPLE_IO_ResponseRequested,
-    input        EXAMPLE_IO_CommandResponse,
-    input        EXAMPLE_IO_RegResponseFlag, // Force a Writeback handshake after updating local buffer
-    input        EXAMPLE_IO_MemResponseFlag, // Only update local buffer
-    input  [3:0] EXAMPLE_IO_DestRegIn,
-    output [3:0] EXAMPLE_IO_DestRegOut,
-    input  [#:0] EXAMPLE_IO_DataIn,
-    output [#:0] EXAMPLE_IO_DataOut
-    // $ENDTEMPLATE$
-// $$ENDGEN$$
+    output        GPIO_IO_Clk,
+    input         GPIO_IO_ACK,
+    output        GPIO_IO_REQ,
+    output        GPIO_IO_CommandEn,
+    output        GPIO_IO_ResponseRequested,
+    input         GPIO_IO_CommandResponse,
+    input         GPIO_IO_RegResponseFlag, // Force a Writeback handshake after updating local buffer
+    input         GPIO_IO_MemResponseFlag, // Only update local buffer
+    input   [3:0] GPIO_IO_DestRegIn,
+    input  [15:0] GPIO_IO_DataIn,
+    output  [3:0] GPIO_IO_DestRegOut,
+    output [15:0] GPIO_IO_DataOut
+
 );
     
     localparam TOTALIODEVICES = IODEVICES + 2; // 1 for Timers, 1 for Clocks
-    localparam TOTALIORESPONSES = IORESPONSES + 12; // 8 for Timers, 4 for Clocks
+    localparam TOTALIORESPONSES = IODEVICES + 12; // 8 for Timers, 4 for Clocks
     localparam PORTADDRWIDTH = $clog2(TOTALIORESPONSES);
     wire                                          LoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
     wire                                          StoreEn = MinorOpcodeIn[2];
@@ -93,7 +87,7 @@ module IOManager_PreGen #(
     );
 //
 
-// Timers  // TODO: Load Alignment
+// Timers
     localparam TIMER_LOWERADDR = 8;
     localparam TIMER_UPPERADDR = 11;
     //wire   TimersEn = CommandAddressIn inside {[TIMER_UPPERADDR:TIMER_LOWERADDR]} ? 1 : '0;
@@ -127,32 +121,31 @@ module IOManager_PreGen #(
     // $$GEN$$ IOGen_Controllers(IO)
         wire [TOTALIODEVICES-1:0] IOCommandREQArray;
         // IO Port Controllers
-            // $TEMPLATE$
-            localparam EXAMPLE_DEVICE_INDEX = 2; // Starts at 2
-            localparam EXAMPLE_IO_INDEX = 12; // Starts at 12
-            localparam EXAMPLE_LOWERADDR = 12; // Starts at 12
-            localparam EXAMPLE_UPPERADDR = 15;
-            localparam EXAMPLE_PORTBYTEWIDTH = 4;
-            localparam EXAMPLE_CLOCKCOMMAND_LSB = 27;
-            localparam EXAMPLE_CLOCKCOMMAND_MSB = 31;
-            localparam EXAMPLE_CLOCKCOMMAND_OPCODE = 5'h1F;
-            localparam EXAMPLE_CLOCKCOMMAND_CLKSELLSB = 24;
-            // wire EXAMPLE_En = CommandAddressIn inside {[EXAMPLE_UPPERADDR:EXAMPLE_LOWERADDR]} ? 1 : '0;
-            wire                      EXAMPLE_En_Min = CommandAddressIn > EXAMPLE_LOWERADDR;
-            wire                      EXAMPLE_En_Max = CommandAddressIn < EXAMPLE_UPPERADDR;
-            wire                      EXAMPLE_En = EXAMPLE_En_Min && EXAMPLE_En_Max;
-            wire                      EXAMPLE_CommandACK = EXAMPLE_En ? CommandACK : '0;
-            wire                      EXAMPLE_CommandREQ;
-            assign                    IOCommandREQArray[EXAMPLE_DEVICE_INDEX] = EXAMPLE_CommandREQ && EXAMPLE_En;
-            wire   [DATABITWIDTH-1:0] EXAMPLE_AddressIn = CommandAddressIn - EXAMPLE_LOWERADDR - IOBASEADDR;
+            localparam GPIO_DEVICE_INDEX = 2; // Starts at 12
+            localparam GPIO_IO_INDEX = 12; // Starts at 12
+            localparam GPIO_LOWERADDR = 12;
+            localparam GPIO_UPPERADDR = 13;
+            localparam GPIO_PORTBYTEWIDTH = 2;
+            localparam GPIO_CLOCKCOMMAND_LSB = 0;
+            localparam GPIO_CLOCKCOMMAND_MSB = 12;
+            localparam GPIO_CLOCKCOMMAND_OPCODE = 13'h1C00; // 1_1100_0000_0000
+            localparam GPIO_CLOCKCOMMAND_CLKSELLSB = 13;
+            // wire                      GPIO_En = CommandAddressIn inside {[GPIO_UPPERADDR:GPIO_LOWERADDR]} ? 1 : '0;
+            wire                      GPIO_En_Min = CommandAddressIn >= GPIO_LOWERADDR;
+            wire                      GPIO_En_Max = CommandAddressIn <= GPIO_UPPERADDR;
+            wire                      GPIO_En = GPIO_En_Min && GPIO_En_Max;
+            wire                      GPIO_CommandACK = GPIO_En ? CommandACK : '0;
+            wire                      GPIO_CommandREQ;
+            assign                    IOCommandREQArray[GPIO_DEVICE_INDEX] = GPIO_CommandREQ && GPIO_En;
+            wire   [DATABITWIDTH-1:0] GPIO_AddressIn = CommandAddressIn - GPIO_LOWERADDR - IOBASEADDR;
             CommandController #(
-                .PORTBYTEWIDTH         (EXAMPLE_PORTBYTEWIDTH),
-                .CLOCKCOMMAND_LSB      (EXAMPLE_CLOCKCOMMAND_LSB),
-                .CLOCKCOMMAND_MSB      (EXAMPLE_CLOCKCOMMAND_MSB),
-                .CLOCKCOMMAND_OPCODE   (EXAMPLE_CLOCKCOMMAND_OPCODE),
-                .CLOCKCOMMAND_CLKSELLSB(EXAMPLE_CLOCKCOMMAND_CLKSELLSB),
+                .PORTBYTEWIDTH         (GPIO_PORTBYTEWIDTH),
+                .CLOCKCOMMAND_LSB      (GPIO_CLOCKCOMMAND_LSB),
+                .CLOCKCOMMAND_MSB      (GPIO_CLOCKCOMMAND_MSB),
+                .CLOCKCOMMAND_OPCODE   (GPIO_CLOCKCOMMAND_OPCODE),
+                .CLOCKCOMMAND_CLKSELLSB(GPIO_CLOCKCOMMAND_CLKSELLSB),
                 .DATABITWIDTH          (DATABITWIDTH)
-            ) EXAMPLE_PortController (
+            ) GPIO_PortController (
                 .sys_clk                (sys_clk),
                 .clk_en                 (clk_en),
                 .sync_rst               (sync_rst),
@@ -162,32 +155,30 @@ module IOManager_PreGen #(
                 .src_clk2               (src_clk2),
                 .divided_clks           (divided_clks),
                 .divided_clk_sels       (divided_clk_sels),
-                .CommandACK             (EXAMPLE_CommandACK),
-                .CommandREQ             (EXAMPLE_CommandREQ),
+                .CommandACK             (GPIO_CommandACK),
+                .CommandREQ             (GPIO_CommandREQ),
                 .MinorOpcodeIn          (MinorOpcodeIn),
-                .CommandAddressIn_Offest(EXAMPLE_AddressIn),
+                .CommandAddressIn_Offest(GPIO_AddressIn),
                 .CommandDataIn          (CommandDataIn),
                 .CommandDestReg         (CommandDestReg),
-                .WritebackACK           (WritebackACKArray[EXAMPLE_IO_INDEX]),
-                .WritebackREQ           (WritebackREQArray[EXAMPLE_IO_INDEX]),
-                .WritebackDestReg       (WritebackDestRegArray[EXAMPLE_IO_INDEX]),
-                .WritebackDataOut       (WritebackDataOutArray[EXAMPLE_IO_INDEX]),
-                .IOClk                  (EXAMPLE_IO_Clk),
-                .IOACK                  (EXAMPLE_IO_ACK),
-                .IOREQ                  (EXAMPLE_IO_REQ),
-                .IOCommandEn            (EXAMPLE_IO_CommandEn),
-                .IOResponseRequested    (EXAMPLE_IO_ResponseRequested),
-                .IOCommandResponse      (EXAMPLE_IO_CommandResponse),
-                .IORegResponseFlag      (EXAMPLE_IO_RegResponseFlag),
-                .IOMemResponseFlag      (EXAMPLE_IO_MemResponseFlag),
-                .IODestRegIn            (EXAMPLE_IO_DestRegIn),
-                .IODataIn               (EXAMPLE_IO_DestRegOut),
-                .IODestRegOut           (EXAMPLE_IO_DataIn),
-                .IODataOut              (EXAMPLE_IO_DataOut)
+                .WritebackACK           (WritebackACKArray[GPIO_IO_INDEX]),
+                .WritebackREQ           (WritebackREQArray[GPIO_IO_INDEX]),
+                .WritebackDestReg       (WritebackDestRegArray[GPIO_IO_INDEX]),
+                .WritebackDataOut       (WritebackDataOutArray[GPIO_IO_INDEX]),
+                .IOClk                  (GPIO_IO_Clk),
+                .IOACK                  (GPIO_IO_ACK),
+                .IOREQ                  (GPIO_IO_REQ),
+                .IOCommandEn            (GPIO_IO_CommandEn),
+                .IOResponseRequested    (GPIO_IO_ResponseRequested),
+                .IOCommandResponse      (GPIO_IO_CommandResponse),
+                .IORegResponseFlag      (GPIO_IO_RegResponseFlag),
+                .IOMemResponseFlag      (GPIO_IO_MemResponseFlag),
+                .IODestRegIn            (GPIO_IO_DestRegIn),
+                .IODataIn               (GPIO_IO_DataIn),
+                .IODestRegOut           (GPIO_IO_DestRegOut),
+                .IODataOut              (GPIO_IO_DataOut)
             );
-            // $ENDTEMPLATE$
-        //
-    // $$ENDGEN$$
+
 
 //
 

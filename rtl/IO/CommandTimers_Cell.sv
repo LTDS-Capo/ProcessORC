@@ -67,7 +67,7 @@ module CommandTimers_Cell #(
         reg  [3:0] WaitRegDestBuffer;
         wire [3:0] NextWaitRegDestBuffer = (sync_rst || TimerElapsed) ? '0 : RegisterDestIn;
         always_ff @(posedge clk) begin
-            if (WaitBufferTrigger) begin
+            if (WaitHoldBufferTrigger) begin
                 WaitRegDestBuffer <= NextWaitRegDestBuffer;
             end
         end
@@ -84,7 +84,7 @@ module CommandTimers_Cell #(
         end
         reg  [31:0] CheckDataBuffer;
         wire [31:0] TempTimerDifference = CounterIn - ComparisonValue - 1;
-        wire        CheckDataBufferTrigger = (TimerElapsed && clk_en) || (CheckHoldBuffer && clk_en) || sync_rst;
+        wire        CheckDataBufferTrigger = (TimerElapsed && clk_en) || (CheckACK && clk_en) || sync_rst;
         wire [31:0] NextCheckDataBuffer = (sync_rst || TimerElapsed || ~Active) ? 0 : TempTimerDifference;
         always_ff @(posedge clk) begin
             if (CheckDataBufferTrigger) begin
@@ -95,7 +95,7 @@ module CommandTimers_Cell #(
         reg  [CHECKBUFBITWIDTH-1:0] CheckMetaBuffer;
         wire [CHECKBUFBITWIDTH-1:0] NextCheckMetaBuffer = (sync_rst) ? 0 : {CommandAddressIn, MinorOpcodeIn, RegisterDestIn};
         always_ff @(posedge clk) begin
-            if (CheckHoldBufferTrigger) begin
+            if (CheckACKTrigger) begin
                 CheckMetaBuffer <= NextCheckMetaBuffer;
             end
         end
@@ -117,7 +117,7 @@ module CommandTimers_Cell #(
 
         assign TimerOutACK = WaitACK || CheckACK;
         assign TimerDataOut = WaitACK ? '0 : CheckDataOut;
-        assign RegisterDestOut = (WaitHoldBuffer && WaitACK) ? RegDestBuffer : RegisterDestIn;
+        assign RegisterDestOut = (WaitHoldBuffer && WaitACK) ? WaitRegDestBuffer : RegisterDestIn;
     //
 
 endmodule

@@ -55,8 +55,10 @@ module IOClkGeneration_Cell #(
 
         wire [DATABITWIDTH-1:0] LoadAlignmentInput = {'0, ConfigRegister};
         wire [DATABITWIDTH-1:0] ResponseDataOut_Tmp;
+        localparam PORTBYTEWIDTH = 2;
         IOLoadDataAlignment #(
-            .DATABITWIDTH(DATABITWIDTH)
+            .DATABITWIDTH(DATABITWIDTH),
+            .PORTBYTEWIDTH(PORTBYTEWIDTH)
         ) LoadAlignment (
             .MinorOpcodeIn(MinorOpcodeIn),
             .DataAddrIn   (DataAddrIn_Offest),

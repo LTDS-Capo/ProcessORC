@@ -1,6 +1,6 @@
 // 32'b[0000_0][000]_0000_0000_0000_0000_0000_0000
 module CommandController #(
-    parameter PORTBYTEWIDTH = 4,
+    parameter PORTBYTEWIDTH = 8,
     parameter CLOCKCOMMAND_LSB = 27,
     parameter CLOCKCOMMAND_MSB = 31,
     parameter CLOCKCOMMAND_OPCODE = 5'h1F,
@@ -43,8 +43,18 @@ module CommandController #(
     input                    [3:0] IODestRegIn,
     input  [(PORTBYTEWIDTH*8)-1:0] IODataIn,
     output                   [3:0] IODestRegOut,
-    output [(PORTBYTEWIDTH*8)-1:0] IODataOut
+    output [(PORTBYTEWIDTH*8)-1:0] IODataOut,
+    
+    output                           TargetResponseACK_Test,
+    output                           TargetResponseREQ_Test,
+    output [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dOut_Test
+
 );
+    assign TargetToSysCDC_dOut_Test = TargetToSysCDC_dOut;
+    assign TargetResponseACK_Test = TargetResponseACK;
+    assign TargetResponseREQ_Test = TargetResponseREQ;
+
+
     localparam PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH);
     localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
     localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
@@ -54,7 +64,7 @@ module CommandController #(
     wire CommandStoreEn = MinorOpcodeIn[2];
 
     // Clock Selection
-        wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB-1:CLOCKCOMMAND_LSB];
+        wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB];
         wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK;
         wire [2:0] ClockSelect = LocalCommandData[CLOCKCOMMAND_CLKSELLSB+2:CLOCKCOMMAND_CLKSELLSB];
         wire       target_clk;

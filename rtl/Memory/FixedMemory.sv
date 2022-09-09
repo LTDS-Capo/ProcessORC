@@ -43,7 +43,7 @@ module FixedMemory #(
     wire [DATABITWIDTH-1:0] NextStoreData = FlashEn ? FlashData : StoreValue_Tmp;
     always_ff @(posedge clk) begin
         if (DataMemoryWriteTrigger) begin
-            DataMemory[MemAddr] <= StoreValue_Tmp;
+            DataMemory[MemAddr] <= NextStoreData;
         end
     end
     wire[DATABITWIDTH-1:0] DataRead = DataMemoryWriteTrigger ? '0 : DataMemory[DataAddrIn[9:1]];

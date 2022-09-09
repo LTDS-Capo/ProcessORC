@@ -1,4 +1,6 @@
-module CommandTimers (
+module CommandTimers #(
+    parameter DATABITWIDTH = 16
+)(
     input clk,
     input clk_en,
     input sync_rst,
@@ -33,7 +35,7 @@ module CommandTimers (
         wire                   [3:0] MinorOpcodeOut;
         wire                         LoadEn = ~MinorOpcodeOut[2];
         wire                         StoreEn = MinorOpcodeOut[2];
-        wire [(PORTBYTEWIDTH*8)-1:0] TimerAddrOut;
+        wire      [DATABITWIDTH-1:0] TimerAddrOut;
         wire [(PORTBYTEWIDTH*8)-1:0] TimerDataOut_Tmp;
         IOCommandInterface #(
             .DATABITWIDTH (DATABITWIDTH),
@@ -84,12 +86,12 @@ module CommandTimers (
                 wire TimerACK_Local = TimerACK && (TimerIndex == TimerDataOut_Tmp[30:28]);
                 CommandTimers_Cell #(
                     .DATABITWIDTH(16)
-                )(
+                ) Timer_Cell (
                     .clk              (clk),
                     .clk_en           (clk_en),
                     .sync_rst         (sync_rst),
                     .CounterIn        (CycleCounter),
-                    .TimerInACK       (TimerACK),
+                    .TimerInACK       (TimerACK_Local),
                     .TimerInREQ       (TimerREQArray[TimerIndex]),
                     .ComparisonValueIn(ComparisonValue),        
                     .MinorOpcodeIn    (MinorOpcodeOut),    
