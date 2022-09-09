@@ -20,7 +20,7 @@ module GPIOController (
     output  [7:0] GPIO_DOutEn
 );
     // Pulse of Length 0 Selects clock.
-    // GPIO (WriteBit[0], WriteByte[1], Clear[2], ReadStatus[3], ReadPin[4], ReadStatusByte[5], ReadPinByte[6], PulseBit(Length)[7]) - In, Out, OutEn
+    // GPIO (WriteBit[0], WriteByte[1], ClearBit[2], ReadStatus[3], ReadPin[4], ReadStatusByte[5], ReadPinByte[6], PulseBit(Length)[7]) - In, Out, OutEn
     // >> NonPulse
     //   [15:13] IOAddr
     //   [12:10] Command
@@ -30,6 +30,13 @@ module GPIOController (
     //   [15:13] IOAddr
     //   [12:10] Command
     //     [9:0] PulseLength
+
+    // wire [15:0] TestValue = LocalDataOutArray;
+    // always_ff @(posedge clk) begin
+	// 	$display("> GPIOCTL -  DataOutCondition - %02b", DataOutCondition);
+	// 	$display("> GPIOCTL - LocalDataOutArray - %08b", LocalDataOutArray);
+	// 	$display("> GPIOCTL -       CellDecoder - %0b", CellDecoder);
+    // end
 
     logic [7:0] Command;
     always_comb begin
@@ -61,7 +68,9 @@ module GPIOController (
                     default: LocalDataIn = IO_DataIn[0]; // Default is also case 0
                 endcase
             end
-            GPIO_Cell GPIOCell (
+            GPIO_Cell #(
+                .TEST_CELLADDR(CellIndex)
+            )GPIOCell (
                 .clk         (clk),
                 .clk_en      (clk_en),
                 .sync_rst    (sync_rst),
@@ -87,10 +96,10 @@ module GPIOController (
     wire    [1:0] DataOutCondition = {(Command[6] || Command[5]), (Command[4] || Command[5])};
     always_comb begin : NextDataOutMux
         case (DataOutCondition)
-            2'b01  : IO_DataOut_Tmp = {'0, PinDataOutArray[CellDecoder]};
+            2'b01  : IO_DataOut_Tmp = {'0, PinDataOutArray[IO_DataIn[15:13]]};
             2'b10  : IO_DataOut_Tmp = {'0, PinDataOutArray};
             2'b11  : IO_DataOut_Tmp = {'0, LocalDataOutArray};
-            default: IO_DataOut_Tmp = {'0, LocalDataOutArray[CellDecoder]}; // Default is also case 0
+            default: IO_DataOut_Tmp = {'0, LocalDataOutArray[IO_DataIn[15:13]]}; // Default is also case 0
         endcase
     end
     assign IO_DataOut = IO_DataOut_Tmp;

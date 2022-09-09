@@ -40,8 +40,8 @@ module IOManager_PreGen #(
     input        EXAMPLE_IO_MemResponseFlag, // Only update local buffer
     input  [3:0] EXAMPLE_IO_DestRegIn,
     output [3:0] EXAMPLE_IO_DestRegOut,
-    input  [#:0] EXAMPLE_IO_DataIn,
-    output [#:0] EXAMPLE_IO_DataOut
+    input  [TBD:0] EXAMPLE_IO_DataIn,
+    output [TBD:0] EXAMPLE_IO_DataOut
     // $ENDTEMPLATE$
 // $$ENDGEN$$
 );

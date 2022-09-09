@@ -13,43 +13,29 @@ module PlatformIndependent_Test #(
     output  [7:0] GPIO_DOut,
     output  [7:0] GPIO_DOutEn,
 
+    output CPU_Halted
+
     // Test Outputs
-    output        Test_InstFlashEn,
-    output        Test_DataFlashEn,
-    output  [9:0] Test_FlashAddr,
-    output [15:0] Test_FlashData,
-    output        Test_SystemEnable,
-    output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
-    output                    RegisterWriteEn_OUT,
-    output              [3:0] RegisterWriteAddr_OUT,
+    // output        Test_InstFlashEn,
+    // output        Test_DataFlashEn,
+    // output  [9:0] Test_FlashAddr,
+    // output [15:0] Test_FlashData,
+    // output        Test_SystemEnable,
+    // output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
+    // output                    RegisterWriteEn_OUT,
+    // output              [3:0] RegisterWriteAddr_OUT,
 
-    output CPU_Halted,
-
-
-    output        GPIO_IO_Clk,
-    input         GPIO_IO_ACK,
-    output        GPIO_IO_REQ,
-    output        GPIO_IO_CommandEn,
-    output        GPIO_IO_ResponseRequested,
-    input         GPIO_IO_CommandResponse,
-    input         GPIO_IO_RegResponseFlag, // Force a Writeback handshake after updating local buffer
-    input         GPIO_IO_MemResponseFlag, // Only update local buffer
-    input   [3:0] GPIO_IO_DestRegIn,
-    input  [15:0] GPIO_IO_DataIn,
-    output  [3:0] GPIO_IO_DestRegOut,
-    output [15:0] GPIO_IO_DataOut,
-
-    input  [3:0] TESTBITS_IN,
-    output [3:0] TESTBITS_OUT
+    // input  [3:0] TESTBITS_IN,
+    // output [3:0] TESTBITS_OUT
 );
 
     assign CPU_Halted = Halted;
     
-    assign Test_InstFlashEn = InstFlashEn;
-    assign Test_DataFlashEn = DataFlashEn;
-    assign Test_FlashAddr = FlashAddr;
-    assign Test_FlashData = FlashData;
-    assign Test_SystemEnable = SystemEn;
+    // assign Test_InstFlashEn = InstFlashEn;
+    // assign Test_DataFlashEn = DataFlashEn;
+    // assign Test_FlashAddr = FlashAddr;
+    // assign Test_FlashData = FlashData;
+    // assign Test_SystemEnable = SystemEn;
 
     // Reset Syncronization
         localparam CLOCKDOMAINS = 4;
@@ -98,7 +84,7 @@ module PlatformIndependent_Test #(
         );
     //
 
-    // CPU - ProcessORC 
+    // CPU - ProcessORC
         wire Halted;
         wire IOOutACK;
         wire IOOutREQ;
@@ -186,25 +172,25 @@ module PlatformIndependent_Test #(
                 .GPIO_IO_DataOut          (GPIO_IO_DataOut)
             );
         // IO Modules
-            // GPIOController GPIOInterface(
-            //     .clk                 (GPIO_IO_Clk),
-            //     .clk_en              (clk_en_out[3]),
-            //     .sync_rst            (sync_rst_out[3]),
-            //     .IO_ACK              (GPIO_IO_ACK),
-            //     .IO_REQ              (GPIO_IO_REQ),
-            //     .IO_CommandEn        (GPIO_IO_CommandEn),
-            //     .IO_ResponseRequested(GPIO_IO_ResponseRequested),
-            //     .IO_CommandResponse  (GPIO_IO_CommandResponse),
-            //     .IO_RegResponseFlag  (GPIO_IO_RegResponseFlag),
-            //     .IO_MemResponseFlag  (GPIO_IO_MemResponseFlag),
-            //     .IO_DestRegIn        (GPIO_IO_DestRegOut),
-            //     .IO_DestRegOut       (GPIO_IO_DestRegIn),
-            //     .IO_DataIn           (GPIO_IO_DataOut),
-            //     .IO_DataOut          (GPIO_IO_DataIn),
-            //     .GPIO_DIn            (GPIO_DIn),
-            //     .GPIO_DOut           (GPIO_DOut),
-            //     .GPIO_DOutEn         (GPIO_DOutEn)
-            // );
+            GPIOController GPIOInterface(
+                .clk                 (GPIO_IO_Clk),
+                .clk_en              (clk_en_out[3]),
+                .sync_rst            (sync_rst_out[3]),
+                .IO_ACK              (GPIO_IO_ACK),
+                .IO_REQ              (GPIO_IO_REQ),
+                .IO_CommandEn        (GPIO_IO_CommandEn),
+                .IO_ResponseRequested(GPIO_IO_ResponseRequested),
+                .IO_CommandResponse  (GPIO_IO_CommandResponse),
+                .IO_RegResponseFlag  (GPIO_IO_RegResponseFlag),
+                .IO_MemResponseFlag  (GPIO_IO_MemResponseFlag),
+                .IO_DestRegIn        (GPIO_IO_DestRegOut),
+                .IO_DestRegOut       (GPIO_IO_DestRegIn),
+                .IO_DataIn           (GPIO_IO_DataOut),
+                .IO_DataOut          (GPIO_IO_DataIn),
+                .GPIO_DIn            (GPIO_DIn),
+                .GPIO_DOut           (GPIO_DOut),
+                .GPIO_DOutEn         (GPIO_DOutEn)
+            );
     //
 
 

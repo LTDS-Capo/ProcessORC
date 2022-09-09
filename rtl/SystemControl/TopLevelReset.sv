@@ -13,9 +13,9 @@ module TopLevelReset #(
 
     input  [CLOCKDOMAINS-1:0] sync_rst_trigger,
 
-    output [CLOCKDOMAINS-1:0] clk_en_out,
-    output [CLOCKDOMAINS-1:0] sync_rst_out,
-    output [CLOCKDOMAINS-1:0] init_out,
+    output  [CLOCKDOMAINS-1:0] clk_en_out,
+    output  [CLOCKDOMAINS-1:0] sync_rst_out,
+    output  [CLOCKDOMAINS-1:0] init_out,
 
     output TESTBIT
 );

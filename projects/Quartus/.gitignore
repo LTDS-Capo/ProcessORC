@@ -1,0 +1,18 @@
+#First ignore everything
+*
+/*
+#Whitelist hdl, IP, config and scripts folders
+!/HDL
+!/HDL/**
+!/IP
+!/IP/**
+!/config
+!/config/**
+!/scripts
+!/scripts/**
+#Whitelist bare minimum for a compile
+!*.qpf
+!*.tcl
+!*.stp
+!*.sdc
+!.gitignore

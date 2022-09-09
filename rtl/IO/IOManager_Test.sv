@@ -196,8 +196,8 @@ module IOManager_Test #(
             .InputAddr (WritebackDataOutArray),
             .OutputACK (WritebackACK),
             .OutputREQ (WritebackREQ),
-            .OutputData(WritebackDestReg),
-            .OutputAddr(WritebackDataOut)
+            .OutputData(WritebackDataOut),
+            .OutputAddr(WritebackDestReg)
         );
     //
 

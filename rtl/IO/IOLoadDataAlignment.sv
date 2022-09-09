@@ -33,14 +33,16 @@ module IOLoadDataAlignment #(
         localparam DATAINDEXBITWIDTH = ((DATABITWIDTH/8) == 1) ? 1 : $clog2(DATABITWIDTH/8);
         localparam TOTALINDEXBITWIDTH = BUFFERINDEXBITWIDTH + DATAINDEXBITWIDTH;
         wire [BUFFERINDEXBITWIDTH-1:0] LocalAddr = DataAddrIn[TOTALINDEXBITWIDTH-1:DATAINDEXBITWIDTH];
-        generate
-            if (BUFFERCOUNT == 1) begin
-                wire [DATABITWIDTH-1:0] LocalData = {'0, DataIn};
-            end
-            else begin
-                wire [DATABITWIDTH-1:0] LocalData = CheckVector[LocalAddr];
-            end
-        endgenerate
+        // generate
+        //     if (BUFFERCOUNT == 1) begin
+        //         wire [DATABITWIDTH-1:0] LocalData = {'0, DataIn};
+        //     end
+        //     else begin
+        //         wire [DATABITWIDTH-1:0] LocalData = CheckVector[LocalAddr];
+        //     end
+        // endgenerate
+        wire [DATABITWIDTH-1:0] LocalData = (BUFFERCOUNT == 1) ? {'0, DataIn} : CheckVector[LocalAddr];
+
     //
 
     // Data Select

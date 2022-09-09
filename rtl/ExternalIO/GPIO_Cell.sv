@@ -1,4 +1,6 @@
-module GPIO_Cell (
+module GPIO_Cell #(
+    parameter TEST_CELLADDR = 0
+)(
     input clk,
     input clk_en,
     input sync_rst,
@@ -15,6 +17,11 @@ module GPIO_Cell (
     output       IODataOutEn
 );
     
+    // always_ff @(posedge clk) begin
+	// 	// $display(">%0h> GPIO_Cell -   DataBuf:Pulse - %01b:%011b", TEST_CELLADDR, DataBuffer, PulseCounter);
+	// 	$display(">%0h> GPIO_Cell -   LocalDataOut - %01b", TEST_CELLADDR, LocalDataOut);
+    // end
+
     // Input Register
         reg  InputBuffer;
         wire InputBufferTrigger = clk_en || sync_rst;
@@ -81,8 +88,8 @@ module GPIO_Cell (
             end
         end
         assign LocalDataOut = (DataBuffer ^ PulseCounter[10]);
-        assign IODataOut = OutputBuffer[0];
-        assign IODataOutEn = OutputBuffer[1];
+        assign IODataOut = OutputBuffer[1];
+        assign IODataOutEn = OutputBuffer[0];
     //
 
 endmodule

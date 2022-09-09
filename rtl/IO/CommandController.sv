@@ -43,25 +43,27 @@ module CommandController #(
     input                    [3:0] IODestRegIn,
     input  [(PORTBYTEWIDTH*8)-1:0] IODataIn,
     output                   [3:0] IODestRegOut,
-    output [(PORTBYTEWIDTH*8)-1:0] IODataOut,
-    
-    output                           TargetResponseACK_Test,
-    output                           TargetResponseREQ_Test,
-    output [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dOut_Test
+    output [(PORTBYTEWIDTH*8)-1:0] IODataOut
 
 );
-    assign TargetToSysCDC_dOut_Test = TargetToSysCDC_dOut;
-    assign TargetResponseACK_Test = TargetResponseACK;
-    assign TargetResponseREQ_Test = TargetResponseREQ;
 
+
+    always_ff @(posedge sys_clk) begin
+		$display("> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandStaleLoadEn, CommandLoadEn, CommandStoreEn);
+		$display("> CMDCTRLR - REQCond - %0b", CommandREQCondition);
+		$display("> CMDCTRLR - S(S>T) - ACK:REQ - %0b:%0b", LocalCommandACK, LocalCommandREQ_Tmp);
+		$display("> CMDCTRLR - T(S>T) - ACK:REQ - %0b:%0b", TargetCommandACK, TargetCommandREQ);
+		$display("> CMDCTRLR - T(T>S) - ACK:REQ - %0b:%0b", TargetResponseACK, TargetResponseREQ);
+		$display("> CMDCTRLR - S(T>S) - ACK:REQ - %0b:%0b", LocalResponseACK, LocalResponseREQ);
+    end
 
     localparam PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH);
     localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
     localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
     
-    wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3];
-    wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire CommandStoreEn = MinorOpcodeIn[2];
+    wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
+    wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3]; // Validated
+    wire CommandStoreEn = MinorOpcodeIn[2]; // Validated
 
     // Clock Selection
         wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB];
@@ -106,10 +108,10 @@ module CommandController #(
         //   - Loads
         //   - Responses (Takes priority)
         localparam REGRESPONSEBITWIDTH = (DATABITWIDTH >= (PORTBYTEWIDTH*8)) ? (PORTBYTEWIDTH*8) : DATABITWIDTH;
-        wire                             LocalResponseACK;
-        wire                             LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;
-        assign                           WritebackACK = LocalIORegResponse ? LocalResponseACK : (CommandACK && CommandStaleLoadEn);
-        assign                           WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg;
+        wire                    LocalResponseACK;
+        wire                    LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;
+        assign                  WritebackACK = LocalIORegResponse ? LocalResponseACK : (CommandACK && CommandStaleLoadEn);
+        assign                  WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg;
         wire [DATABITWIDTH-1:0] LoadData_Tmp;
         IOLoadDataAlignment #(
             .DATABITWIDTH(DATABITWIDTH),
@@ -216,7 +218,7 @@ module CommandController #(
         // Sys to Target Handshake
         assign TargetCommandREQ = IOCommandResponse && IOCommandEn && IOACK;
         // IO Hanshake
-        assign IOREQ = TargetResponseREQ || TargetCommandACK; // Handshake direction is flipped here due to full-duplex communication
+        assign IOREQ = (TargetResponseREQ && IOMemResponseFlag) || (TargetResponseREQ && IORegResponseFlag) || TargetCommandACK; // Handshake direction is flipped here due to full-duplex communication
         assign IOCommandEn = TargetCommandACK;
         assign IOResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
         assign IODestRegOut = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];

@@ -10,7 +10,7 @@ module TopLevelReset_FlagGen #(
     input clk,
     input clk_en,
     input async_rst_in,
-
+    
     input sync_rst_Trigger,
 
     input SyncIn [CLOCKDOMAINS-1:0],
@@ -32,19 +32,32 @@ module TopLevelReset_FlagGen #(
     wire ResetLimitReached = (CycleCount == RESETCYCLELIMIT) && clk_en;
     localparam CYCLEBITWIDTH = $clog2(CYCLELIMIT);
 
+    // clk_en rising edge trigger
+    reg  [1:0] clk_en_Delay;
+    wire clk_en_DelayTrigger = clk_en;
+    wire Nextclk_en_Delay = AsyncRstDetection;
+    always_ff @(posedge clk) begin
+        if (clk_en_DelayTrigger) begin
+            clk_en_Delay[0] <= Nextclk_en_Delay;
+            clk_en_Delay[1] <= clk_en_Delay[0];
+        end
+    end
+    wire clk_enRisingEdge = clk_en_Delay[0] && ~clk_en_Delay[1];
+
+
     // async_rst_in Trigger
         reg  [7:0] AsyncRstCapture = '0;
         wire       AsyncRstCaptureTrigger = clk_en;
         wire       AsyncRstDetection = AsyncRstCapture == 0;
-        wire [7:0] NextAsyncRstCapture;
-        assign NextAsyncRstCapture[0] = AsyncRstDetection;
-        assign NextAsyncRstCapture[1] = AsyncRstCapture[0] || AsyncRstDetection;
-        assign NextAsyncRstCapture[2] = AsyncRstCapture[1] || AsyncRstDetection;
-        assign NextAsyncRstCapture[3] = AsyncRstCapture[2] || AsyncRstDetection;
-        assign NextAsyncRstCapture[4] = AsyncRstCapture[3];
-        assign NextAsyncRstCapture[5] = AsyncRstCapture[4];
-        assign NextAsyncRstCapture[6] = AsyncRstCapture[5];
-        assign NextAsyncRstCapture[7] = AsyncRstCapture[6];
+        wire [7:0] NextAsyncRstCapture /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[0] = AsyncRstDetection || clk_enRisingEdge /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[1] = AsyncRstCapture[0] || AsyncRstDetection || clk_enRisingEdge /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[2] = AsyncRstCapture[1] || AsyncRstDetection || clk_enRisingEdge /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[3] = AsyncRstCapture[2] || AsyncRstDetection || clk_enRisingEdge /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[4] = AsyncRstCapture[3] /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[5] = AsyncRstCapture[4] /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[6] = AsyncRstCapture[5] /* synthesis syn_keep=1 */;
+        assign NextAsyncRstCapture[7] = AsyncRstCapture[6] /* synthesis syn_keep=1 */;
         always_ff @(posedge clk or posedge async_rst_in) begin
             if (async_rst_in) begin
                 AsyncRstCapture <= 0;
@@ -57,7 +70,7 @@ module TopLevelReset_FlagGen #(
     //  
 
     // sync_rst Trigger
-        reg    syncRstCapture;
+        reg    syncRstCapture = '0;
         wire   syncRstCaptureTrigger = clk_en;
         wire   NextsyncRstCapture = sync_rst_Trigger;
         always_ff @(posedge clk or posedge async_rst_in) begin
@@ -73,8 +86,8 @@ module TopLevelReset_FlagGen #(
 
 
     // CycleCount Active
-    reg  CountActive;
-    wire CountActiveTrigger = (sync_rst_Trigger && clk_en) || (AsyncRstTrigger && clk_en) || (syncRstTrigger && clk_en);
+    reg  CountActive = '0;
+    wire CountActiveTrigger = (sync_rst_Trigger && clk_en) || (AsyncRstTrigger && clk_en) || (syncRstTrigger && clk_en); 
     wire NextCountActive = (AsyncRstTrigger || syncRstTrigger) && ~sync_rst_Trigger;
     always_ff @(posedge clk or posedge async_rst_in) begin
         if (async_rst_in) begin
@@ -84,15 +97,12 @@ module TopLevelReset_FlagGen #(
             CountActive <= NextCountActive;
         end
 
-
         $display("CountActive       - %0b", CountActive);
         $display("CycleLimitReached - %0b", CycleLimitReached);
 
-
-
     end
     // Cycle Counter
-    reg  [CYCLEBITWIDTH+1:0] CycleCount;
+    reg  [CYCLEBITWIDTH+1:0] CycleCount = '0;
     wire                     CycleCountTrigger = (sync_rst_Trigger && clk_en) || (CountActive && ~SyncWait && ~CycleLimitReached && clk_en);
     wire [CYCLEBITWIDTH+1:0] NextCycleCount = sync_rst_Trigger ? 0 : CycleCount + 1;
     always_ff @(posedge clk or posedge async_rst_in) begin
@@ -110,7 +120,7 @@ module TopLevelReset_FlagGen #(
         generate
             for (SyncIndex = 0; SyncIndex < CLOCKDOMAINS; SyncIndex = SyncIndex + 1) begin : SyncBufferGen
                 if (SyncIndex == (CLOCKDOMAINS-1)) begin
-                    reg  SyncBuffer;
+                    reg  SyncBuffer = '0;
                     wire SyncBufferTrigger = (SyncClear && clk_en) || (SyncIn[SyncIndex] && SyncWait && clk_en) || (sync_rst_Trigger && clk_en);
                     wire NextSyncBuffer = SyncIn[SyncIndex] && ~SyncClear && ~sync_rst_Trigger;
                     always_ff @(posedge clk or posedge async_rst_in) begin
@@ -126,7 +136,7 @@ module TopLevelReset_FlagGen #(
                     // assign SyncVector[SyncIndex] = 1'b1;
                 end
                 else begin
-                    reg  SyncBuffer;
+                    reg  SyncBuffer = '0;
                     wire SyncBufferTrigger = (SyncClear && clk_en) || (SyncIn[SyncIndex] && SyncWait && clk_en) || (sync_rst_Trigger && clk_en);
                     wire NextSyncBuffer = SyncIn[SyncIndex] && ~SyncClear && ~sync_rst_Trigger;
                     always_ff @(posedge clk or posedge async_rst_in) begin
@@ -144,7 +154,7 @@ module TopLevelReset_FlagGen #(
         // Sync Clear
         wire SyncClear = (&SyncVector) && SyncWait;
         // Sync Wait
-        reg  SyncWait;
+        reg  SyncWait = '0;
         wire SyncWaitTrigger = (SyncClear && clk_en) || (ResetLimitReached && clk_en) || (OperationalLimitReached && clk_en) || (sync_rst_Trigger && clk_en);
         wire NextSyncWait = (ResetLimitReached || OperationalLimitReached) && ~SyncClear && ~sync_rst_Trigger;
         always_ff @(posedge clk or posedge async_rst_in) begin
@@ -158,7 +168,7 @@ module TopLevelReset_FlagGen #(
     //
 
     // Output Assignment
-        reg  InitPulseLimit;
+        reg  InitPulseLimit = '0;
         wire InitPulseLimitTrigger = (CycleLimitReached && clk_en) || (sync_rst_Trigger && clk_en);
         wire NextInitPulseLimit = CycleLimitReached && ~sync_rst_Trigger;
         always_ff @(posedge clk or posedge async_rst_in) begin
