@@ -35,6 +35,7 @@ module CommandTimers #(
         wire                   [3:0] MinorOpcodeOut;
         wire                         LoadEn = ~MinorOpcodeOut[2];
         wire                         StoreEn = MinorOpcodeOut[2];
+        wire                   [3:0] RegisterDestLocal;
         wire      [DATABITWIDTH-1:0] TimerAddrOut;
         wire [(PORTBYTEWIDTH*8)-1:0] TimerDataOut_Tmp;
         IOCommandInterface #(
@@ -42,19 +43,21 @@ module CommandTimers #(
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
             .BUFFERCOUNT  (BUFFERCOUNT)
         ) IOInterface (
-            .clk           (clk),
-            .clk_en        (clk_en),
-            .sync_rst      (sync_rst),
-            .CommandInACK  (IOInACK),
-            .CommandInREQ  (IOInREQ),
-            .MinorOpcodeIn (MinorOpcodeIn),
-            .DataAddrIn    (DataAddrIn),
-            .DataIn        (DataIn),
-            .CommandOutACK (TimerACK),
-            .CommandOutREQ (TimerREQ),
-            .MinorOpcodeOut(MinorOpcodeOut),
-            .DataAddrOut   (TimerAddrOut),
-            .DataOut       (TimerDataOut_Tmp)
+            .clk            (clk),
+            .clk_en         (clk_en),
+            .sync_rst       (sync_rst),
+            .CommandInACK   (IOInACK),
+            .CommandInREQ   (IOInREQ),
+            .MinorOpcodeIn  (MinorOpcodeIn),
+            .RegisterDestIn (RegisterDestIn),
+            .DataAddrIn     (DataAddrIn),
+            .DataIn         (DataIn),
+            .CommandOutACK  (TimerACK),
+            .CommandOutREQ  (TimerREQ),
+            .MinorOpcodeOut (MinorOpcodeOut),
+            .RegisterDestOut(RegisterDestLocal),
+            .DataAddrOut    (TimerAddrOut),
+            .DataOut        (TimerDataOut_Tmp)
         );
     //
 
@@ -96,7 +99,7 @@ module CommandTimers #(
                     .ComparisonValueIn(ComparisonValue),        
                     .MinorOpcodeIn    (MinorOpcodeOut),    
                     .CommandAddressIn (TimerAddrOut),       
-                    .RegisterDestIn   (RegisterDestIn),     
+                    .RegisterDestIn   (RegisterDestLocal),     
                     .TimerSet         (CommandVector[3]),
                     .TimerClear       (CommandVector[2]),
                     .TimerCheck       (CommandVector[0]),

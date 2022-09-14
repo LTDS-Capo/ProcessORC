@@ -1,12 +1,11 @@
 // 32'b[0000_0][000]_0000_0000_0000_0000_0000_0000
 module CommandController #(
-    parameter PORTBYTEWIDTH = 8,
+    parameter PORTBYTEWIDTH = 4,
     parameter CLOCKCOMMAND_LSB = 27,
     parameter CLOCKCOMMAND_MSB = 31,
     parameter CLOCKCOMMAND_OPCODE = 5'h1F,
     parameter CLOCKCOMMAND_CLKSELLSB = 24,
     parameter DATABITWIDTH = 16
-
 )(
     input sys_clk,
     input clk_en,
@@ -47,22 +46,21 @@ module CommandController #(
 
 );
 
-
-    always_ff @(posedge sys_clk) begin
-		$display("> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandStaleLoadEn, CommandLoadEn, CommandStoreEn);
-		$display("> CMDCTRLR - REQCond - %0b", CommandREQCondition);
-		$display("> CMDCTRLR - S(S>T) - ACK:REQ - %0b:%0b", LocalCommandACK, LocalCommandREQ_Tmp);
-		$display("> CMDCTRLR - T(S>T) - ACK:REQ - %0b:%0b", TargetCommandACK, TargetCommandREQ);
-		$display("> CMDCTRLR - T(T>S) - ACK:REQ - %0b:%0b", TargetResponseACK, TargetResponseREQ);
-		$display("> CMDCTRLR - S(T>S) - ACK:REQ - %0b:%0b", LocalResponseACK, LocalResponseREQ);
-    end
+    // always_ff @(posedge sys_clk) begin
+	// 	$display("> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandStaleLoadEn, CommandLoadEn, CommandStoreEn);
+	// 	$display("> CMDCTRLR - REQCond - %0b", CommandREQCondition);
+	// 	$display("> CMDCTRLR - S(S>T) - ACK:REQ - %0b:%0b", LocalCommandACK, LocalCommandREQ_Tmp);
+	// 	$display("> CMDCTRLR - T(S>T) - ACK:REQ - %0b:%0b", TargetCommandACK, TargetCommandREQ);
+	// 	$display("> CMDCTRLR - T(T>S) - ACK:REQ - %0b:%0b", TargetResponseACK, TargetResponseREQ);
+	// 	$display("> CMDCTRLR - S(T>S) - ACK:REQ - %0b:%0b", LocalResponseACK, LocalResponseREQ);
+    // end
 
     localparam PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH);
     localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
     localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
     
-    wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
-    wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3]; // Validated
+    wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated // ToDo: Rename to LoadEn
+    wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3]; // Validated // ToDo: Rename to AtomicLoadEn
     wire CommandStoreEn = MinorOpcodeIn[2]; // Validated
 
     // Clock Selection
@@ -125,7 +123,8 @@ module CommandController #(
         assign WritebackDataOut = LocalIORegResponse ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
     //
 
-    // Data Store Buffer System
+    // Data Store Buffer System // TODO: Add StatusLoad operations to read the current value in the Command Interface
+                                // TODO: Have Atomic Load Command go through this
         wire SysCommandACK = CommandACK && CommandStoreEn;
         wire SysCommandREQ;
         wire LocalCommandACK_Tmp;

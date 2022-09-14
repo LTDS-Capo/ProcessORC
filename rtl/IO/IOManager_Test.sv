@@ -97,7 +97,7 @@ module IOManager_Test #(
     assign                    IOCommandREQArray[1] = Timers_CommandREQ && TimersEn;
     wire   [DATABITWIDTH-1:0] Timers_AddressIn = CommandAddressIn - TIMER_LOWERADDR - IOBASEADDR;
     CommandTimers #(
-        .DATABITWIDTH(16)
+        .DATABITWIDTH(DATABITWIDTH)
     ) SystemTimers (
         .clk            (sys_clk),
         .clk_en         (clk_en),
