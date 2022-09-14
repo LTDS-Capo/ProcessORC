@@ -47,7 +47,7 @@ module CommandController #(
 );
 
     // always_ff @(posedge sys_clk) begin
-	// 	$display("> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandStaleLoadEn, CommandLoadEn, CommandStoreEn);
+	// 	$display("> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandLoadEn, CommandAtomicLoadEn, CommandStoreEn);
 	// 	$display("> CMDCTRLR - REQCond - %0b", CommandREQCondition);
 	// 	$display("> CMDCTRLR - S(S>T) - ACK:REQ - %0b:%0b", LocalCommandACK, LocalCommandREQ_Tmp);
 	// 	$display("> CMDCTRLR - T(S>T) - ACK:REQ - %0b:%0b", TargetCommandACK, TargetCommandREQ);
@@ -59,9 +59,12 @@ module CommandController #(
     localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
     localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
     
-    wire CommandStaleLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated // ToDo: Rename to LoadEn
-    wire CommandLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3]; // Validated // ToDo: Rename to AtomicLoadEn
-    wire CommandStoreEn = MinorOpcodeIn[2]; // Validated
+    wire CommandLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
+    wire CommandAtomicLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    wire CommandStoreEn = MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
+    wire LocalCommandAtomicLoadEn = ~MinorOpcodeLocal[2] && MinorOpcodeLocal[3];
+    wire LocalCommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
 
     // Clock Selection
         wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB];
@@ -90,17 +93,7 @@ module CommandController #(
         localparam REGOUTLOWERBIT = TARGETTOSYSBITWIDTH - 5;
         // Loads: Forward to Writeback Handshake
         // Stores: Forward to SysToTargetCDC
-        logic CommandREQ_Tmp;
-        wire  [1:0] CommandREQCondition = {CommandStaleLoadEn, CommandLoadEn};
-        always_comb begin : CommandREQConditionMux
-            case (CommandREQCondition)
-                2'b01  : CommandREQ_Tmp = LocalCommandREQ_Tmp;
-                2'b10  : CommandREQ_Tmp = WritebackREQ && ~LocalResponseACK;
-                2'b11  : CommandREQ_Tmp = '0;
-                default: CommandREQ_Tmp = SysCommandREQ; // Default is also case 0
-            endcase
-        end
-        assign CommandREQ = CommandREQ_Tmp;
+        assign CommandREQ = CommandLoadEn ? (WritebackREQ && ~LocalResponseACK && ~LocalCommandStatusLoadEn) : SysCommandREQ;
         // Writeback Handshake
         // > Sources:
         //   - Loads
@@ -108,29 +101,46 @@ module CommandController #(
         localparam REGRESPONSEBITWIDTH = (DATABITWIDTH >= (PORTBYTEWIDTH*8)) ? (PORTBYTEWIDTH*8) : DATABITWIDTH;
         wire                    LocalResponseACK;
         wire                    LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;
-        assign                  WritebackACK = LocalIORegResponse ? LocalResponseACK : (CommandACK && CommandStaleLoadEn);
-        assign                  WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg;
-        wire [DATABITWIDTH-1:0] LoadData_Tmp;
+        assign                  WritebackACK = LocalIORegResponse ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (LocalCommandACK_Tmp && LocalCommandStatusLoadEn));
+        //assign                  WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg; DestRegLocal // make a 4 way mux
+        logic [3:0] WritebackDestReg_Tmp;
+        wire  [1:0] WriteBackRegCondition = {LocalIORegResponse, LocalCommandStatusLoadEn};
+        always_comb begin : NextSOMETHINGMux
+            case (WriteBackRegCondition)
+                2'b01  : WritebackDestReg_Tmp = DestRegLocal;
+                2'b10  : WritebackDestReg_Tmp = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT];
+                2'b11  : WritebackDestReg_Tmp = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT];
+                default: WritebackDestReg_Tmp = CommandDestReg; // Default is also case 0
+            endcase
+        end
+        assign                    WritebackDestReg = WritebackDestReg_Tmp;
+        wire   [DATABITWIDTH-1:0] LoadData_Tmp;
+
+        wire [3:0] LoadMinorOpcode = LocalCommandStatusLoadEn ? MinorOpcodeLocal : MinorOpcodeIn;
+        wire [3:0] LoadAddrIn = LocalCommandStatusLoadEn ? DataAddrLocal : CommandAddressIn_Offest;
+        wire [3:0] LoadDataIn = LocalCommandStatusLoadEn ? LocalCommandData : LoadBuffer;
         IOLoadDataAlignment #(
             .DATABITWIDTH(DATABITWIDTH),
             .PORTBYTEWIDTH(PORTBYTEWIDTH)
         ) LoadDataAlignment (
-            .MinorOpcodeIn(MinorOpcodeIn),
-            .DataAddrIn   (CommandAddressIn_Offest),
-            .DataIn       (LoadBuffer),
+            .MinorOpcodeIn(LoadMinorOpcode), // mux this for status
+            .DataAddrIn   (LoadAddrIn), // mux this for status
+            .DataIn       (LoadDataIn), // mux this for status
             .DataOut      (LoadData_Tmp)
         );
         assign WritebackDataOut = LocalIORegResponse ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
     //
 
-    // Data Store Buffer System // TODO: Add StatusLoad operations to read the current value in the Command Interface
-                                // TODO: Have Atomic Load Command go through this
-        wire SysCommandACK = CommandACK && CommandStoreEn;
+    // Data Store Buffer System
+        wire SysCommandACK = (CommandACK && CommandStoreEn) || (CommandACK && CommandAtomicLoadEn) || (CommandACK && CommandStatusLoadEn);
         wire SysCommandREQ;
         wire LocalCommandACK_Tmp;
         wire LocalCommandREQ_Tmp;
-        wire LocalCommandREQ = (LocalCommandREQ_Tmp && ~CommandLoadEn) || ClockUpdate_Tmp; 
+        wire LocalCommandREQ = LocalCommandREQ_Tmp || ClockUpdate_Tmp || (LocalCommandStatusLoadEn && WritebackREQ && ~LocalResponseACK);
         wire [(PORTBYTEWIDTH*8)-1:0] LocalCommandData;
+        wire                   [3:0] MinorOpcodeLocal;
+        wire                   [3:0] DestRegLocal;
+        wire      [DATABITWIDTH-1:0] DataAddrLocal;
         IOCommandInterface #(
             .DATABITWIDTH (DATABITWIDTH),
             .PORTBYTEWIDTH(PORTBYTEWIDTH),
@@ -147,18 +157,18 @@ module CommandController #(
             .DataIn         (CommandDataIn),
             .CommandOutACK  (LocalCommandACK_Tmp),
             .CommandOutREQ  (LocalCommandREQ),
-            .MinorOpcodeOut (), // Do Not Connect
-            .RegisterDestOut(), // Do Not Connect
-            .DataAddrOut    (), // Do Not Connect
+            .MinorOpcodeOut (MinorOpcodeLocal), // Do Not Connect
+            .RegisterDestOut(DestRegLocal), // Do Not Connect
+            .DataAddrOut    (DataAddrLocal), // Do Not Connect
             .DataOut        (LocalCommandData)
         );
     //
 
     // Sys to Target FIFO CDC
-        wire                           LocalCommandACK = CommandLoadEn ? CommandACK : (LocalCommandACK_Tmp && ~ClockUpdate_Tmp);
+        wire                           LocalCommandACK = LocalCommandACK_Tmp && ~ClockUpdate_Tmp && ~LocalCommandStatusLoadEn;
         wire                           TargetCommandACK;
         wire                           TargetCommandREQ;
-        wire [SYSTOTARGETBITWIDTH-1:0] SysToTargetCDC_dIn = {CommandLoadEn, CommandDestReg, LocalCommandData};
+        wire [SYSTOTARGETBITWIDTH-1:0] SysToTargetCDC_dIn = {LocalCommandAtomicLoadEn, DestRegLocal, LocalCommandData};
         wire [SYSTOTARGETBITWIDTH-1:0] SysToTargetCDC_dOut;
         FIFO_ClockDomainCrosser #(
             .BITWIDTH  (SYSTOTARGETBITWIDTH),
