@@ -70,12 +70,12 @@ module CommandController_tb ();
         wire [3:0][1:0] divided_clk_sels = {clk_sel_3, clk_sel_2, clk_sel_1, clk_sel_0};
         wire            CommandACK = CommandACKTestBuffer;
         wire            CommandREQ;
-        wire      [3:0] MinorOpcodeIn = 4'b0101;
+        wire      [3:0] MinorOpcodeIn = 4'b1101; // Need to retest all 4 operations
         wire     [15:0] CommandAddressIn_Offest = 16'h0000;
         wire     [15:0] CommandDataIn = 16'hA5A5;
         wire      [3:0] CommandDestReg = 4'hF;
         wire            WritebackACK;
-        wire            WritebackREQ = 1'b1;
+        wire            WritebackREQ = WBREQTestBuffer; //CycleCount == 12;
         wire      [3:0] WritebackDestReg;
         wire     [15:0] WritebackDataOut;
         wire            IOClk;
@@ -83,7 +83,7 @@ module CommandController_tb ();
         wire            IOREQ;
         wire            IOCommandEn;
         wire            IOResponseRequested;
-        wire            IOCommandResponse = IOCommandEn;
+        wire            IOCommandResponse = IOCommandEn || IOResponseRequested;
         wire            IORegResponseFlag = IOResponseRequested;
         wire            IOMemResponseFlag = 1'b0;
         wire      [3:0] IODestRegIn = 4'h7;
@@ -162,7 +162,14 @@ module CommandController_tb ();
             end
         end
 
-
+        reg  WBREQTestBuffer;
+        wire WBREQTestBufferTrigger = (WritebackREQ && WritebackACK) || (WritebackACK) || sync_rst;
+        wire NextWBREQTestBuffer = (~WritebackREQ) && ~sync_rst;
+        always_ff @(posedge clk) begin
+            if (WBREQTestBufferTrigger) begin
+                WBREQTestBuffer <= NextWBREQTestBuffer;
+            end
+        end
 
 	//                    //
 

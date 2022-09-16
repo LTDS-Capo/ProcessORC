@@ -46,25 +46,29 @@ module CommandController #(
 
 );
 
-    // always_ff @(posedge sys_clk) begin
-	// 	$display("> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandLoadEn, CommandAtomicLoadEn, CommandStoreEn);
-	// 	$display("> CMDCTRLR - REQCond - %0b", CommandREQCondition);
-	// 	$display("> CMDCTRLR - S(S>T) - ACK:REQ - %0b:%0b", LocalCommandACK, LocalCommandREQ_Tmp);
-	// 	$display("> CMDCTRLR - T(S>T) - ACK:REQ - %0b:%0b", TargetCommandACK, TargetCommandREQ);
-	// 	$display("> CMDCTRLR - T(T>S) - ACK:REQ - %0b:%0b", TargetResponseACK, TargetResponseREQ);
-	// 	$display("> CMDCTRLR - S(T>S) - ACK:REQ - %0b:%0b", LocalResponseACK, LocalResponseREQ);
-    // end
+    always_ff @(posedge sys_clk) begin
+		// $display(">>> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandLoadEn, CommandAtomicLoadEn, CommandStoreEn);
+		// // $display>>("> CMDCTRLR - REQCond - %0b", CommandREQCondition);
+		// $display(">>> CMDCTRLR - C(S>S) - ACK:REQ - %0b:%0b", SysCommandACK, SysCommandREQ);
+		// $display(">>> CMDCTRLR - S(S>T) - ACK:REQ - %0b:%0b", LocalCommandACK, LocalCommandREQ_Tmp);
+		// $display(">>> CMDCTRLR - T(S>T) - ACK:REQ - %0b:%0b", TargetCommandACK, TargetCommandREQ);
+		// $display(">>> CMDCTRLR - T(T>S) - ACK:REQ - %0b:%0b", TargetResponseACK, TargetResponseREQ);
+		// $display(">>> CMDCTRLR - S(T>S) - ACK:REQ - %0b:%0b:%0b", LocalResponseACK, LocalResponseREQ, LocalIORegResponse);
+    end
 
     localparam PORTINDEXBITWIDTH = (PORTBYTEWIDTH == 1) ? 1 : $clog2(PORTBYTEWIDTH);
     localparam ODDPORTWIDTHCHECK = (((PORTBYTEWIDTH * 8) % DATABITWIDTH) != 0) ? 1 : 0;
     localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : (((PORTBYTEWIDTH * 8) / DATABITWIDTH) + ODDPORTWIDTHCHECK);
     
-    wire CommandLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
-    wire CommandAtomicLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire CommandStoreEn = MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
-    wire LocalCommandAtomicLoadEn = ~MinorOpcodeLocal[2] && MinorOpcodeLocal[3];
-    wire LocalCommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    // Command Decoding
+        wire CommandLoadEn = ~MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
+        wire CommandAtomicLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3]; // Validated
+        wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3]; // Validated
+        wire CommandStoreEn = MinorOpcodeIn[2] && ~MinorOpcodeIn[3]; // Validated
+
+        wire LocalCommandAtomicLoadEn = ~MinorOpcodeLocal[2] && MinorOpcodeLocal[3];
+        wire LocalCommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    //
 
     // Clock Selection
         wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB];
@@ -99,12 +103,12 @@ module CommandController #(
         //   - Loads
         //   - Responses (Takes priority)
         localparam REGRESPONSEBITWIDTH = (DATABITWIDTH >= (PORTBYTEWIDTH*8)) ? (PORTBYTEWIDTH*8) : DATABITWIDTH;
+        wire                    RegResponse_Tmp = LocalIORegResponse && TargetCommandACK; 
         wire                    LocalResponseACK;
-        wire                    LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;
-        assign                  WritebackACK = LocalIORegResponse ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (LocalCommandACK_Tmp && LocalCommandStatusLoadEn));
-        //assign                  WritebackDestReg = LocalIORegResponse ? TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-2:REGOUTLOWERBIT] : CommandDestReg; DestRegLocal // make a 4 way mux
+        wire                    LocalResponseREQ = (RegResponse_Tmp && WritebackREQ) || ~RegResponse_Tmp;
+        assign                  WritebackACK = RegResponse_Tmp ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (LocalCommandACK_Tmp && LocalCommandStatusLoadEn));
         logic [3:0] WritebackDestReg_Tmp;
-        wire  [1:0] WriteBackRegCondition = {LocalIORegResponse, LocalCommandStatusLoadEn};
+        wire  [1:0] WriteBackRegCondition = {RegResponse_Tmp, StatusLoadEn_Tmp};
         always_comb begin : NextSOMETHINGMux
             case (WriteBackRegCondition)
                 2'b01  : WritebackDestReg_Tmp = DestRegLocal;
@@ -116,9 +120,10 @@ module CommandController #(
         assign                    WritebackDestReg = WritebackDestReg_Tmp;
         wire   [DATABITWIDTH-1:0] LoadData_Tmp;
 
-        wire [3:0] LoadMinorOpcode = LocalCommandStatusLoadEn ? MinorOpcodeLocal : MinorOpcodeIn;
-        wire [3:0] LoadAddrIn = LocalCommandStatusLoadEn ? DataAddrLocal : CommandAddressIn_Offest;
-        wire [3:0] LoadDataIn = LocalCommandStatusLoadEn ? LocalCommandData : LoadBuffer;
+        wire                    StatusLoadEn_Tmp = LocalCommandStatusLoadEn && LocalCommandACK_Tmp;
+        wire              [3:0] LoadMinorOpcode = StatusLoadEn_Tmp ? MinorOpcodeLocal : MinorOpcodeIn;
+        wire [DATABITWIDTH-1:0] LoadAddrIn = StatusLoadEn_Tmp ? DataAddrLocal : CommandAddressIn_Offest;
+        wire [DATABITWIDTH-1:0] LoadDataIn = StatusLoadEn_Tmp ? LocalCommandData : LoadBuffer;
         IOLoadDataAlignment #(
             .DATABITWIDTH(DATABITWIDTH),
             .PORTBYTEWIDTH(PORTBYTEWIDTH)
@@ -128,7 +133,7 @@ module CommandController #(
             .DataIn       (LoadDataIn), // mux this for status
             .DataOut      (LoadData_Tmp)
         );
-        assign WritebackDataOut = LocalIORegResponse ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
+        assign WritebackDataOut = RegResponse_Tmp ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
     //
 
     // Data Store Buffer System
@@ -189,7 +194,7 @@ module CommandController #(
 
     // Data Load Buffer System - // ToDo: Make this update on a store command - nahhhh,,, only if someone bitches
         reg  [(PORTBYTEWIDTH*8)-1:0] LoadBuffer;
-        wire                         LoadBufferTrigger = (TargetResponseACK && TargetResponseREQ && clk_en) || sync_rst;
+        wire                         LoadBufferTrigger = (LocalResponseACK && LocalResponseREQ && clk_en) || sync_rst;
         wire [(PORTBYTEWIDTH*8)-1:0] NextLoadBuffer = (sync_rst) ? 0 : TargetToSysCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
         always_ff @(posedge sys_clk) begin
             if (LoadBufferTrigger) begin
@@ -225,10 +230,10 @@ module CommandController #(
         // Target to Sys Handshake
         assign TargetResponseACK = (IOMemResponseFlag || IORegResponseFlag) && IOACK;
         // Sys to Target Handshake
-        assign TargetCommandREQ = IOCommandResponse && IOCommandEn && IOACK;
+        assign TargetCommandREQ = IOCommandResponse && (IOCommandEn || IOResponseRequested) && IOACK;
         // IO Hanshake
         assign IOREQ = (TargetResponseREQ && IOMemResponseFlag) || (TargetResponseREQ && IORegResponseFlag) || TargetCommandACK; // Handshake direction is flipped here due to full-duplex communication
-        assign IOCommandEn = TargetCommandACK;
+        assign IOCommandEn = TargetCommandACK && ~IOResponseRequested;
         assign IOResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
         assign IODestRegOut = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];
         assign IODataOut = SysToTargetCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
