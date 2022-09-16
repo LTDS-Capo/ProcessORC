@@ -89,7 +89,7 @@ module GPIOController (
     
     assign        IO_ACK = clk_en;
     assign        IO_CommandResponse = IO_CommandEn;
-    assign        IO_RegResponseFlag = IO_ResponseRequested && (|(Command[3:6]));
+    assign        IO_RegResponseFlag = IO_ResponseRequested && (|(Command[6:3]));
     assign        IO_MemResponseFlag = '0;
     assign        IO_DestRegOut = IO_DestRegIn;
     logic  [15:0] IO_DataOut_Tmp;

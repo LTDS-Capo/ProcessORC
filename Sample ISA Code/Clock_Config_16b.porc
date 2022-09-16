@@ -1,0 +1,102 @@
+//                                                                            //
+    //  Clock Conf Addr = 384-391
+    //                  >  [13:0] - clk division (4x)
+    //                  > [15:16] - clk source (4x)
+    //       Timer Addr = 392-395
+    //                  > [26:0] Wait time
+    //                  >   [27] PreScaler
+    //                  > - 0 : 1x
+    //                  > - 1 : 32x
+    //                  > [30:28] Timer Select
+    //                  > [31] Command
+    //                  > - 0 : Clear(Store)/Check(Load)
+    //                  > - 1 : Set(Store)/Wait(Load)
+    // GPIO MemMap Addr = 396-397
+    //                  > Pulse of Length 0 Selects clock.
+    //                  > GPIO (WriteBit[0], WriteByte[1], ClearBit[2], ReadStatus[3], ReadPin[4], ReadStatusByte[5], ReadPinByte[6], PulseBit(Length)[7]) - In, Out, OutEn
+    //                  > - NonPulse
+    //                  > [15:13] IOAddr
+    //                  > [12:10] Command
+    //                  >   [9:8] *Ignore*
+    //                  >   [7:1] WriteByteValue/*Ignore*
+    //                  >     [0] WriteByteValue/WriteBitValue/*Ignore*
+    //                  > - Pulse
+    //                  > [15:13] IOAddr
+    //                  > [12:10] Command
+    //                  >   [9:0] PulseLength
+//                                                                            //
+// Boot time segisters
+    // r0 - ZR
+    // r1 - Clock Base Pointer
+    // r2 - > Clock Enable Vector (Lowest 4 bits)
+    // r3 - Constant 1 - Shift Amount & Vector Mask
+    // r4 - Clock Enable Condition Register
+    // r5 - > Clock Config Base Pointer
+    // r6 - Constant 2
+    // r7 - Temp Config Register
+    // r8 - 
+    // r9 - 
+    // rA - 
+    // rB - 
+    // rC - 
+    // rD - 
+    // rE - 
+    // rF - *Return Pointer*
+//                                                                            //
+
+:FUNCTION: Clock_Config_16b
+    :PARAMETERS:
+        >CLOCK_IO_BASE = 'd384
+        >CLOCK_CONFIG_BASE = 'd0
+    :ENDPARAMETERS:
+
+    :ALIAS:
+        // TODO: Allow memory address and register aliasing
+    :ALIAS:
+
+    :DATA:
+        @CLOCK_CONFIG_BASE
+        2'h0001 // IO Clock 4 Config - sys_clk div by 2
+        2'h4001 // IO Clock 5 Config - src_clk0 div by 2
+        2'h8001 // IO Clock 6 Config - src_clk1 div by 2
+        2'hC001 // IO Clock 7 Config - src_clk2 div by 2
+    :ENDDATA:
+
+    :INSTRUCTIONS:
+        LEI r1  CLOCK_IO_BASE
+        LLI r3 'h1
+        LLI r6 'h2
+        // Clock 4
+        MOV r4 r3
+        AND r4 r2
+        BZI r4 'h2 // May be off by 1 - Should land on the Next SHR
+        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5
+        STW r7 r1
+        ADD r1 r6
+        // Clock 5
+        MOV r4 r3
+        AND r4 r2
+        BZI r4 'h2 // May be off by 1 - Should land on the Next SHR
+        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5
+        STW r7 r1
+        ADD r1 r6
+        // Clock 6
+        MOV r4 r3
+        AND r4 r2
+        BZI r4 'h2 // May be off by 1 - Should land on the Next SHR
+        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5
+        STW r7 r1
+        ADD r1 r6
+        // Clock 7
+        MOV r4 r3
+        AND r4 r2
+        BZI r4 'h2 // May be off by 1 - Should land on the Ret
+        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5
+        STW r7 r1
+        RET // Aliased BZR r0 r15
+    :ENDINSTRUCTIONS:
+:ENDFUNCTION:
