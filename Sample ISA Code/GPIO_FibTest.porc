@@ -5,37 +5,37 @@
     //       Timer Addr = 392-395
     //                  > [26:0] Wait time
     //                  >   [27] PreScaler
-    //                  > - 0 : 1x
-    //                  > - 1 : 32x
+    //                      > - 0 : 1x
+    //                      > - 1 : 32x
     //                  > [30:28] Timer Select
     //                  >    [31] Command
-    //                  > - 0 : Clear(Store)/Check(Load)
-    //                  > - 1 : Set(Store)/Wait(Load)
-    // GPIO MemMap Addr = 396-397
+    //                      > - 0 : Clear(Store)/Check(Load)
+    //                      > - 1 : Set(Store)/Wait(Load)
+    // GPIO MemMap Addr = 396-397 (Can upgrade with more commands if I check Load/Store)
     //                  > Pulse of Length 0 Selects clock.
     //                  > GPIO - In, Out, OutEn
     //                  >>> NonPulse
-    //                  > [15:13] IOAddr
-    //                  > [12:10] Command
-    //                  > - 0 : WriteBit
-    //                  > - 1 : WriteByte
-    //                  > - 2 : ClearBit
-    //                  > - 3 : ReadStatus
-    //                  > - 4 : ReadPin
-    //                  > - 5 : ReadStatusByte
-    //                  > - 6 : ReadPinByte
-    //                  > - 7 : PulseBit
-    //                  > - 7 : Configure Clocks // Used if Pulse Length == 0
-    //                  >   [9:8] *Ignore*
-    //                  >   [7:1] WriteByteValue/*Ignore*
-    //                  >     [0] WriteByteValue/WriteBitValue/*Ignore*
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command
+    //                          > - 0 : WriteBit
+    //                          > - 1 : WriteByte
+    //                          > - 2 : ClearBit
+    //                          > - 3 : ReadStatus
+    //                          > - 4 : ReadPin
+    //                          > - 5 : ReadStatusByte
+    //                          > - 6 : ReadPinByte
+    //                          > - 7 : PulseBit
+    //                          > - 7 : Configure Clocks // Used if Pulse Length == 0
+    //                          >   [9:8] *Ignore*
+    //                          >   [7:1] WriteByteValue/*Ignore*
+    //                          >     [0] WriteByteValue/WriteBitValue/*Ignore*
     //                  >>> Pulse
-    //                  > [15:13] IOAddr
-    //                  > [12:10] Command
-    //                  >   [9:0] PulseLength
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength
     //                  >>> Configure Clocks
-    //                  > [15:13] Clock Select
-    //                  >  [12:0] Command - 13'h1C00
+    //                      > [15:13] Clock Select
+    //                      >  [12:0] Command - 13'h1C00
 //                                                                            //
 // Registers
     // r0 - ZR
@@ -100,31 +100,31 @@
         // Display Counter [Starts at 0]
         MOV r6 rB            // 067B - Move Command Mask to Working Register
         AND r6 r2            // 0642 - Apply Mask to Counter
-        OR  r6 rA            // 066A - Append Command Upper to Masked Counter
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
         STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
         INC r2 r2            // 0212 - Increment Count
-        CALL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        CAL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
         // First Fib
         MOV r6 rB            // 067B - Move Command Mask to Working Register
         AND r6 r4            // 0644 - Apply Mask to Fib 0
-        OR  r6 rA            // 066A - Append Command Upper to Masked Counter
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
         STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
         ADD r4 r5            // 0212 - Itterate Fib 0
-        CALL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        CAL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
         // Display Counter
         MOV r6 rB            // 067B - Move Command Mask to Working Register
         AND r6 r2            // 0642 - Apply Mask to Counter
-        OR  r6 rA            // 066A - Append Command Upper to Masked Counter
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
         STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
         INC r2 r2            // 0212 - Increment Count
-        CALL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        CAL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
         // Second Fib
         MOV r6 rB            // 067B - Move Command Mask to Working Register
         AND r6 r5            // 0645 - Apply Mask to Fib 0
-        OR  r6 rA            // 066A - Append Command Upper to Masked Counter
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
         STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
         ADD r5 r4            // 0212 - Itterate Fib 1
-        CALL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        CAL TIMER_WAIT      // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
         BZI r0 LOOP_START    // B0[] - Loop
         :TIMER_WAIT 
         STW r8 r9            // 3859 - Store Timer Commmand Upper (Set Timer 0 to 12,500,000)
