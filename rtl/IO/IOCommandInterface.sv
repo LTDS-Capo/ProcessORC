@@ -43,9 +43,11 @@ module IOCommandInterface #(
             end
         endgenerate
     //
-    wire CommandAtomicLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && ~sync_rst) || (CommandInACK && CommandAtomicLoadEn && ~sync_rst) || (CommandInACK && CommandStatusLoadEn && ~sync_rst);
+    // wire CommandAtomicLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    // wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    wire CommandStoreEn = MinorOpcodeIn[2] && ~MinorOpcodeIn[3];
+    // wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~sync_rst) || (CommandInACK && CommandAtomicLoadEn && ~sync_rst) || (CommandInACK && CommandStatusLoadEn && ~sync_rst);
+    wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~sync_rst) || (CommandInACK && ~CommandStoreEn && ~sync_rst);
     always_ff @(posedge clk) begin
         if (ActiveTrigger) begin
             Active <= NextActive;
@@ -100,7 +102,7 @@ module IOCommandInterface #(
     generate
         for (BufferIndex = 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : BufferGeneration
             reg  [DATABITWIDTH-1:0] DataBuffer;
-            wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInREQ && CommandInACK && clk_en) || sync_rst;
+            wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInREQ && CommandInACK && CommandStoreEn && clk_en) || sync_rst;
             wire [DATABITWIDTH-1:0] NextDataBuffer = (sync_rst) ? '0 : NextDataBuffer_Tmp;
             always_ff @(posedge clk) begin
                 if (DataBufferTrigger) begin

@@ -7,10 +7,10 @@ module FlashROM_Data (
     always_comb begin : ROMBlock
         case (Address)
             //                     Data
-            10'h000 : TempValue = 16'h0000;
-            10'h002 : TempValue = 16'h0000;
-            10'h004 : TempValue = 16'h0000;
-            10'h006 : TempValue = 16'h0000;
+            10'h000 : TempValue = 16'h0001;
+            10'h002 : TempValue = 16'h4001;
+            10'h004 : TempValue = 16'h8001;
+            10'h006 : TempValue = 16'hC001;
             10'h008 : TempValue = 16'h0000;
             10'h00a : TempValue = 16'h0000;
             10'h00c : TempValue = 16'h0000;

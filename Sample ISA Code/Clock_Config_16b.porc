@@ -25,7 +25,7 @@
     //                  > [12:10] Command
     //                  >   [9:0] PulseLength
 //                                                                            //
-// Boot time segisters
+// Registers
     // r0 - ZR
     // r1 - Clock Base Pointer
     // r2 - > Clock Enable Vector (Lowest 4 bits)
@@ -46,57 +46,59 @@
 
 :FUNCTION: Clock_Config_16b
     :PARAMETERS:
-        >CLOCK_IO_BASE = 'd384
-        >CLOCK_CONFIG_BASE = 'd0
+        CLOCK_IO_BASE = 'd384
+        CLOCK_CONFIG_BASE = 'd0
     :ENDPARAMETERS:
 
     :ALIAS:
         // TODO: Allow memory address and register aliasing
-    :ALIAS:
+    :ENDALIAS:
 
     :DATA:
         @CLOCK_CONFIG_BASE
-        2'h0001 // IO Clock 4 Config - sys_clk div by 2
-        2'h4001 // IO Clock 5 Config - src_clk0 div by 2
-        2'h8001 // IO Clock 6 Config - src_clk1 div by 2
-        2'hC001 // IO Clock 7 Config - src_clk2 div by 2
+        'h0001 // IO Clock 4 Config - sys_clk (50mhz) div by 2
+        'h4001 // IO Clock 5 Config - src_clk0(25mhz) div by 2
+        'h8001 // IO Clock 6 Config - src_clk1(10mhz) div by 2
+        'hC001 // IO Clock 7 Config - src_clk2(2p5mhz) div by 2
     :ENDDATA:
 
     :INSTRUCTIONS:
-        LEI r1  CLOCK_IO_BASE
-        LLI r3 'h1
-        LLI r6 'h2
+        LEI r1 CLOCK_IO_BASE // E180
+        LLI r3 'h1           // C301
+        LLI r6 'h2           // C602
         // Clock 4
-        MOV r4 r3
-        AND r4 r2
-        BZI r4 'h2 // May be off by 1 - Should land on the Next SHR
-        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
-        LDW r7 r5
-        STW r7 r1
-        ADD r1 r6
+        MOV r4 r3            // 0473
+        AND r4 r2            // 0442
+        BZI r4 'h2           // B402 - May be off by 1 - Should land on the Next SHR
+        SHR r2 r3            // 1243 - Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5            // 3715
+        STW r7 r1            // 1751
+        ADD r1 r6            // 0106
         // Clock 5
-        MOV r4 r3
-        AND r4 r2
-        BZI r4 'h2 // May be off by 1 - Should land on the Next SHR
-        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
-        LDW r7 r5
-        STW r7 r1
-        ADD r1 r6
+        MOV r4 r3            // 0473
+        AND r4 r2            // 0442
+        BZI r4 'h2           // B402 - May be off by 1 - Should land on the Next SHR
+        SHR r2 r3            // 1243 - Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5            // 3715
+        STW r7 r1            // 1751
+        ADD r1 r6            // 0106
         // Clock 6
-        MOV r4 r3
-        AND r4 r2
-        BZI r4 'h2 // May be off by 1 - Should land on the Next SHR
-        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
-        LDW r7 r5
-        STW r7 r1
-        ADD r1 r6
+        MOV r4 r3            // 0473
+        AND r4 r2            // 0442
+        BZI r4 'h2           // B402 - May be off by 1 - Should land on the Next SHR
+        SHR r2 r3            // 1243 - Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5            // 3715
+        STW r7 r1            // 1751
+        ADD r1 r6            // 0106
         // Clock 7
-        MOV r4 r3
-        AND r4 r2
-        BZI r4 'h2 // May be off by 1 - Should land on the Ret
-        SHR r2 r3 // Shift Config Mask down by 1 [Delay Slot]
-        LDW r7 r5
-        STW r7 r1
-        RET // Aliased BZR r0 r15
+        MOV r4 r3            // 0473
+        AND r4 r2            // 0442
+        BZI r4 'h2           // B402 - May be off by 1 - Should land on the Ret
+        SHR r2 r3            // 1243 - Shift Config Mask down by 1 [Delay Slot]
+        LDW r7 r5            // 3715
+        STW r7 r1            // 1751
+    //  RET                  // A00F  - Aliased BZR r0 r15
     :ENDINSTRUCTIONS:
 :ENDFUNCTION:
+
+
