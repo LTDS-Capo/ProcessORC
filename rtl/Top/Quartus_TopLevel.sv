@@ -17,7 +17,7 @@ module Quartus_TopLevel (
 
     PLL ClockGeneration (
         .refclk  (PLL_refclk),  
-        .rst     (async_rst),     
+        .rst     (~async_rst),     
         .outclk_0(sys_clk),  // 50mhz
         .outclk_1(src_clk0), // 25mhz
         .outclk_2(src_clk1), // 10mhz
@@ -30,7 +30,7 @@ module Quartus_TopLevel (
     ) PlatformIndependent (
         .sys_clk    (sys_clk),
         .clk_en     (clk_en),
-        .async_rst  (async_rst),
+        .async_rst  (~async_rst),
         .src_clk0   (src_clk0),
         .src_clk1   (src_clk1),
         .src_clk2   (src_clk2),

@@ -45,10 +45,13 @@ module PlatformIndependent_Test #(
         wire [CLOCKDOMAINS-1:0] sync_rst_out;
         wire [CLOCKDOMAINS-1:0] init_out;
         TopLevelReset #(
-            .RESETWAITCYCLES      (625000),
+            // .RESETWAITCYCLES      (625000),
+            .RESETWAITCYCLES      (64),
             .RESETCYCLELENGTH     (16),
-            .OPERATIONALWAITCYCLES(25000),
-            .INITIALIZEWAITCYCLES (1024),
+            // .OPERATIONALWAITCYCLES(25000),
+            .OPERATIONALWAITCYCLES(64),
+            // .INITIALIZEWAITCYCLES (1024),
+            .INITIALIZEWAITCYCLES (32),
             .CLOCKDOMAINS         (CLOCKDOMAINS)
         ) ResetSystem (
             .sys_clk         (sys_clk),
@@ -88,14 +91,14 @@ module PlatformIndependent_Test #(
         wire Halted;
         wire IOOutACK;
         wire IOOutREQ;
-        wire IOMinorOpcode;
-        wire IOOutAddress;
-        wire IOOutData;
-        wire IOOutDestReg;
-        wire IOInACK;
-        wire IOInREQ;
-        wire IOInDestReg;
-        wire IOInData;
+        wire              [3:0] IOMinorOpcode;
+        wire [DATABITWIDTH-1:0] IOOutAddress;
+        wire [DATABITWIDTH-1:0] IOOutData;
+        wire              [3:0] IOOutDestReg;
+        wire                    IOInACK;
+        wire                    IOInREQ;
+        wire              [3:0] IOInDestReg;
+        wire [DATABITWIDTH-1:0] IOInData;
         CPU #(
             .DATABITWIDTH(DATABITWIDTH)
         ) MainCPU (
@@ -118,25 +121,25 @@ module PlatformIndependent_Test #(
             .IOInREQ              (IOInREQ),
             .IOInDestReg          (IOInDestReg),
             .IOInData             (IOInData),
-            .RegisterWriteData_OUT(RegisterWriteData_OUT), // Do Not Connect - Test Output
-            .RegisterWriteEn_OUT  (RegisterWriteEn_OUT), // Do Not Connect - Test Output
-            .RegisterWriteAddr_OUT(RegisterWriteAddr_OUT)  // Do Not Connect - Test Output
+            .RegisterWriteData_OUT(), // Do Not Connect - Test Output
+            .RegisterWriteEn_OUT  (), // Do Not Connect - Test Output
+            .RegisterWriteAddr_OUT()  // Do Not Connect - Test Output
         );
     //
 
     // IO Interfaces
-            // wire GPIO_IO_Clk;
-            // wire GPIO_IO_ACK;
-            // wire GPIO_IO_REQ;
-            // wire GPIO_IO_CommandEn;
-            // wire GPIO_IO_ResponseRequested;
-            // wire GPIO_IO_CommandResponse;
-            // wire GPIO_IO_RegResponseFlag;
-            // wire GPIO_IO_MemResponseFlag;
-            // wire GPIO_IO_DestRegIn;
-            // wire GPIO_IO_DestRegOut;
-            // wire GPIO_IO_DataIn;
-            // wire GPIO_IO_DataOut;
+            wire         GPIO_IO_Clk;
+            wire         GPIO_IO_ACK;
+            wire         GPIO_IO_REQ;
+            wire         GPIO_IO_CommandEn;
+            wire         GPIO_IO_ResponseRequested;
+            wire         GPIO_IO_CommandResponse;
+            wire         GPIO_IO_RegResponseFlag;
+            wire         GPIO_IO_MemResponseFlag;
+            wire   [3:0] GPIO_IO_DestRegIn;
+            wire   [3:0] GPIO_IO_DestRegOut;
+            wire  [15:0] GPIO_IO_DataIn;
+            wire  [15:0] GPIO_IO_DataOut;
             IOManager_Test #(
                 .IOBASEADDR  (384),
                 .TOTALIOBYTES(128)

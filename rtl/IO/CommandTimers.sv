@@ -15,7 +15,7 @@ module CommandTimers #(
     output       [7:0]        TimerOutACK,
     input        [7:0]        TimerOutREQ,
     output       [7:0]  [3:0] RegisterDestOut,
-    output       [7:0] [31:0] TimerDataOut
+    output       [7:0] [15:0] TimerDataOut
 );
     
     // [26:0] Wait time
@@ -88,7 +88,7 @@ module CommandTimers #(
             for (TimerIndex = 0; TimerIndex < 8; TimerIndex = TimerIndex + 1) begin : TimerGeneration
                 wire TimerACK_Local = TimerACK && (TimerIndex == TimerDataOut_Tmp[30:28]);
                 CommandTimers_Cell #(
-                    .DATABITWIDTH(16)
+                    .DATABITWIDTH(DATABITWIDTH)
                 ) Timer_Cell (
                     .clk              (clk),
                     .clk_en           (clk_en),

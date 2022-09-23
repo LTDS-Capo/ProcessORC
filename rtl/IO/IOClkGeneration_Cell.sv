@@ -4,7 +4,7 @@ module IOClkGeneration_Cell #(
     input sys_clk,
     input clk_en,
     input sync_rst,
-    input async_rst,
+    // input async_rst,
 
     input src_clk0,
     input src_clk1,
@@ -94,7 +94,8 @@ module IOClkGeneration_Cell #(
             .DEPTH   (4),
             .TESTENABLE(0)
         ) SysToTarget (
-            .rst    (async_rst),
+            // .rst    (async_rst),
+            .rst    (sync_rst),
             .w_clk  (sys_clk),
             .dInACK (LocalConfigACK),
             .dInREQ (LocalConfigREQ),

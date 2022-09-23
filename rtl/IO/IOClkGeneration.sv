@@ -19,7 +19,7 @@ module IOClkGeneration #(
     output [3:0]                   WritebackACK,
     input  [3:0]                   WritebackREQ,
     output [3:0]             [3:0] WritebackDestReg,
-    output [3:0][DATABITWIDTH-1:0] WritebackDataOut, // TODO: Load Alignment
+    output [3:0][DATABITWIDTH-1:0] WritebackDataOut,
 
     output              [7:0]      divided_clk_out,
     output              [3:0][1:0] divided_clk_sel_out

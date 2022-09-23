@@ -12,7 +12,7 @@ module InstructionMemory (
 );
 
     // Memory Instantiation
-    reg  [15:0] DataMemoryBlock [9:0];
+    reg  [15:0] DataMemoryBlock [1023:0];
     wire        WriteEn = clk_en && FlashEn;
     always_ff @(posedge clk) begin
         if (WriteEn) begin

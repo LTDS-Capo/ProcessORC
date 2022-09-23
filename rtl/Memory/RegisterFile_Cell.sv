@@ -15,9 +15,7 @@ module RegisterFile_Cell #(
 
 
     output [BITWIDTH-1:0] DataOut,
-    output                DirtyBitOut,
-
-    input [REGADDRBITWIDTH-1:0] TEST_REGADDRIN
+    output                DirtyBitOut
 );
 
     reg   [BITWIDTH-1:0] Register;

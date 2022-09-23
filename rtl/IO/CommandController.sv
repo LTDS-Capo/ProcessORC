@@ -44,7 +44,16 @@ module CommandController #(
     output                   [3:0] IODestRegOut,
     output [(PORTBYTEWIDTH*8)-1:0] IODataOut
 
+    //output [(PORTBYTEWIDTH*8)-1:0] LoadBuffer_TEST
+    //output [3:0] TEST_VECTOR,
+    //output [1:0] TEST_VECTOR2
+
 );
+
+    //assign LoadBuffer_TEST = LoadBuffer;
+
+    // assign TEST_VECTOR = {ClockUpdate, ClockSelect};
+    // assign TEST_VECTOR2 = {ClockUpdate_Tmp, LocalCommandACK};
 
     always_ff @(posedge sys_clk) begin
 		// $display(">>> CMDCTRLR - SL:L:S  - %0b:%0b:%0b", CommandLoadEn, CommandAtomicLoadEn, CommandStoreEn);
@@ -128,9 +137,9 @@ module CommandController #(
             .DATABITWIDTH(DATABITWIDTH),
             .PORTBYTEWIDTH(PORTBYTEWIDTH)
         ) LoadDataAlignment (
-            .MinorOpcodeIn(LoadMinorOpcode), // mux this for status
-            .DataAddrIn   (LoadAddrIn), // mux this for status
-            .DataIn       (LoadDataIn), // mux this for status
+            .MinorOpcodeIn(LoadMinorOpcode),
+            .DataAddrIn   (LoadAddrIn),
+            .DataIn       (LoadDataIn),
             .DataOut      (LoadData_Tmp)
         );
         assign WritebackDataOut = RegResponse_Tmp ? {'0, TargetToSysCDC_dOut[REGRESPONSEBITWIDTH-1:0]} : LoadData_Tmp;
@@ -170,7 +179,7 @@ module CommandController #(
     //
 
     // Sys to Target FIFO CDC
-        wire                           LocalCommandACK = LocalCommandACK_Tmp && ~ClockUpdate_Tmp && ~LocalCommandStatusLoadEn;
+        wire                           LocalCommandACK = LocalCommandACK_Tmp && ~ClockUpdate && ~LocalCommandStatusLoadEn;
         wire                           TargetCommandACK;
         wire                           TargetCommandREQ;
         wire [SYSTOTARGETBITWIDTH-1:0] SysToTargetCDC_dIn = {LocalCommandAtomicLoadEn, DestRegLocal, LocalCommandData};
