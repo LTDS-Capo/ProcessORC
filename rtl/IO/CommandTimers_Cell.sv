@@ -113,7 +113,8 @@ module CommandTimers_Cell #(
     //
 
     // Output Assignments
-        assign TimerInREQ = (~WaitHoldBuffer && TimerWait) ? TimerOutREQ : 1'b1;
+        // assign TimerInREQ = (~WaitHoldBuffer && TimerWait) ? TimerOutREQ : 1'b1;
+        assign TimerInREQ =  ~((CheckACK && TimerCheck) || (WaitACK && TimerWait));
 
         assign TimerOutACK = WaitACK || CheckACK;
         assign TimerDataOut = WaitACK ? '0 : CheckDataOut;

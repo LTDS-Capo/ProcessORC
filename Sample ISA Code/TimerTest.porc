@@ -1,0 +1,70 @@
+//                                                                            //
+    //  Clock Conf Addr = 384-391
+    //                  >  [13:0] - clk division (4x)
+    //                  > [15:16] - clk source (4x)
+    //       Timer Addr = 392-395
+    //                  > [26:0] Wait time
+    //                  >   [27] PreScaler
+    //                      > - 0 : 1x
+    //                      > - 1 : 32x
+    //                  > [30:28] Timer Select
+    //                  >    [31] Command
+    //                      > - 0 : Clear(Store)/Check(Load)
+    //                      > - 1 : Set(Store)/Wait(Load)
+    // GPIO MemMap Addr = 396-397 (Can upgrade with more commands if I check Load/Store)
+    //                  > Pulse of Length 0 Selects clock.
+    //                  > GPIO - In, Out, OutEn
+    //                  >>> NonPulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command
+    //                          > - 0 : WriteBit
+    //                          > - 1 : WriteByte
+    //                          > - 2 : ClearBit
+    //                          > - 3 : ReadStatus
+    //                          > - 4 : ReadPin
+    //                          > - 5 : ReadStatusByte
+    //                          > - 6 : ReadPinByte
+    //                          > - 7 : PulseBit         // Used if Pulse Length != 0
+    //                          > - 7 : Configure Clocks // Used if Pulse Length == 0
+    //                          >   [9:8] *Ignore*
+    //                          >   [7:1] WriteByteValue/*Ignore*
+    //                          >     [0] WriteByteValue/WriteBitValue/*Ignore*
+    //                  >>> Pulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - NOT 10'h000
+    //                  >>> Configure Clocks
+    //                      > [15:13] Clock Select
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - 10'h000
+//                                                                            //
+// Registers
+    // r0 - ZR
+    // r1 - 
+    // r2 - 
+    // r3 - 
+    // r4 - 
+    // r5 - 
+    // r6 - 
+    // r7 - 
+    // r8 - 
+    // r9 - 
+    // rA - 
+    // rB - 
+    // rC - 
+    // rD - 
+    // rE - 
+    // rF - *Return Pointer*
+//
+
+ 0. LEI r1 'd392 // D188 - Load Timer Base Address
+ 1. LLI r2 'h20  // C220 - Load Timer Command Byte 0
+ 2. LLI r3 'h00  // C300 - Load Timer Command Byte 2
+ 3. LUI r3 'h80  // E380 - Load Timer Command Byte 3
+ 4. STW r2 r1    // 3251 - Store Timer Command Lower [32 cycles]
+ 5. INC r1 r1    // 0111 - Increment Timer Pointer
+ 6. INC r1 r1    // 0111 - Increment Timer Pointer
+ 7. STW r3 r1    // 3351 - Store Timer Command Upper [Timer Set]
+ 8. LDW r4 r1    // 3411 - Load Timer Command Upper [Timer Wait]
+ 9. MOV r0 r4    // 0074 - Wait for r4 to clear
+10. BZI r0 -3    // B3FD - Jump back to Line 8 [negative 3]

@@ -6,23 +6,18 @@ module FlashROM_Instruction (
     logic [15:0] TempValue;
     always_comb begin : ROMBlock
         case (Address)
-            // Old Fib Test
-            10'h000 : TempValue = 16'h0170;
-            10'h001 : TempValue = 16'h0270;
-            10'h002 : TempValue = 16'hC301;
-            10'h003 : TempValue = 16'h0470;
+
+            10'h000 : TempValue = 16'hD188;
+            10'h001 : TempValue = 16'hC220;
+            10'h002 : TempValue = 16'hC300;
+            10'h003 : TempValue = 16'hE380;
             10'h004 : TempValue = 16'h3251;
-            10'h005 : TempValue = 16'h3411;
+            10'h005 : TempValue = 16'h0111;
             10'h006 : TempValue = 16'h0111;
-            10'h007 : TempValue = 16'h0302;
-            10'h008 : TempValue = 16'h3351;
-            10'h009 : TempValue = 16'h3411;
-            10'h00A : TempValue = 16'h0111;
-            10'h00B : TempValue = 16'h0203;
-            10'h00C : TempValue = 16'hB005;
-            10'h00D : TempValue = 16'h0000;
-            10'h00E : TempValue = 16'h0000;
-            10'h00F : TempValue = 16'h0000;
+            10'h007 : TempValue = 16'h3351;
+            10'h008 : TempValue = 16'h3411;
+            10'h009 : TempValue = 16'h0074;
+            10'h00A : TempValue = 16'hB3FD;
 
             // GPIO Fib Test
             // 10'h000 : TempValue = 16'hD18C;

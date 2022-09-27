@@ -52,8 +52,8 @@ module IOManager_Test #(
     localparam CLOCKS_LOWERADDR = 0;
     localparam CLOCKS_UPPERADDR = 7;
     // wire ClockEn = CommandAddressIn inside {[CLOCKS_UPPERADDR:CLOCKS_LOWERADDR]} ? 1 : '0;
-    wire                      ClockEn_Min = CommandAddressIn >= CLOCKS_LOWERADDR;
-    wire                      ClockEn_Max = CommandAddressIn <= CLOCKS_UPPERADDR;
+    wire                      ClockEn_Min = CommandAddressIn >= (CLOCKS_LOWERADDR + IOBASEADDR);
+    wire                      ClockEn_Max = CommandAddressIn <= (CLOCKS_UPPERADDR + IOBASEADDR);
     wire                      ClockEn = ClockEn_Min && ClockEn_Max;
     wire                      ClockCommandACK = ClockEn ? CommandACK : '0;
     wire                      ClockCommandREQ;
@@ -89,8 +89,8 @@ module IOManager_Test #(
     localparam TIMER_LOWERADDR = 8;
     localparam TIMER_UPPERADDR = 11;
     //wire   TimersEn = CommandAddressIn inside {[TIMER_UPPERADDR:TIMER_LOWERADDR]} ? 1 : '0;
-    wire                      TimersEn_Min = CommandAddressIn >= TIMER_LOWERADDR;
-    wire                      TimersEn_Max = CommandAddressIn <= TIMER_UPPERADDR;
+    wire                      TimersEn_Min = CommandAddressIn >= (TIMER_LOWERADDR + IOBASEADDR);
+    wire                      TimersEn_Max = CommandAddressIn <= (TIMER_UPPERADDR + IOBASEADDR);
     wire                      TimersEn = TimersEn_Min && TimersEn_Max;
     wire                      Timers_CommandACK = TimersEn ? CommandACK : '0;
     wire                      Timers_CommandREQ;
@@ -129,8 +129,8 @@ module IOManager_Test #(
             localparam GPIO_CLOCKCOMMAND_OPCODE = 13'h1C00; // 1_1100_0000_0000
             localparam GPIO_CLOCKCOMMAND_CLKSELLSB = 13;
             // wire                      GPIO_En = CommandAddressIn inside {[GPIO_UPPERADDR:GPIO_LOWERADDR]} ? 1 : '0;
-            wire                      GPIO_En_Min = CommandAddressIn >= GPIO_LOWERADDR;
-            wire                      GPIO_En_Max = CommandAddressIn <= GPIO_UPPERADDR;
+            wire                      GPIO_En_Min = CommandAddressIn >= (GPIO_LOWERADDR + IOBASEADDR);
+            wire                      GPIO_En_Max = CommandAddressIn <= (GPIO_UPPERADDR + IOBASEADDR);
             wire                      GPIO_En = GPIO_En_Min && GPIO_En_Max;
             wire                      GPIO_CommandACK = GPIO_En ? CommandACK : '0;
             wire                      GPIO_CommandREQ;
