@@ -1,20 +1,36 @@
-  0-15  : Timers x8
- 16-47  : GPIO x32
- 48-51  : PWM x4
- 52-63  : SPI 0 (2 Chip Selects)
- 64-75  : SPI 1 (2 Chip Selects)
- 76-87  : I2C 0
- 88-100 : I2C 1
-101-111 : RESERVED
-112-119 : Clk Config (4x 2 bytes per clk)
-120-127 : System Info
------------------------------------------------
-12 bytes per SPI interface x2
-12 bytes per I2C interface x2
------------------------------------------------
-Timers: 4 Bytes (4x system timers, 16 total)
-    2bit Scale(1x, 2x, 4x, 8x), 14 bit Time
-    > Write0 to set timer
-    > Write1 to clear timer
-    > Read0 to Read Remaining Time
-    > Read1 to Replies if/when Clear
+// IO Config data
+  > Byte Width,
+  > Name,
+  > Module Name,
+
+8bit ID, ??
+
+
+
+
+
+// Change to 4 bytes per IO type, 2 byte command, 2 byte value.
+0-7     - Clk Config
+8-11    - 4 Byte Timer Interface [2 byte command, 2 byte value]
+12-127  - 116x General Purpose Command Ports
+
+
+GPIO (Set1, Set0, Clear, Write, Read, Pulse[Length], set clock) - In, Out, OutEn
+// NonPulse
+  [15:13] Command
+  [12:10] IOAddr
+    [9:1] *Ignore*
+      [0] WriteValue
+// Pulse
+  [15:13] Command
+  [12:10] IOAddr
+    [9:0] PulseLength
+
+
+
+
+  
+
+
+
+

@@ -15,9 +15,7 @@ module RegisterFile_Cell #(
 
 
     output [BITWIDTH-1:0] DataOut,
-    output                DirtyBitOut,
-
-    input [REGADDRBITWIDTH-1:0] TEST_REGADDRIN
+    output                DirtyBitOut
 );
 
     reg   [BITWIDTH-1:0] Register;
@@ -30,6 +28,7 @@ module RegisterFile_Cell #(
         case (NextRegisterCondition)
             2'b01  : NextRegister = DataIn;
             2'b10  : NextRegister = Mem_DataIn;
+            2'b11  : NextRegister = Mem_DataIn;
             default: NextRegister = 0; // Default is also case 0
         endcase
     end

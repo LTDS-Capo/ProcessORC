@@ -3,17 +3,10 @@ module InstructionIssue #(
     parameter TAGBITWIDTH = 6,
     parameter REGADDRBITWIDTH = 4
 )(
-    input clk,
-    input clk_en,
-    input sync_rst,
-
     // Instruction Input
     input                  [3:0] MinorOpcode,
     input                  [4:0] FunctionalUnitEnable,
     input                  [1:0] WriteBackSourceIn,
-    input                        RegAWriteEnIn,
-    input                        InstructionTagValid,
-    input      [TAGBITWIDTH-1:0] InstructionTagIn,
     input                        WritebackEnIn,
     input  [REGADDRBITWIDTH-1:0] WritebackRegAddr,
     input     [DATABITWIDTH-1:0] RegADataIn,

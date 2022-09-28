@@ -54,7 +54,7 @@ module HandshakeFIFO #(
 			FIFOMem[Head[FIFODEPTHBITWIDTH-1:0]] <= dIN;
 		end
 	end
-	assign dOUT = FIFOReadEn ? FIFOMem[Tail[FIFODEPTHBITWIDTH-1:0]] : 0;
+	assign dOUT = ~FIFOEmtpyCheck ? FIFOMem[Tail[FIFODEPTHBITWIDTH-1:0]] : 0;
 
 	// Handshake Outputs
 	assign dInREQ = ~FIFOFullCheck && clk_en;

@@ -1,24 +1,68 @@
-module IOClkGeneration (
+module IOClkGeneration #(
+    parameter DATABITWIDTH = 16
+)(
     input sys_clk,
     input clk_en,
     input sync_rst,
-    input async_rst,
 
     input src_clk0,
     input src_clk1,
     input src_clk2,
 
-    input   [1:0] ConfigurationAddr,
-    input         ConfigWriteEnUpper,
-    input         ConfigWriteEnLower,
-    input  [15:0] ConfigInput,
-    output [15:0] ConfigOutput,
+    input                          CommandACK,
+    output                         CommandREQ,
+    input                    [3:0] MinorOpcodeIn,
+    input       [DATABITWIDTH-1:0] CommandAddressIn_Offest,
+    input       [DATABITWIDTH-1:0] CommandDataIn,
+    input                    [3:0] CommandDestReg,
 
+    output [3:0]                   WritebackACK,
+    input  [3:0]                   WritebackREQ,
+    output [3:0]             [3:0] WritebackDestReg,
+    output [3:0][DATABITWIDTH-1:0] WritebackDataOut,
 
-    output [7:0]       divided_clk_out,
-    output [3:0] [1:0] divided_clk_sel_out
+    output              [7:0]      divided_clk_out,
+    output              [3:0][1:0] divided_clk_sel_out
 );
     
+    wire LoadEn = ~MinorOpcodeIn[2];
+
+    // Interface Manager (For stores)
+        localparam PORTBYTEWIDTH = 2; // Multiple of 2s only for now
+        localparam BUFFERCOUNT = ((PORTBYTEWIDTH * 8) <= DATABITWIDTH) ? 1 : ((PORTBYTEWIDTH * 8) / DATABITWIDTH);
+        wire LocalCommandACK = ~LoadEn && CommandACK;
+        wire LocalCommandREQ;
+        wire        ClockACK;
+        wire  [3:0] REQSelectArray = ConfigREQArray & StoreDecoder;
+        wire        ClockREQ = |REQSelectArray;
+        wire [15:0] ClockDataOut;
+        wire  [3:0] MinorOpcodeOut;
+        wire [15:0] DataAddrOut;
+        IOCommandInterface #(
+            .DATABITWIDTH (DATABITWIDTH),
+            .PORTBYTEWIDTH(PORTBYTEWIDTH),
+            .BUFFERCOUNT  (BUFFERCOUNT)
+        ) IOInterface (
+            .clk            (sys_clk),
+            .clk_en         (clk_en),
+            .sync_rst       (sync_rst),
+            .CommandInACK   (LocalCommandACK),
+            .CommandInREQ   (LocalCommandREQ),
+            .MinorOpcodeIn  (MinorOpcodeIn),
+            .RegisterDestIn (CommandDestReg),
+            .DataAddrIn     (CommandAddressIn_Offest),
+            .DataIn         (CommandDataIn),
+            .CommandOutACK  (ClockACK),
+            .CommandOutREQ  (ClockREQ),
+            .MinorOpcodeOut (MinorOpcodeOut),
+            .RegisterDestOut(), // Do Not Connect
+            .DataAddrOut    (DataAddrOut),
+            .DataOut        (ClockDataOut)
+        );
+        assign CommandREQ = LoadEn ? ConfigREQArray[LoadDecoder] : LocalCommandREQ;
+    //
+
+
     // clk0: sys_clk
     // clk1: src_clk0
     // clk2: src_clk1
@@ -30,13 +74,21 @@ module IOClkGeneration (
 
     // divided_clk Config bits
     // >  [13:0] - clk division
-    // > [15:24] - clk source
+    // > [15:16] - clk source
 
     // Config Decoder
-        logic [3:0] ClkDecoder;
+        logic [3:0] LoadDecoder;
         always_comb begin
-            ClkDecoder = 0;
-            ClkDecoder[ConfigurationAddr] = 1'b1;
+            LoadDecoder = 0;
+            LoadDecoder[CommandDataIn[2:1]] = 1'b1;
+        end
+    //
+
+    // Config Decoder
+        logic [3:0] StoreDecoder;
+        always_comb begin
+            StoreDecoder = 0;
+            StoreDecoder[DataAddrOut[2:1]] = 1'b1;
         end
     //
 
@@ -44,39 +96,40 @@ module IOClkGeneration (
         wire   [3:0] [15:0] ConfigOutputs;
         wire   [3:0]        divided_clks;
         wire   [3:0]  [1:0] ConfigSelOutputs;
+        wire   [3:0]        ConfigREQArray;
         genvar ClkGen;
         generate
             for (ClkGen = 0; ClkGen < 4; ClkGen = ClkGen + 1) begin : ClkDivisionGeneration
-                wire        Local_ConfigWriteEnUpper = ClkDecoder && ConfigWriteEnUpper;
-                wire        Local_ConfigWriteEnLower = ClkDecoder && ConfigWriteEnLower;
-                wire [15:0] ConfigInput = DataIn;
-                wire [15:0] ConfigOutput;
+                wire LocalConfigACK = (LoadEn && LoadDecoder[ClkGen] && CommandACK) || (~LoadEn && ClockACK && StoreDecoder[ClkGen]);
+                wire LocalConfigREQ;
                 wire        divided_clk;
                 wire  [1:0] divided_clk_sel;
-                IOClkGeneration ClkDivisionGen (
+                IOClkGeneration_Cell ClkDivisionGen (
                     .sys_clk           (sys_clk),
                     .clk_en            (clk_en),
                     .sync_rst          (sync_rst),
-                    .async_rst         (async_rst),
                     .src_clk0          (src_clk0),
                     .src_clk1          (src_clk1),
                     .src_clk2          (src_clk2),
-                    .ConfigWriteEnUpper(Local_ConfigWriteEnUpper),
-                    .ConfigWriteEnLower(Local_ConfigWriteEnLower),
-                    .ConfigInput       (ConfigInput),
-                    .ConfigOutput      (ConfigOutput),
+                    .ConfigACK         (LocalConfigACK),
+                    .ConfigREQ         (LocalConfigREQ),
+                    .LoadEn            (LoadEn),
+                    .MinorOpcodeIn     (MinorOpcodeOut),
+                    .DataAddrIn_Offest (DataAddrOut),
+                    .ConfigWordIn      (ClockDataOut),
+                    .ConfigRegDestIn   (CommandDestReg),
+                    .ResponseACK       (WritebackACK[ClkGen]),
+                    .ResponseREQ       (WritebackREQ[ClkGen]),
+                    .ResponseDataOut   (WritebackDataOut[ClkGen]),
+                    .ResponseRegDestOut(WritebackDestReg[ClkGen]),
                     .divided_clk       (divided_clk),
                     .divided_clk_sel   (divided_clk_sel)
                 );
-                assign ConfigOutputs[ClkGen] = ConfigOutput;
+                assign ConfigREQArray[ClkGen] = LocalConfigREQ;
                 assign divided_clks[ClkGen] = divided_clk;
                 assign ConfigSelOutputs[ClkGen] = divided_clk_sel;
             end
         endgenerate
-    //
-
-    // Configuration Read
-        assign ConfigOutput = ConfigOutputs[ConfigurationAddr];
     //
 
     // divided_clk output assignment

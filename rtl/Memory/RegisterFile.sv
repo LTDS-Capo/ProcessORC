@@ -90,8 +90,20 @@ module RegisterFile #(
     // RegisterStallOut and Sync Generation
     wire   StallA = DirtyBitOutVector[ReadA_Address] && ReadA_En;
     wire   StallB = DirtyBitOutVector[ReadB_Address] && ReadB_En;
-    assign RegistersSync = ~|DirtyBitOutVector;
-    assign RegisterStallOut = StallA || StallB;
+    // assign RegistersSync = ~|DirtyBitOutVector;
+
+    reg  RegisterStallBuffer;
+    wire RegisterStall = StallA || StallB;
+    wire RegisterStallBufferTrigger = (Mem_Write_En && clk_en) || (DirtyBitTrigger && clk_en) || sync_rst;
+    wire NextRegisterStallBuffer = RegisterStall && ~sync_rst;
+    always_ff @(posedge clk) begin
+        if (RegisterStallBufferTrigger) begin
+            RegisterStallBuffer <= NextRegisterStallBuffer;
+        end
+    end
+
+    assign RegistersSync = DirtyBitOutVector == 0;
+    assign RegisterStallOut = RegisterStall || RegisterStallBuffer;
 
     // Read A decoder
     // assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;

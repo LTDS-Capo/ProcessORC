@@ -1,0 +1,138 @@
+//                                                                            //
+    //  Clock Conf Addr = 384-391
+    //                  >  [13:0] - clk division (4x)
+    //                  > [15:16] - clk source (4x)
+    //       Timer Addr = 392-395
+    //                  > [26:0] Wait time
+    //                  >   [27] PreScaler
+    //                      > - 0 : 1x
+    //                      > - 1 : 32x
+    //                  > [30:28] Timer Select
+    //                  >    [31] Command
+    //                      > - 0 : Clear(Store)/Check(Load)
+    //                      > - 1 : Set(Store)/Wait(Load)
+    // GPIO MemMap Addr = 396-397 (Can upgrade with more commands if I check Load/Store)
+    //                  > Pulse of Length 0 Selects clock.
+    //                  > GPIO - In, Out, OutEn
+    //                  >>> NonPulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command
+    //                          > - 0 : WriteBit
+    //                          > - 1 : WriteByte
+    //                          > - 2 : ClearBit
+    //                          > - 3 : ReadStatus
+    //                          > - 4 : ReadPin
+    //                          > - 5 : ReadStatusByte
+    //                          > - 6 : ReadPinByte
+    //                          > - 7 : PulseBit         // Used if Pulse Length != 0
+    //                          > - 7 : Configure Clocks // Used if Pulse Length == 0
+    //                          >   [9:8] *Ignore*
+    //                          >   [7:1] WriteByteValue/*Ignore*
+    //                          >     [0] WriteByteValue/WriteBitValue/*Ignore*
+    //                  >>> Pulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - NOT 10'h000
+    //                  >>> Configure Clocks
+    //                      > [15:13] Clock Select
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - 10'h000
+//                                                                            //
+// Registers
+    // r0 - ZR
+    // r1 - > GPIO Base Pointer (GPOINTER)
+    // r2 - Step Counter (COUNT)
+    // r3 - Counter Mask (MASK)
+    // r4 - Fib 0 (FIB0)
+    // r5 - Fib 1 (FIB1)
+    // r6 - GPIO Working Register
+    // r7 - Timer Lower (TLOWER)
+    // r8 - Timer Upper (TUPPER)
+    // r9 - > Timer Base Pointer (TPOINTER)
+    // rA - GPIO Command Upper
+    // rB - GPIO Command Mask
+    // rC - 
+    // rD - *Call Pointer
+    // rE - 
+    // rF - *Return Pointer*
+//                                                                            //
+
+:FUNCTION: GPIO_FibTest
+    :PARAMETERS:
+        GPIO_IO_BASE = 'd396
+        TIMER_IO_BASE = 'd392
+    :ENDPARAMETERS:
+
+    :ALIAS: // (This section is just an example for now)
+        // TODO: Allow memory address and register aliasing
+        r1    > GPOINTER
+        r2    > COUNT
+        r3    > MASK
+        r4    > FIB0
+        r5    > FIB1
+        r7    > TLOWER
+        r8    > TUPPER
+        r9    > TPOINTER
+        rA    > TWAIT
+//        'd384 > IOBASE (This is just an example)
+    :ENDALIAS:
+
+    :DATA:
+        // Do Not Need Data
+    :ENDDATA:
+
+    :INSTRUCTIONS:
+        // Defaults to GPIO using the sys_clk
+        :PARAMLOAD:
+        LEI r1 GPIO_IO_BASE  // D18C - Load GPIO Base Pointer
+        LEI r9 TIMER_IO_BASE // D988 - Load Timer Base Pointer
+        :ENDPARAMLOAD:
+        MOV r2 r0            // 0270 - Clear Counter
+        MOV r4 r0            // 0470 - Clear Fib 0
+        LLI r5 'd1           // C505 - Set Fib 1
+        LLI r7 'h20          // C720 - Set TLOWER to BC20 (lower 16 bits of 12,500,000)
+        LUI r7 'hBC          // E7BC - Set TLOWER to BC20 (lower 16 bits of 12,500,000)
+        LLI r8 'hBE          // C8BE - Set TUPPER to 80BE (Set/Wait command, Timer 0, Upper 8 bits of 12,500,000)
+        LUI r8 'h80          // C880 - Set TUPPER to 80BE (Set/Wait command, Timer 0, Upper 8 bits of 12,500,000)
+        STW r7 r9            // 3759 - Store TLOWER to TIME_IO_BASE
+        INC r9 r9            // 0919 - INC TIME_IO_BASE to Upper Timer Config Buffer
+        MOV rA r0            // 0A70 - Set GPIO Command Upper (IO Addr 0, WriteByte('h40))
+        LUI rA 'h04          // EA04 - Set GPIO Command Upper (IO Addr 0, WriteByte('h40))
+        LLI rB 'hFF          // CBFF - Set GPIO Command Mask
+        :LOOP_START
+        // Display Counter [Starts at 0]
+        MOV r6 rB            // 067B - Move Command Mask to Working Register
+        AND r6 r2            // 0642 - Apply Mask to Counter
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
+        STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
+        INC r2 r2            // 0212 - Increment Count
+        CAL TIMER_WAIT       // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        // First Fib
+        MOV r6 rB            // 067B - Move Command Mask to Working Register
+        AND r6 r4            // 0644 - Apply Mask to Fib 0
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
+        STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
+        ADD r4 r5            // 0212 - Itterate Fib 0
+        CAL TIMER_WAIT       // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        // Display Counter
+        MOV r6 rB            // 067B - Move Command Mask to Working Register
+        AND r6 r2            // 0642 - Apply Mask to Counter
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
+        STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
+        INC r2 r2            // 0212 - Increment Count
+        CAL TIMER_WAIT       // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        // Second Fib
+        MOV r6 rB            // 067B - Move Command Mask to Working Register
+        AND r6 r5            // 0645 - Apply Mask to Fib 0
+        IOR r6 rA            // 066A - Append Command Upper to Masked Counter
+        STW r6 r1            // 3651 - Store GPIO Command to GPIO Base Pointer (GPIO Addr 0, WriteByte('h40))
+        ADD r5 r4            // 0212 - Itterate Fib 1
+        CAL TIMER_WAIT       // 90[] - Aliased (LEI rD :TIMER_WAIT, JLR r0 rD) or (JLI r0 [Relative to :TIMER_WAIT])
+        BZI r0 LOOP_START    // B0[] - Loop
+        :TIMER_WAIT 
+        STW r8 r9            // 3859 - Store Timer Commmand Upper (Set Timer 0 to 12,500,000)
+        LDW rE r9            // 3E19 - Load Timer Command Upper (Wait Timer 0)
+        MOV r0 rE            // 007E - Wait for rE Dirty Bit to clear
+        RET                  // A00F - Aliased BZR r0 r15
+    :ENDINSTRUCTIONS:
+:ENDFUNCTION:

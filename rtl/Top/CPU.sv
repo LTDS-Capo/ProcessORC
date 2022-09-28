@@ -5,19 +5,35 @@ module CPU #(
     input clk_en,
     input sync_rst,
 
+    // Control and Status
     input  SystemEn,
-    output HaltOut, // TODO:
+    output HaltOut,
+
+    // Memory Flashing
+    input                    InstFlashEn,
+    input                    DataFlashEn,
+    input              [9:0] FlashAddr,
+    input [DATABITWIDTH-1:0] FlashData,
+
+
+    // IO Out Handshake
+    output                    IOOutACK,
+    input                     IOOutREQ,
+    output              [3:0] IOMinorOpcode,
+    output [DATABITWIDTH-1:0] IOOutAddress,
+    output [DATABITWIDTH-1:0] IOOutData,
+    output              [3:0] IOOutDestReg,
+
+    // IO In Handshake
+    input                     IOInACK,
+    output                    IOInREQ,
+    input               [3:0] IOInDestReg,
+    input  [DATABITWIDTH-1:0] IOInData,
 
     // Test Outputs
     output [DATABITWIDTH-1:0] RegisterWriteData_OUT,
     output                    RegisterWriteEn_OUT,
-    output              [3:0] RegisterWriteAddr_OUT
-
-
-
-    // IO Out Handshake
-
-    // IO In Handshake
+    output              [3:0] RegisterWriteAddr_OUT    
 );
     localparam REGISTERCOUNT = 16;
     localparam REGADDRBITWIDTH = (REGISTERCOUNT == 1) ? 1 : $clog2(REGISTERCOUNT);
@@ -34,15 +50,13 @@ module CPU #(
     assign RegisterWriteEn_OUT = Write_En;
     assign RegisterWriteAddr_OUT = Write_Address;
 
-    assign HaltOut = 1'b0;
-
 
     // Debug output
         always_ff @(posedge clk) begin
             // $display("CPU - WBSource:AAddr  - %0h:%0h", WritebackSource, RegAAddr);
-            // $display("CPU - Minor:DataA:B   - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
+            $display("CPU - Minor:DataA:B   - %0h:%0h:%0h", s2_MinorOpcode, s2_Data_A, s2_Data_B);
             // $display("CPU - WBEn:Addr:Src   - %0b:%0h:%0h", WBMux_RegAWriteEn, WBMux_RegWriteAddr, WBMux_WritebackSource);
-            // $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", Write_En, Write_Address, Write_Data);
+            $display("CPU - RegEn:Addr:Data - %0b:%0h:%0h", Write_En, Write_Address, Write_Data);
             // $display("CPU - DecodedImm      - %0h", ImmediateOut);
             // $display("CPU - ImmBDataIn:ImEn     - %0h:%0b", BDataIn, ImmediateEn);
             // $display("CPU - ImmADataIn:UpEn - %0h:%0b", ADataIn, UpperImmediateEn);
@@ -75,10 +89,19 @@ module CPU #(
         // Instruction ROM
             wire [15:0] InstructionAddress = InstructionAddrOut[15:0];
             wire [15:0] s0_InstructionOut;
-            InstructionROM InstROM (
-                .InstructionAddress(InstructionAddress),
-                .InstructionOut    (s0_InstructionOut)
+            InstructionMemory InstMem (
+                .clk          (clk),
+                .clk_en       (clk_en),
+                .FlashEn      (InstFlashEn),
+                .FlashAddr    (FlashAddr),
+                .FlashData    (FlashData),
+                .ReadAddressIn(InstructionAddress),
+                .DataOut      (s0_InstructionOut)
             );
+            // InstructionROM InstROM (
+            //     .InstructionAddress(InstructionAddress),
+            //     .InstructionOut    (s0_InstructionOut)
+            // );
         //
 
         // Instruction Valid Generation
@@ -125,8 +148,11 @@ module CPU #(
             wire                       RegBReadEn;
             wire [REGADDRBITWIDTH-1:0] RegBAddr;
             wire                       BranchStall;
+            wire                       s1_RelativeEn;
+            wire    [DATABITWIDTH-1:0] s1_BranchOffset;
             wire                       JumpEn;
             wire                       s1_JumpAndLinkEn;
+            wire                       HaltEn;
             InstructionDecoder #(
                 .DATABITWIDTH(DATABITWIDTH)
             ) InstDecoder (
@@ -146,8 +172,11 @@ module CPU #(
                 .RegBReadEn          (RegBReadEn),
                 .RegBAddr            (RegBAddr),
                 .BranchStall         (BranchStall),
+                .RelativeEn          (s1_RelativeEn),
+                .BranchOffset        (s1_BranchOffset),
                 .JumpEn              (JumpEn),
-                .JumpAndLinkEn       (s1_JumpAndLinkEn)
+                .JumpAndLinkEn       (s1_JumpAndLinkEn),
+                .HaltEn              (HaltEn)
             );
         //
 
@@ -156,6 +185,7 @@ module CPU #(
             wire BranchStallIn = BranchStall;
             wire RegisterStallIn = RegisterStall;
             wire IssueCongestionStallIn = IssueCongestionStallOut;
+            wire Halted;
             wire StallEn;
             StallControl StallCtl (
                 .clk                   (clk),
@@ -165,6 +195,8 @@ module CPU #(
                 .BranchStallIn         (BranchStallIn),
                 .RegisterStallIn       (RegisterStallIn),
                 .IssueCongestionStallIn(IssueCongestionStallIn),
+                .HaltStallIn           (HaltEn),
+                .Halted                (Halted), 
                 .StallEn               (StallEn)
             );
         //
@@ -209,6 +241,7 @@ module CPU #(
                 .RegistersSync    (RegistersSync),
                 .RegisterStallOut (RegisterStall)
             );
+            assign HaltOut = RegistersSync && StallEn && Halted;
         //
 
         // Forwarding (Ready For Testing)
@@ -272,7 +305,6 @@ module CPU #(
             wire                 [3:0] MinorOpcode = MinorOpcodeOut;
             wire                 [4:0] FunctionalUnitEnableIn = FunctionalUnitEnable;
             wire                 [1:0] WriteBackSourceIn = WritebackSource;
-            wire                       Issue_RegAWriteEnIn = RegAWriteEn;
             wire                       WritebackEnIn = RegAWriteEn;
             wire [REGADDRBITWIDTH-1:0] WritebackRegAddrIn = RegAAddr;
             wire    [DATABITWIDTH-1:0] RegADataIn = FwdADataOut;
@@ -299,7 +331,6 @@ module CPU #(
                 .MinorOpcode            (MinorOpcode),
                 .FunctionalUnitEnable   (FunctionalUnitEnableIn),
                 .WriteBackSourceIn      (WriteBackSourceIn),
-                .RegAWriteEnIn          (Issue_RegAWriteEnIn),
                 .WritebackEnIn          (WritebackEnIn),
                 .WritebackRegAddr       (WritebackRegAddrIn),
                 .RegADataIn             (RegADataIn),
@@ -320,11 +351,11 @@ module CPU #(
         //
 
         // Pipeline Buffer - Stage 1 (Ready For Testing)
-            localparam S1BUFFERINBITWIDTH_FUE = 3;
+            localparam S1BUFFERINBITWIDTH_FUE = DATABITWIDTH + 4;
             localparam S1BUFFERINBITWIDTH_META = (DATABITWIDTH * 2) + 4;
             localparam S1BUFFERINBITWIDTH_WRITEBACK = REGADDRBITWIDTH + 4;
 
-            wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
+            wire [S1BUFFERINBITWIDTH_FUE-1:0]s1_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable, s1_RelativeEn, s1_BranchOffset};
             wire [S1BUFFERINBITWIDTH_META-1:0]s1_MetaDataIssue = {s1_MinorOpcode, s1_Data_InA, s1_Data_InB};
             wire [S1BUFFERINBITWIDTH_WRITEBACK-1:0] s1_RegWriteIssue = {s1_JumpAndLinkEn, s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
 
@@ -381,9 +412,11 @@ module CPU #(
             // s2_FunctionalUnitEnable = {s1_BranchEn, s1_ALU0_Enable, s1_ALU1_Enable};
             // s2_MetaDataIssue = {s1_MinorOpcode, s1_Data_A, s1_Data_B};
             // s2_RegWriteIssue = {s1_RegWriteEn, s1_WriteBackSourceOut, s1_RegWriteAddrOut};
-            wire s2_BranchEn = s2_FunctionalUnitEnable[2];
-            wire s2_ALU0_Enable = s2_FunctionalUnitEnable[1];
-            wire s2_ALU1_Enable = s2_FunctionalUnitEnable[0];
+            wire                    s2_BranchEn = s2_FunctionalUnitEnable[DATABITWIDTH+3];
+            wire                    s2_ALU0_Enable = s2_FunctionalUnitEnable[DATABITWIDTH+2];
+            wire                    s2_ALU1_Enable = s2_FunctionalUnitEnable[DATABITWIDTH+1];
+            wire                    s2_RelativeEn = s2_FunctionalUnitEnable[DATABITWIDTH];
+            wire [DATABITWIDTH-1:0] s2_BranchOffset = s2_FunctionalUnitEnable[DATABITWIDTH-1:0];
 
             wire              [3:0] s2_MinorOpcode = s2_MetaDataIssue[((DATABITWIDTH*2)+4)-1:(DATABITWIDTH*2)];
             wire [DATABITWIDTH-1:0] s2_Data_A = s2_MetaDataIssue[(DATABITWIDTH*2)-1:DATABITWIDTH];
@@ -407,7 +440,7 @@ module CPU #(
             wire [DATABITWIDTH-1:0] InstructionAddrOut;
             wire [DATABITWIDTH-1:0] JumpAndLinkAddrOut;
             ProgramCounter #(
-                .DATABITWIDTH(16)
+                .DATABITWIDTH(DATABITWIDTH)
             ) PC (
                 .clk               (clk),
                 .clk_en            (clk_en),
@@ -415,9 +448,13 @@ module CPU #(
                 .PCEn              (PCEn),
                 .StallEn           (PC_StallEn),
                 .BranchEn          (BranchEn),
+                .RelativeEn        (s2_RelativeEn),
+                .BranchOffset      (s2_BranchOffset),
                 .ComparisonValue   (ComparisonValue),
                 .BranchDest        (BranchDest),
                 .JumpEn            (PC_JumpEn),
+                .JumpRelativeEn    (s1_RelativeEn),
+                .JumpOffset        (s1_BranchOffset),
                 .JumpDest          (PC_JumpDest),
                 .InstructionAddrOut(InstructionAddrOut),
                 .JumpAndLinkAddrOut(JumpAndLinkAddrOut)
@@ -498,12 +535,6 @@ module CPU #(
             wire     [DATABITWIDTH-1:0] s2_LoadStore_MemoryAddress = s1_LoadStoreFIFO_dOUT[S2LSUMAUPPERLIMIT-1:S2LSUSVUPPERLIMIT];
             wire     [DATABITWIDTH-1:0] s2_LoadStore_StoreValue = s1_LoadStoreFIFO_dOUT[S2LSUSVUPPERLIMIT-1:REGADDRBITWIDTH];
             wire  [REGADDRBITWIDTH-1:0] s2_LoadStore_DestinationRegister = s1_LoadStoreFIFO_dOUT[REGADDRBITWIDTH-1:0];
-            wire                       IOManager_REQ = 1'b0;
-            wire                       IOManager_ACK;
-            wire                 [3:0] IOManager_MinorOpcode;
-            wire    [DATABITWIDTH-1:0] IOManager_MemoryAddress;
-            wire    [DATABITWIDTH-1:0] IOManager_StoreValue;
-            wire [REGADDRBITWIDTH-1:0] IOManager_DestinationRegister;
             wire                       Cache_REQ = 1'b0;
             wire                       Cache_ACK;
             wire                 [3:0] Cache_MinorOpcode;
@@ -529,12 +560,12 @@ module CPU #(
                 .LoadStore_MemoryAddress        (s2_LoadStore_MemoryAddress),
                 .LoadStore_StoreValue           (s2_LoadStore_StoreValue),
                 .LoadStore_DestinationRegister  (s2_LoadStore_DestinationRegister),
-                .IOManager_REQ                  (IOManager_REQ),
-                .IOManager_ACK                  (IOManager_ACK),
-                .IOManager_MinorOpcode          (IOManager_MinorOpcode),
-                .IOManager_MemoryAddress        (IOManager_MemoryAddress),
-                .IOManager_StoreValue           (IOManager_StoreValue),
-                .IOManager_DestinationRegister  (IOManager_DestinationRegister),
+                .IOManager_REQ                  (IOOutREQ),
+                .IOManager_ACK                  (IOOutACK),
+                .IOManager_MinorOpcode          (IOMinorOpcode),
+                .IOManager_MemoryAddress        (IOOutAddress),
+                .IOManager_StoreValue           (IOOutData),
+                .IOManager_DestinationRegister  (IOOutDestReg),
                 .Cache_REQ                      (Cache_REQ),
                 .Cache_ACK                      (Cache_ACK),
                 .Cache_MinorOpcode              (Cache_MinorOpcode),
@@ -568,6 +599,9 @@ module CPU #(
             ) FixedMem (
                 .clk            (clk),
                 .clk_en         (clk_en),
+                .FlashEn        (DataFlashEn),
+                .FlashAddr      (FlashAddr),
+                .FlashData      (FlashData),
                 .LoadStore_REQ  (FixedMem_LoadStore_REQ),
                 .LoadStore_ACK  (FixedMem_LoadStore_ACK),
                 .MinorOpcodeIn  (FixedMem_MinorOpcodeIn),
@@ -587,11 +621,6 @@ module CPU #(
     // In:
     // Out:
         // Cache Controller
-            // TODO:
-
-        //
-
-        // IO Manager
             // TODO:
 
         //
@@ -644,17 +673,17 @@ module CPU #(
             assign                            MemWritebackACK[MEMWB_COMPLEXALUPORT] = 1'b0;
             assign                            MemWritebackACK[MEMWB_FIXEDMEMPORT] = s3_FixedMemoryFIFO_dOutACK;
             assign                            MemWritebackACK[MEMWB_CACHEPORT] = 1'b0;
-            assign                            MemWritebackACK[MEMWB_IOPORT] = 1'b0;
+            assign                            MemWritebackACK[MEMWB_IOPORT] = IOInACK;
             wire   [MEMWB_INPUTPORTCOUNT-1:0] [DATABITWIDTH-1:0] MemWritebackDataIn;
             assign                            MemWritebackDataIn[MEMWB_COMPLEXALUPORT] = '0;
             assign                            MemWritebackDataIn[MEMWB_FIXEDMEMPORT] = s3_FixedMemory_dOut;
             assign                            MemWritebackDataIn[MEMWB_CACHEPORT] = '0;
-            assign                            MemWritebackDataIn[MEMWB_IOPORT] = '0;
+            assign                            MemWritebackDataIn[MEMWB_IOPORT] = IOInData;
             wire   [MEMWB_INPUTPORTCOUNT-1:0] [REGADDRBITWIDTH-1:0] MemWritebackAddrIn;
             assign                            MemWritebackAddrIn[MEMWB_COMPLEXALUPORT] = '0;
             assign                            MemWritebackAddrIn[MEMWB_FIXEDMEMPORT] = s3_FixedMemory_AddrOut;
             assign                            MemWritebackAddrIn[MEMWB_CACHEPORT] = '0;
-            assign                            MemWritebackAddrIn[MEMWB_IOPORT] = '0;
+            assign                            MemWritebackAddrIn[MEMWB_IOPORT] = IOInDestReg;
             wire                              MemWBMux_RegWriteEn;
             wire           [DATABITWIDTH-1:0] MemWBMux_RegWriteData;
             wire        [REGADDRBITWIDTH-1:0] MemWBMux_RegWriteAddr;
@@ -675,6 +704,7 @@ module CPU #(
                 .RegWriteData      (MemWBMux_RegWriteData),
                 .RegWriteAddr      (MemWBMux_RegWriteAddr)
             );
+            assign IOInREQ = MemWritebackREQ[MEMWB_IOPORT];
         //
     //
 

@@ -27,7 +27,7 @@ module MemWritebackMux #(
         .clk          (clk),
         .clk_en       (clk_en),
         .sync_rst     (sync_rst),
-        .PortACKVector(MemWritebackACK),
+        .PortACKVector(PortACKVector),
         .PortSelection(PortSelection)
     );
 
