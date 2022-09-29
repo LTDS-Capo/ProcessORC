@@ -14,5 +14,7 @@
 !*.qpf
 !*.tcl
 !*.stp
+!*.qsf
+!*.qws
 !*.sdc
 !.gitignore
