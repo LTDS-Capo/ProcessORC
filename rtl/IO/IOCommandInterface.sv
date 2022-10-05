@@ -47,7 +47,7 @@ module IOCommandInterface #(
     // wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
     wire CommandStoreEn = MinorOpcodeIn[2] && ~MinorOpcodeIn[3];
     // wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~sync_rst) || (CommandInACK && CommandAtomicLoadEn && ~sync_rst) || (CommandInACK && CommandStatusLoadEn && ~sync_rst);
-    wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~sync_rst) || (CommandInACK && ~CommandStoreEn && ~sync_rst);
+    wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~Active && ~sync_rst) || (CommandInACK && ~CommandStoreEn && ~Active && ~sync_rst);
     always_ff @(posedge clk) begin
         if (ActiveTrigger) begin
             Active <= NextActive;

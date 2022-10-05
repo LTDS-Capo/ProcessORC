@@ -61,7 +61,8 @@ module IOClkSelectionBuffer (
                 default: target_clk_Tmp = divided_clks[0]; // Default is also case 0
             endcase
         end
-        assign target_clk = target_clk_Tmp;
+        // assign target_clk = target_clk_Tmp;
+        assign target_clk = sys_clk; // Temporarily disable everything here
     //
 
 endmodule

@@ -18,6 +18,7 @@ module FlashROM_Instruction (
             10'h008 : TempValue = 16'h3411;
             10'h009 : TempValue = 16'h0074;
             10'h00A : TempValue = 16'hB3FD;
+            // 10'h00A : TempValue = 16'hB3FC;
 
             // GPIO Fib Test
             // 10'h000 : TempValue = 16'hD18C;

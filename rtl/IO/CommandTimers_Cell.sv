@@ -50,7 +50,7 @@ module CommandTimers_Cell #(
     // Wait Buffer
         reg  WaitHoldBuffer;
         wire WaitHoldBufferTrigger = (WaitACK && TimerOutREQ && TimerOutACK && clk_en) || (~WaitHoldBuffer && Active && TimerWait && TimerInREQ && TimerInACK) || sync_rst;
-        wire NextWaitHoldBuffer = TimerWait && ~sync_rst;
+        wire NextWaitHoldBuffer = ~WaitHoldBuffer && Active && TimerWait && ~sync_rst;
         always_ff @(posedge clk) begin
             if (WaitHoldBufferTrigger) begin
                 WaitHoldBuffer <= NextWaitHoldBuffer;
@@ -58,7 +58,7 @@ module CommandTimers_Cell #(
         end
         reg  WaitACK;
         wire WaitACKTrigger = (WaitACK && TimerOutREQ && TimerOutACK && clk_en) || (TimerElapsed && clk_en) || (~Active && TimerWait && TimerInREQ && TimerInACK)|| sync_rst;
-        wire NextWaitACK = WaitHoldBuffer && ~WaitACK && ~sync_rst;
+        wire NextWaitACK = (WaitHoldBuffer || ~Active) && ~WaitACK && ~sync_rst;
         always_ff @(posedge clk) begin
             if (WaitACKTrigger) begin
                 WaitACK <= NextWaitACK;
@@ -115,6 +115,7 @@ module CommandTimers_Cell #(
     // Output Assignments
         // assign TimerInREQ = (~WaitHoldBuffer && TimerWait) ? TimerOutREQ : 1'b1;
         assign TimerInREQ =  ~((CheckACK && TimerCheck) || (WaitACK && TimerWait));
+        // assign TimerInREQ =  ~((CheckACK && TimerCheck) || (WaitACK && TimerWait)) || (~Active && TimerWait);
 
         assign TimerOutACK = WaitACK || CheckACK;
         assign TimerDataOut = WaitACK ? '0 : CheckDataOut;

@@ -18,7 +18,7 @@ module Quartus_TopLevel (
     PLL ClockGeneration (
         .refclk  (PLL_refclk),  
         .rst     (~async_rst),     
-        .outclk_0(sys_clk),  // 50mhz
+        .outclk_0(sys_clk),  // 50mhz (dropped to 45mhz until the pipeline is optimized)
         .outclk_1(src_clk0), // 25mhz
         .outclk_2(src_clk1), // 10mhz
         .outclk_3(src_clk2), // 2p5mhz

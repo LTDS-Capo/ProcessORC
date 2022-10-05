@@ -81,7 +81,8 @@ module CommandController #(
 
     // Clock Selection
         wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB];
-        wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK;
+        // wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK;
+        wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK_Tmp;
         wire [2:0] ClockSelect = LocalCommandData[CLOCKCOMMAND_CLKSELLSB+2:CLOCKCOMMAND_CLKSELLSB];
         wire       target_clk;
         IOClkSelectionBuffer ClockSelection (

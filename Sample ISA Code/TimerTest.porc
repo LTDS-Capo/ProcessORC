@@ -67,4 +67,4 @@
  7. STW r3 r1    // 3351 - Store Timer Command Upper [Timer Set]
  8. LDW r4 r1    // 3411 - Load Timer Command Upper [Timer Wait]
  9. MOV r0 r4    // 0074 - Wait for r4 to clear
-10. BZI r0 -3    // B3FD - Jump back to Line 8 [negative 3]
+10. BZI r0 -4    // B3FC - Jump back to Line 8 [negative 3]
