@@ -24,8 +24,9 @@ module ProgramCounter #(
 );
 
     reg    [DATABITWIDTH-1:0] ProgramCounter;
-    wire                      AEqualsZero = ComparisonValue == 0;
+    wire                      AEqualsZero = ComparisonValue == '0;
     wire                      ProgramCounterTrigger = (JumpEn && PCEn && ~StallEn && clk_en) || (AEqualsZero && BranchEn && PCEn && ~StallEn && clk_en) || (~BranchEn && PCEn && ~StallEn && clk_en) || sync_rst;
+    // wire                      ProgramCounterTrigger = (JumpEn && PCEn && ~StallEn && clk_en) || (AEqualsZero && BranchEn && PCEn && clk_en) || (~BranchEn && PCEn && ~StallEn && clk_en) || sync_rst;
     logic  [DATABITWIDTH-1:0] NextProgramCounter;
     wire   [DATABITWIDTH-1:0] ProgramCounterPlusOne = ProgramCounter + 1;
     wire   [1:0] NextPCCondition;
@@ -34,8 +35,8 @@ module ProgramCounter #(
     always_comb begin : NextRegMux
         case (NextPCCondition)
             2'b01  : NextProgramCounter = ProgramCounterPlusOne;
-            2'b10  : NextProgramCounter = JumpRelativeEn ? (ProgramCounter + JumpDest) : (JumpDest + JumpOffset);
-            2'b11  : NextProgramCounter = RelativeEn ? (ProgramCounter + BranchDest) : (BranchDest + BranchOffset);
+            2'b10  : NextProgramCounter = JumpRelativeEn ? (ProgramCounter + JumpDest - 1) : (JumpDest + JumpOffset);
+            2'b11  : NextProgramCounter = RelativeEn ? (ProgramCounter + BranchDest - 2) : (BranchDest + BranchOffset);
             default: NextProgramCounter = '0; // Default is also case 0
         endcase
     end
@@ -46,7 +47,8 @@ module ProgramCounter #(
     end
     
     assign InstructionAddrOut = ProgramCounter;
-    assign JumpAndLinkAddrOut = ProgramCounter - 1;
+    // assign JumpAndLinkAddrOut = ProgramCounter - 1;
+    assign JumpAndLinkAddrOut = ProgramCounter; // Removed the -1 since we have a delay slot
 
     // // Debug
     //     always_ff @(posedge clk) begin

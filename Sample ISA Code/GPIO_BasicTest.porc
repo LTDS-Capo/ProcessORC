@@ -1,0 +1,103 @@
+//                                                                            //
+    //  Clock Conf Addr = 384-391
+    //                  >  [13:0] - clk division (4x)
+    //                  > [15:16] - clk source (4x)
+    //       Timer Addr = 392-395
+    //                  > [26:0] Wait time
+    //                  >   [27] PreScaler
+    //                      > - 0 : 1x
+    //                      > - 1 : 32x
+    //                  > [30:28] Timer Select
+    //                  >    [31] Command
+    //                      > - 0 : Clear(Store)/Check(Load)
+    //                      > - 1 : Set(Store)/Wait(Load)
+    // GPIO MemMap Addr = 396-397 (Can upgrade with more commands if I check Load/Store)
+    //                  > Pulse of Length 0 Selects clock.
+    //                  > GPIO - In, Out, OutEn
+    //                  >>> NonPulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command
+    //                          > - 0 : WriteBit
+    //                          > - 1 : WriteByte
+    //                          > - 2 : ClearBit
+    //                          > - 3 : ReadStatus
+    //                          > - 4 : ReadPin
+    //                          > - 5 : ReadStatusByte
+    //                          > - 6 : ReadPinByte
+    //                          > - 7 : PulseBit         // Used if Pulse Length != 0
+    //                          > - 7 : Configure Clocks // Used if Pulse Length == 0
+    //                          >   [9:8] *Ignore*
+    //                          >   [7:1] WriteByteValue/*Ignore*
+    //                          >     [0] WriteByteValue/WriteBitValue/*Ignore*
+    //                  >>> Pulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - NOT 10'h000
+    //                  >>> Configure Clocks
+    //                      > [15:13] Clock Select
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - 10'h000
+//                                                                            //
+// Registers
+    // r0 - ZR
+    // r1 -  Base Address
+    // r2 -  Command Byte [1:0]
+    // r3 -  Command Byte [3:2]
+    // r4 -  
+    // r5 - 
+    // r6 - 
+    // r7 - 
+    // r8 - 
+    // r9 - 
+    // rA - 
+    // rB - 
+    // rC - 
+    // rD - 
+    // rE - 
+    // rF - *Return Pointer*
+//                                                                            //
+
+:FUNCTION: GPIO_FibTest
+    :PARAMETERS:
+
+    :ENDPARAMETERS:
+
+    :ALIAS: // (This section is just an example for now)
+        // TODO: Allow memory address and register aliasing
+//        r2    > COUNT  (This is just an example)
+//        'd384 > IOBASE (This is just an example)
+    :ENDALIAS:
+
+    :DATA:
+        
+    :ENDDATA:
+
+    :INSTRUCTIONS:
+        // Timer Prep
+        LEI r1 'd392 // D188 - Load Timer Base Address
+        LLI r2 'h20  // C220 - Load Timer Command Byte 0
+        LLI r3 'h00  // C300 - Load Timer Command Byte 2
+        LUI r3 'h80  // E380 - Load Timer Command Byte 3
+        STW r2 r1    // 3251 - Store Timer Command Lower [32 cycles]
+        INC r1 r1    // 0111 - Increment Timer Pointer
+        INC r1 r1    // 0111 - Increment Timer Pointer
+        // GPIO Prep
+        LEI r5 'd396 // D58C - GPIO Base Address
+        LLI r6 'h00  // C600 - GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]
+        LUI r6 'h04  // E604 - GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]
+        LLI r7 'hFF  // C7FF - GPIO Data Mask
+        // GPIO Loop
+        STW r6 r5    // 3655 - Submit a GPIO write
+        SLW r9 r5    // 39D5 - Read the most recent GPIO Command back out
+        INC rA r9    // 0A19 - Increment most recent command value
+        AND rA r7    // 0A07 - Apply value mask
+        MOV r6 rA    // 067A - Move Write Value to GPIO Command Lower
+        JLI r0 [+3]  // 9003 - Jump and Link to Timer Routine
+        LUI r6 'h04  // E604 - GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]
+        BZI r0 [-7]  // B3F9 - Jump to begining of GPIO loop
+        // Timer Set & Wait
+        STW r3 r1    // 3351 - Store Timer Command Upper [Timer Set]
+        LDW r4 r1    // 3411 - Load Timer Command Upper [Timer Wait]
+        MOV r0 r4    // 0074 - Wait for r4 to clear
+        RET          // A00F - Jump back to Line X [negative Y] 
+    :ENDINSTRUCTIONS:

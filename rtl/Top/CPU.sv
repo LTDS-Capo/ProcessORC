@@ -185,6 +185,7 @@ module CPU #(
             wire BranchStallIn = BranchStall;
             wire RegisterStallIn = RegisterStall;
             wire IssueCongestionStallIn = IssueCongestionStallOut;
+            wire BranchStallDisable;
             wire Halted;
             wire StallEn;
             StallControl StallCtl (
@@ -196,6 +197,7 @@ module CPU #(
                 .RegisterStallIn       (RegisterStallIn),
                 .IssueCongestionStallIn(IssueCongestionStallIn),
                 .HaltStallIn           (HaltEn),
+                .BranchStallDisable    (BranchStallDisable),
                 .Halted                (Halted), 
                 .StallEn               (StallEn)
             );
@@ -328,6 +330,9 @@ module CPU #(
                 .TAGBITWIDTH    (TAGBITWIDTH),
                 .REGADDRBITWIDTH(REGADDRBITWIDTH)
             ) InstIssue (
+                .clk                    (clk),
+                .clk_en                 (clk_en),
+                .sync_rst               (sync_rst),
                 .MinorOpcode            (MinorOpcode),
                 .FunctionalUnitEnable   (FunctionalUnitEnableIn),
                 .WriteBackSourceIn      (WriteBackSourceIn),
@@ -431,7 +436,7 @@ module CPU #(
 
         // Program Counter (Ready for testing)
             wire                    PCEn = SystemEn;
-            wire                    PC_StallEn = StallEn;
+            wire                    PC_StallEn = StallEn && ~BranchStallDisable;
             wire                    BranchEn = s2_BranchEn;
             wire [DATABITWIDTH-1:0] ComparisonValue = s2_Data_A;
             wire [DATABITWIDTH-1:0] BranchDest = s2_Data_B;

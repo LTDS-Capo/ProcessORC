@@ -20,7 +20,7 @@ module MemWritebackMux #(
 
     wire [INPUTPORTCOUNT-1:0] PortACKVector = MemWritebackACK;
     wire  [PORTADDRWIDTH-1:0] PortSelection;
-    RoundRobinPortPriority #(
+    RoundRobin #(
         .PORTCOUNT    (INPUTPORTCOUNT),
         .PORTADDRWIDTH(PORTADDRWIDTH)
     ) RRPortPriority (

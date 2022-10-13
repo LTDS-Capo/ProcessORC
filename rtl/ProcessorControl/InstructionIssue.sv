@@ -3,6 +3,10 @@ module InstructionIssue #(
     parameter TAGBITWIDTH = 6,
     parameter REGADDRBITWIDTH = 4
 )(
+    input clk,
+    input clk_en,
+    input sync_rst,
+
     // Instruction Input
     input                  [3:0] MinorOpcode,
     input                  [4:0] FunctionalUnitEnable,
@@ -59,9 +63,20 @@ module InstructionIssue #(
     assign RegWriteEn = WritebackEnIn;
 
     // Stall Flag
+    reg  CongestionStallBuffer;
+    wire CongestionStallBufferTrigger = (LoadStore_ACK && LoadStore_REQ && clk_en) || (LoadStore_ACK && ~LoadStore_REQ && clk_en) || sync_rst;
+    wire NextCongestionStallBuffer = ~LoadStore_REQ && ~sync_rst;
+    always_ff @(posedge clk) begin
+        if (CongestionStallBufferTrigger) begin
+            CongestionStallBuffer <= NextCongestionStallBuffer;
+        end
+    end
+    
     assign IssueCongestionStallOut = LoadStore_ACK && ~LoadStore_REQ;
+    
+
 
     // Load Store Unit Control
-    assign LoadStore_ACK = FunctionalUnitEnable[3];
+    assign LoadStore_ACK = FunctionalUnitEnable[3] || CongestionStallBuffer;
 
 endmodule

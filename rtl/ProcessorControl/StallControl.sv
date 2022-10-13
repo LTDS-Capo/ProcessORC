@@ -10,6 +10,7 @@ module StallControl (
     input  IssueCongestionStallIn,
     input  HaltStallIn,
 
+    output BranchStallDisable,
     output Halted,
     output StallEn
 );
@@ -32,6 +33,7 @@ module StallControl (
         end
     end
 
+    assign BranchStallDisable = BranchStallDelay;
     assign Halted = HaltCapture;
     assign StallEn = BranchStallDelay || RegisterStallIn || IssueCongestionStallIn || HaltStallIn || HaltCapture;
 

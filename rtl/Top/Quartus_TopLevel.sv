@@ -15,6 +15,8 @@ module Quartus_TopLevel (
     wire src_clk2;
     wire clk_en;
 
+    //replace timers with fixed speed clock for timers
+
     PLL ClockGeneration (
         .refclk  (PLL_refclk),  
         .rst     (~async_rst),     

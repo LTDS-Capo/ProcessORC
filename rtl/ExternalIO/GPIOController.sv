@@ -19,6 +19,7 @@ module GPIOController (
     output  [7:0] GPIO_DOut,
     output  [7:0] GPIO_DOutEn
 );
+
     // Pulse of Length 0 Selects clock.
     // GPIO (WriteBit[0], WriteByte[1], ClearBit[2], ReadStatus[3], ReadPin[4], ReadStatusByte[5], ReadPinByte[6], PulseBit(Length)[7]) - In, Out, OutEn
     // >> NonPulse
@@ -41,8 +42,9 @@ module GPIOController (
     logic [7:0] Command;
     always_comb begin
         Command = '0;
-        Command[IO_DataIn[12:10]] = (IO_CommandEn && IO_REQ);
+        Command[IO_DataIn[12:10]] = 1'b1;
     end
+    wire CommandValid = ((IO_CommandEn || IO_ResponseRequested) && IO_REQ);
 
     logic [7:0] CellDecoder;
     always_comb begin
@@ -55,9 +57,9 @@ module GPIOController (
     genvar CellIndex;
     generate
         for (CellIndex = 0; CellIndex < 8; CellIndex = CellIndex + 1) begin : GPIOCellGeneration
-            wire        Local_Set = (Command[0] && CellDecoder[CellIndex]) || Command[1];
-            wire        Local_Clear = Command[2] && CellDecoder[CellIndex];
-            wire        Local_PulseInit = Command[7] && CellDecoder[CellIndex];
+            wire        Local_Set = (Command[0] && CommandValid && CellDecoder[CellIndex]) || Command[1];
+            wire        Local_Clear = Command[2] && CommandValid && CellDecoder[CellIndex];
+            wire        Local_PulseInit = Command[7] && CommandValid && CellDecoder[CellIndex];
             logic [9:0] LocalDataIn;
             wire  [1:0] DataInCondition = {Command[7], Command[1]};
             always_comb begin : LocalDataInMux

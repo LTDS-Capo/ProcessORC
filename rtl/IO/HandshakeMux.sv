@@ -20,12 +20,13 @@ module HandshakeMux #(
 );
 
     wire  [PORTADDRWIDTH-1:0] PortSelection;
-    RoundRobinPortPriority #(
+    wire RoundRobinEnable = clk_en && OutputACK && OutputREQ;
+    RoundRobin #(
         .PORTCOUNT    (INPUTPORTCOUNT),
         .PORTADDRWIDTH(PORTADDRWIDTH)
     ) RRPortPriority (
         .clk          (clk),
-        .clk_en       (clk_en),
+        .clk_en       (RoundRobinEnable),
         .sync_rst     (sync_rst),
         .PortACKVector(InputACK),
         .PortSelection(PortSelection)
