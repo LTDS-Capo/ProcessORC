@@ -31,7 +31,7 @@ module FlashROM_Instruction (
             10'h006 : TempValue = 16'h0111; // Increment Timer Pointer
         // GPIO Prep
             10'h007 : TempValue = 16'hD58C; // GPIO Base Address
-            10'h008 : TempValue = 16'hC600; // GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]
+            10'h008 : TempValue = 16'hC655; // GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000] 55 for testing
             10'h009 : TempValue = 16'hE604; // GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]
             10'h00A : TempValue = 16'hC7FF; // GPIO Data Mask
         // GPIO Loop

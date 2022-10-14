@@ -45,6 +45,7 @@ module GPIO_Cell #(
         wire          PulseMSB = PulseCounter[10] && ~(PulseCounter[9:0] == 1);
         always_comb begin : PulseCounterMux
             case (NextPulseCondition)
+                2'b00  : NextPulseCounter = '0;
                 2'b01  : NextPulseCounter = {1'b1, LocalDataIn};
                 2'b10  : NextPulseCounter = {PulseMSB, NextPulseCountSub};
                 2'b11  : NextPulseCounter = {1'b1, LocalDataIn};
