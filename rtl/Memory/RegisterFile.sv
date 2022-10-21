@@ -94,7 +94,8 @@ module RegisterFile #(
 
     reg  RegisterStallBuffer;
     wire RegisterStall = StallA || StallB;
-    wire RegisterStallBufferTrigger = (Mem_Write_En && clk_en) || (DirtyBitTrigger && clk_en) || sync_rst;
+    // wire RegisterStallBufferTrigger = (Mem_Write_En && clk_en) || (DirtyBitTrigger && clk_en) || sync_rst;
+    wire RegisterStallBufferTrigger = (Mem_Write_En && clk_en) || (RegisterStall && clk_en) || sync_rst;
     wire NextRegisterStallBuffer = RegisterStall && ~sync_rst;
     always_ff @(posedge clk) begin
         if (RegisterStallBufferTrigger) begin

@@ -38,7 +38,7 @@ module FlashROM_Instruction (
             10'h00B : TempValue = 16'h3655; // Submit a GPIO write
             10'h00C : TempValue = 16'h39D5; // Read the most recent GPIO Command back out
             10'h00D : TempValue = 16'h0A19; // Increment most recent command value
-            10'h00E : TempValue = 16'h0A07; // Apply value mask
+            10'h00E : TempValue = 16'h0A47; // Apply value mask
             10'h00F : TempValue = 16'h067A; // Move Write Value to GPIO Command Lower
             10'h010 : TempValue = 16'h9004; // Jump and Link to Timer Routine
             10'h011 : TempValue = 16'hE604; // GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]

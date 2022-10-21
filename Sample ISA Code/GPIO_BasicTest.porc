@@ -90,7 +90,7 @@
         STW r6 r5    // 3655 - Submit a GPIO write
         SLW r9 r5    // 39D5 - Read the most recent GPIO Command back out
         INC rA r9    // 0A19 - Increment most recent command value
-        AND rA r7    // 0A07 - Apply value mask
+        AND rA r7    // 0A47 - Apply value mask
         MOV r6 rA    // 067A - Move Write Value to GPIO Command Lower
         JLI r0 [+3]  // 9003 - Jump and Link to Timer Routine
         LUI r6 'h04  // E604 - GPIO Write Byte Addr:0, Value 'hA6 [0000_01_00_00000000]
