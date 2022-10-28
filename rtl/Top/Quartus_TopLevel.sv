@@ -39,7 +39,7 @@ module Quartus_TopLevel (
         .GPIO_DIn   (GPIO_DIn),
         .GPIO_DOut  (GPIO_DOut),
         .GPIO_DOutEn(GPIO_DOutEn),
-        .CPU_Halted (CPU_Halted),
+        .CPU_Halted (CPU_Halted)
     );
 
 

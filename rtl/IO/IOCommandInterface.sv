@@ -43,11 +43,12 @@ module IOCommandInterface #(
             end
         endgenerate
     //
-    // wire CommandAtomicLoadEn = ~MinorOpcodeIn[2] && MinorOpcodeIn[3];
+    wire CommandAtomicLoadEn = MinorOpcodeIn[3] && ~MinorOpcodeIn[2];
     // wire CommandStatusLoadEn = MinorOpcodeIn[2] && MinorOpcodeIn[3];
-    wire CommandStoreEn = MinorOpcodeIn[2] && ~MinorOpcodeIn[3];
+    wire CommandStoreEn = ~MinorOpcodeIn[3] && MinorOpcodeIn[2];
     // wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~sync_rst) || (CommandInACK && CommandAtomicLoadEn && ~sync_rst) || (CommandInACK && CommandStatusLoadEn && ~sync_rst);
-    wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~Active && ~sync_rst) || (CommandInACK && ~CommandStoreEn && ~Active && ~sync_rst);
+    wire NextActive = (CommandInACK && CommandInREQ && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~sync_rst) || (CommandInACK && CommandInREQ && CommandAtomicLoadEn && ~sync_rst);
+    // wire NextActive = (CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~Active && ~sync_rst) || (CommandInACK && ~CommandStoreEn && ~Active && ~sync_rst);
     // wire NextActive = CommandInACK && WordEn[BUFFERCOUNT-1] && UpperByteEn && CommandStoreEn && ~Active && ~sync_rst;
     always_ff @(posedge clk) begin
         if (ActiveTrigger) begin
@@ -103,7 +104,7 @@ module IOCommandInterface #(
     generate
         for (BufferIndex = 0; BufferIndex < BUFFERCOUNT; BufferIndex = BufferIndex + 1) begin : BufferGeneration
             reg  [DATABITWIDTH-1:0] DataBuffer;
-            wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInREQ && CommandInACK && CommandStoreEn && clk_en) || sync_rst;
+            wire                    DataBufferTrigger = (WordEn[BufferIndex] && CommandInREQ && CommandInACK && CommandAtomicLoadEn && clk_en) || (WordEn[BufferIndex] && CommandInREQ && CommandInACK && CommandStoreEn && clk_en) || sync_rst;
             wire [DATABITWIDTH-1:0] NextDataBuffer = (sync_rst) ? '0 : NextDataBuffer_Tmp;
             always_ff @(posedge clk) begin
                 if (DataBufferTrigger) begin

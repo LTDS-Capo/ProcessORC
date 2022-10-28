@@ -106,18 +106,29 @@ module CPU #(
 
         // Instruction Valid Generation
             wire s0_InstructionValid = SystemEn && ~StallEn;
+
+            reg  StallDelayBuffer;
+            wire StallDelayBufferTrigger = clk_en || sync_rst;
+            wire NextStallDelayBuffer = RegisterStall && ~sync_rst;
+            always_ff @(posedge clk) begin
+                if (StallDelayBufferTrigger) begin
+                    StallDelayBuffer <= NextStallDelayBuffer;
+                end
+            end
         //
 
         // Pipeline Buffer - Stage 0
             reg  [16:0] Stage0Buffer;
-            wire        Stage0BufferTrigger = (SystemEn && clk_en) || sync_rst;
+            // wire        Stage0BufferTrigger = (SystemEn && clk_en) || sync_rst;
+            wire        Stage0BufferTrigger = (SystemEn && ~RegisterStall && ~StallDelayBuffer && clk_en) || sync_rst;
             wire [16:0] NextStage0Buffer = (sync_rst) ? 0 : {s0_InstructionValid, s0_InstructionOut};
             always_ff @(posedge clk) begin
                 if (Stage0BufferTrigger) begin
                     Stage0Buffer <= NextStage0Buffer;
                 end
             end
-            wire        s1_InstructionValid = Stage0Buffer[16];
+            // wire        s1_InstructionValid = (Stage0Buffer[16] && ~StallDelayBuffer) || (~Stage0Buffer[16] && StallDelayBuffer);
+            wire        s1_InstructionValid = (Stage0Buffer[16] && ~StallDelayBuffer);
             wire [15:0] s1_InstructionOut = Stage0Buffer[15:0];
         //
 
@@ -436,7 +447,7 @@ module CPU #(
 
         // Program Counter (Ready for testing)
             wire                    PCEn = SystemEn;
-            wire                    PC_StallEn = StallEn && ~BranchStallDisable;
+            wire                    PC_StallEn = (StallEn || StallDelayBuffer) && ~BranchStallDisable;
             wire                    BranchEn = s2_BranchEn;
             wire [DATABITWIDTH-1:0] ComparisonValue = s2_Data_A;
             wire [DATABITWIDTH-1:0] BranchDest = s2_Data_B;
@@ -501,7 +512,8 @@ module CPU #(
         //
 
         // Register Writeback Mux (Ready for testing)
-            wire                       WBMux_RegAWriteEn = s2_RegWriteEn;
+            // wire                       WBMux_RegAWriteEn = s2_RegWriteEn && ~(StallEn && ~BranchStallIn);
+            wire                       WBMux_RegAWriteEn = s2_RegWriteEn && ~RegisterStall;
             wire                       WBMux_JumpAndLinkEn = s2_JumpAndLinkEn;
             wire [REGADDRBITWIDTH-1:0] WBMux_RegWriteAddr = s2_RegWriteAddrOut;
             wire                 [1:0] WBMux_WritebackSource = s2_WriteBackSourceOut;

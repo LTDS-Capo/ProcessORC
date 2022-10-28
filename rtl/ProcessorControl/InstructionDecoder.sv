@@ -107,7 +107,8 @@ module InstructionDecoder #(
             default   : OperationBitVector = 0;
         endcase
     end
-    assign DirtyBitTrigger = OperationBitVector[0] && ~MinorOpcodeOut[3] && ~MinorOpcodeOut[2];
+    // assign DirtyBitTrigger = OperationBitVector[0] && ~MinorOpcodeOut[3] && ~MinorOpcodeOut[2];
+    assign DirtyBitTrigger = OperationBitVector[0] && (MinorOpcodeOut[3:2] != 2'b01);
     assign FunctionalUnitEnable = OperationBitVector[5:1];
     assign WritebackSource = OperationBitVector[7:6];
     assign ImmediateEn = OperationBitVector[8];

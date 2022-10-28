@@ -26,17 +26,30 @@ module IOManager_Test #(
     output [DATABITWIDTH-1:0] WritebackDataOut,
 
     output        GPIO_IO_Clk,
-    input         GPIO_IO_ACK,
-    output        GPIO_IO_REQ,
-    output        GPIO_IO_CommandEn,
-    output        GPIO_IO_ResponseRequested,
-    input         GPIO_IO_CommandResponse,
-    input         GPIO_IO_RegResponseFlag, // Force a Writeback handshake after updating local buffer
-    input         GPIO_IO_MemResponseFlag, // Only update local buffer
-    input   [3:0] GPIO_IO_DestRegIn,
-    input  [15:0] GPIO_IO_DataIn,
-    output  [3:0] GPIO_IO_DestRegOut,
-    output [15:0] GPIO_IO_DataOut
+    // input         GPIO_IO_ACK,
+    // output        GPIO_IO_REQ,
+    // output        GPIO_IO_CommandEn,
+    // output        GPIO_IO_ResponseRequested,
+    // input         GPIO_IO_CommandResponse,
+    // input         GPIO_IO_RegResponseFlag, // Force a Writeback handshake after updating local buffer
+    // input         GPIO_IO_MemResponseFlag, // Only update local buffer
+    // input   [3:0] GPIO_IO_DestRegIn,
+    // input  [15:0] GPIO_IO_DataIn,
+    // output  [3:0] GPIO_IO_DestRegOut,
+    // output [15:0] GPIO_IO_DataOut
+
+    output        GPIO_IOOut_ACK,
+    input         GPIO_IOOut_REQ,
+    output        GPIO_IOOut_ResponseRequested,
+    output  [3:0] GPIO_IOOut_DestReg,
+    output [15:0] GPIO_IOOut_Data,
+
+    input         GPIO_IOIn_ACK,
+    output        GPIO_IOIn_REQ,
+    input         GPIO_IOIn_RegResponseFlag,
+    input         GPIO_IOIn_MemResponseFlag,
+    input   [3:0] GPIO_IOIn_DestReg,
+    input  [15:0] GPIO_IOIn_Data
 
 );
     
@@ -164,17 +177,29 @@ module IOManager_Test #(
                 .WritebackDestReg       (WritebackDestRegArray[GPIO_IO_INDEX]),
                 .WritebackDataOut       (WritebackDataOutArray[GPIO_IO_INDEX]),
                 .IOClk                  (GPIO_IO_Clk),
-                .IOACK                  (GPIO_IO_ACK),
-                .IOREQ                  (GPIO_IO_REQ),
-                .IOCommandEn            (GPIO_IO_CommandEn),
-                .IOResponseRequested    (GPIO_IO_ResponseRequested),
-                .IOCommandResponse      (GPIO_IO_CommandResponse),
-                .IORegResponseFlag      (GPIO_IO_RegResponseFlag),
-                .IOMemResponseFlag      (GPIO_IO_MemResponseFlag),
-                .IODestRegIn            (GPIO_IO_DestRegIn),
-                .IODataIn               (GPIO_IO_DataIn),
-                .IODestRegOut           (GPIO_IO_DestRegOut),
-                .IODataOut              (GPIO_IO_DataOut)
+                // .IOACK                  (GPIO_IO_ACK),
+                // .IOREQ                  (GPIO_IO_REQ),
+                // .IOCommandEn            (GPIO_IO_CommandEn),
+                // .IOResponseRequested    (GPIO_IO_ResponseRequested),
+                // .IOCommandResponse      (GPIO_IO_CommandResponse),
+                // .IORegResponseFlag      (GPIO_IO_RegResponseFlag),
+                // .IOMemResponseFlag      (GPIO_IO_MemResponseFlag),
+                // .IODestRegIn            (GPIO_IO_DestRegIn),
+                // .IODataIn               (GPIO_IO_DataIn),
+                // .IODestRegOut           (GPIO_IO_DestRegOut),
+                // .IODataOut              (GPIO_IO_DataOut)
+                .IOOut_ACK              (GPIO_IOOut_ACK),
+                .IOOut_REQ              (GPIO_IOOut_REQ),
+                .IOOut_ResponseRequested(GPIO_IOOut_ResponseRequested),
+                .IOOut_DestReg          (GPIO_IOOut_DestReg),
+                .IOOut_Data             (GPIO_IOOut_Data),
+                .IOIn_ACK               (GPIO_IOIn_ACK),
+                .IOIn_REQ               (GPIO_IOIn_REQ),
+                .IOIn_RegResponseFlag   (GPIO_IOIn_RegResponseFlag),
+                .IOIn_MemResponseFlag   (GPIO_IOIn_MemResponseFlag),
+                .IOIn_DestReg           (GPIO_IOIn_DestReg),
+                .IOIn_Data              (GPIO_IOIn_Data)
+
             );
 
 

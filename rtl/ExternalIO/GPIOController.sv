@@ -3,17 +3,31 @@ module GPIOController (
     input clk_en,
     input sync_rst,
 
-    output        IO_ACK,
-    input         IO_REQ,
-    input         IO_CommandEn,
-    input         IO_ResponseRequested,
-    output        IO_CommandResponse,
-    output        IO_RegResponseFlag,
-    output        IO_MemResponseFlag,
-    input   [3:0] IO_DestRegIn,
-    output  [3:0] IO_DestRegOut,
-    input  [15:0] IO_DataIn,
-    output [15:0] IO_DataOut,
+    // output        IO_ACK,
+    // input         IO_REQ,
+    // input         IO_CommandEn,
+    // input         IO_ResponseRequested,
+    // output        IO_CommandResponse,
+    // output        IO_RegResponseFlag,
+    // output        IO_MemResponseFlag,
+    // input   [3:0] IO_DestRegIn,
+    // output  [3:0] IO_DestRegOut,
+    // input  [15:0] IO_DataIn,
+    // output [15:0] IO_DataOut,
+
+    input         IOOut_ACK,
+    output        IOOut_REQ,
+    input         IOOut_ResponseRequested,
+    input   [3:0] IOOut_DestReg,
+    input  [15:0] IOOut_Data,
+
+    output        IOIn_ACK,
+    input         IOIn_REQ,
+    output        IOIn_RegResponseFlag,
+    output        IOIn_MemResponseFlag,
+    output  [3:0] IOIn_DestReg,
+    output [15:0] IOIn_Data, 
+
 
     input   [7:0] GPIO_DIn,
     output  [7:0] GPIO_DOut,
@@ -40,16 +54,18 @@ module GPIOController (
     // end
 
     logic [7:0] Command;
+    wire [2:0] GPIOOpcode = IOOut_Data[12:10];
     always_comb begin
         Command = '0;
-        Command[IO_DataIn[12:10]] = 1'b1;
+        Command[GPIOOpcode] = 1'b1;
     end
-    wire CommandValid = ((IO_CommandEn || IO_ResponseRequested) && IO_REQ);
+    // wire CommandValid = ((IO_CommandEn || IOOut_ResponseRequested) && IO_REQ);
+    wire CommandValid = IOOut_ACK;
 
     logic [7:0] CellDecoder;
     always_comb begin
         CellDecoder = '0;
-        CellDecoder[IO_DataIn[15:13]] = 1'b1;
+        CellDecoder[IOOut_Data[15:13]] = 1'b1;
     end
 
     wire [7:0] LocalDataOutArray;
@@ -64,10 +80,10 @@ module GPIOController (
             wire  [1:0] DataInCondition = {Command[7], Command[1]};
             always_comb begin : LocalDataInMux
                 case (DataInCondition)
-                    2'b01  : LocalDataIn = IO_DataIn[CellIndex];
-                    2'b10  : LocalDataIn = IO_DataIn[9:0];
-                    2'b11  : LocalDataIn = IO_DataIn[9:0];
-                    default: LocalDataIn = IO_DataIn[0]; // Default is also case 0
+                    2'b01  : LocalDataIn = IOOut_Data[CellIndex];
+                    2'b10  : LocalDataIn = IOOut_Data[9:0];
+                    2'b11  : LocalDataIn = IOOut_Data[9:0];
+                    default: LocalDataIn = IOOut_Data[0]; // Default is also case 0
                 endcase
             end
             GPIO_Cell #(
@@ -89,21 +105,31 @@ module GPIOController (
         end
     endgenerate
     
-    assign        IO_ACK = clk_en;
-    assign        IO_CommandResponse = IO_CommandEn;
-    assign        IO_RegResponseFlag = IO_ResponseRequested && (|(Command[6:3]));
-    assign        IO_MemResponseFlag = '0;
-    assign        IO_DestRegOut = IO_DestRegIn;
+    // assign        IO_ACK = IO_REQ;
+    // assign        IO_CommandResponse = IO_CommandEn;
+    // assign        IO_RegResponseFlag = IO_ResponseRequested && (|(Command[6:3]));
+    // assign        IO_MemResponseFlag = '0;
+    // assign        IO_DestRegOut = IO_DestRegIn;
+
     logic  [15:0] IO_DataOut_Tmp;
     wire    [1:0] DataOutCondition = {(Command[6] || Command[5]), (Command[4] || Command[5])};
     always_comb begin : NextDataOutMux
         case (DataOutCondition)
-            2'b01  : IO_DataOut_Tmp = {'0, PinDataOutArray[IO_DataIn[15:13]]};
+            2'b01  : IO_DataOut_Tmp = {'0, PinDataOutArray[IOOut_Data[15:13]]};
             2'b10  : IO_DataOut_Tmp = {'0, PinDataOutArray};
             2'b11  : IO_DataOut_Tmp = {'0, LocalDataOutArray};
-            default: IO_DataOut_Tmp = {'0, LocalDataOutArray[IO_DataIn[15:13]]}; // Default is also case 0
+            default: IO_DataOut_Tmp = {'0, LocalDataOutArray[IOOut_Data[15:13]]}; // Default is also case 0
         endcase
     end
-    assign IO_DataOut = IO_DataOut_Tmp;
+    // assign IO_DataOut = IO_DataOut_Tmp;
+
+    assign IOOut_REQ = IOOut_ResponseRequested ? IOIn_REQ : IOOut_ACK;
+    assign IOIn_ACK = IOOut_ResponseRequested && IOOut_ACK;
+    assign IOIn_RegResponseFlag = IOOut_ResponseRequested && (|(Command[6:3]));
+    assign IOIn_MemResponseFlag = '0;
+    assign IOIn_DestReg = IOOut_DestReg;
+    assign IOIn_Data = IO_DataOut_Tmp;
+
+
 
 endmodule

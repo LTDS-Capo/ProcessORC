@@ -32,17 +32,30 @@ module CommandController #(
     output      [DATABITWIDTH-1:0] WritebackDataOut,
 
     output                         IOClk,
-    input                          IOACK,
-    output                         IOREQ,
-    output                         IOCommandEn,
-    output                         IOResponseRequested,
-    input                          IOCommandResponse,
-    input                          IORegResponseFlag, // Force a Writeback handshake after updating local buffer
-    input                          IOMemResponseFlag, // Only update local buffer
-    input                    [3:0] IODestRegIn,
-    input  [(PORTBYTEWIDTH*8)-1:0] IODataIn,
-    output                   [3:0] IODestRegOut,
-    output [(PORTBYTEWIDTH*8)-1:0] IODataOut
+    // input                          IOACK,
+    // output                         IOREQ,
+    // output                         IOCommandEn,
+    // output                         IOResponseRequested,
+    // input                          IOCommandResponse,
+    // input                          IORegResponseFlag, // Force a Writeback handshake after updating local buffer
+    // input                          IOMemResponseFlag, // Only update local buffer
+    // input                    [3:0] IODestRegIn,
+    // input  [(PORTBYTEWIDTH*8)-1:0] IODataIn,
+    // output                   [3:0] IODestRegOut,
+    // output [(PORTBYTEWIDTH*8)-1:0] IODataOut
+
+    output        IOOut_ACK,
+    input         IOOut_REQ,
+    output        IOOut_ResponseRequested,
+    output  [3:0] IOOut_DestReg,
+    output [15:0] IOOut_Data,
+
+    input         IOIn_ACK,
+    output        IOIn_REQ,
+    input         IOIn_RegResponseFlag,
+    input         IOIn_MemResponseFlag,
+    input   [3:0] IOIn_DestReg,
+    input  [15:0] IOIn_Data
 
     //output [(PORTBYTEWIDTH*8)-1:0] LoadBuffer_TEST
     //output [3:0] TEST_VECTOR,
@@ -117,11 +130,14 @@ module CommandController #(
         //   - Loads
         //   - Responses (Takes priority)
         localparam REGRESPONSEBITWIDTH = (DATABITWIDTH >= (PORTBYTEWIDTH*8)) ? (PORTBYTEWIDTH*8) : DATABITWIDTH;
-        wire                    RegResponse_Tmp = LocalIORegResponse && TargetCommandACK; 
+        // wire                    RegResponse_Tmp = LocalIORegResponse && TargetCommandACK; 
+        wire                    RegResponse_Tmp = LocalIORegResponse && LocalResponseACK; 
         wire                    LocalResponseACK;
-        wire                    LocalResponseREQ = (RegResponse_Tmp && WritebackREQ) || ~RegResponse_Tmp;
+        // wire                    LocalResponseREQ = (RegResponse_Tmp && WritebackREQ) || ~RegResponse_Tmp;
+        wire                    LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;
         // assign                  WritebackACK = RegResponse_Tmp ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (LocalCommandACK_Tmp && LocalCommandStatusLoadEn));
-        assign                  WritebackACK = RegResponse_Tmp ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (CommandACK && CommandStatusLoadEn));
+        // assign                  WritebackACK = RegResponse_Tmp ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (CommandACK && CommandStatusLoadEn));
+        assign                  WritebackACK = LocalIORegResponse ? LocalResponseACK : ((CommandACK && CommandLoadEn) || (CommandACK && CommandStatusLoadEn));
         
         
         // logic [3:0] WritebackDestReg_Tmp;
@@ -203,19 +219,22 @@ module CommandController #(
             .DEPTH     (8),
             .TESTENABLE(0)
         ) SysToTargetCDC (
-            .rst    (async_rst),
+            // .rst    (async_rst),
+            .rst    (sync_rst),
             .w_clk  (sys_clk),
             .dInACK (LocalCommandACK),
             .dInREQ (LocalCommandREQ_Tmp),
             .dIN    (SysToTargetCDC_dIn),
             .r_clk  (target_clk),
-            .dOutACK(TargetCommandACK),
-            .dOutREQ(TargetCommandREQ),
+            // .dOutACK(TargetCommandACK),
+            // .dOutREQ(TargetCommandREQ),
+            .dOutACK(IOOut_ACK),
+            .dOutREQ(IOOut_REQ),
             .dOUT   (SysToTargetCDC_dOut)
         );
     //
 
-    // Data Load Buffer System - // ToDo: Make this update on a store command - nahhhh,,, only if someone bitches
+    // Data Load Buffer System
         reg  [(PORTBYTEWIDTH*8)-1:0] LoadBuffer;
         wire                         LoadBufferTrigger = (LocalResponseACK && LocalResponseREQ && clk_en) || sync_rst;
         wire [(PORTBYTEWIDTH*8)-1:0] NextLoadBuffer = (sync_rst) ? 0 : TargetToSysCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
@@ -229,7 +248,8 @@ module CommandController #(
     // Target to Sys FIFO CDC
         wire                           TargetResponseACK;
         wire                           TargetResponseREQ;
-        wire [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dIn = {IORegResponseFlag, IODestRegIn, IODataIn};
+        // wire [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dIn = {IORegResponseFlag, IODestRegIn, IODataIn};
+        wire [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dIn = {IOIn_RegResponseFlag, IOIn_DestReg, IOIn_Data};
         wire [TARGETTOSYSBITWIDTH-1:0] TargetToSysCDC_dOut;
         wire LocalIORegResponse = TargetToSysCDC_dOut[TARGETTOSYSBITWIDTH-1];
         FIFO_ClockDomainCrosser #(
@@ -237,10 +257,13 @@ module CommandController #(
             .DEPTH   (8),
             .TESTENABLE(0)
         ) TargetToSysCDC (
-            .rst    (async_rst),
+            // .rst    (async_rst),
+            .rst    (sync_rst),
             .w_clk  (target_clk),
-            .dInACK (TargetResponseACK),
-            .dInREQ (TargetResponseREQ),
+            // .dInACK (TargetResponseACK),
+            // .dInREQ (TargetResponseREQ),
+            .dInACK (IOIn_ACK),
+            .dInREQ (IOIn_REQ),
             .dIN    (TargetToSysCDC_dIn),
             .r_clk  (sys_clk),
             .dOutACK(LocalResponseACK),
@@ -250,16 +273,21 @@ module CommandController #(
     //
 
     // IO Domain Control
-        // Target to Sys Handshake
-        assign TargetResponseACK = (IOMemResponseFlag || IORegResponseFlag) && IOACK;
-        // Sys to Target Handshake
-        assign TargetCommandREQ = IOCommandResponse && (IOCommandEn || IOResponseRequested) && IOACK;
-        // IO Hanshake
-        assign IOREQ = (TargetResponseREQ && IOMemResponseFlag) || (TargetResponseREQ && IORegResponseFlag) || TargetCommandACK; // Handshake direction is flipped here due to full-duplex communication
-        assign IOCommandEn = TargetCommandACK && ~IOResponseRequested;
-        assign IOResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
-        assign IODestRegOut = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];
-        assign IODataOut = SysToTargetCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
+        // // Target to Sys Handshake
+        // assign TargetResponseACK = (IOMemResponseFlag || IORegResponseFlag) && IOACK;
+        // // Sys to Target Handshake
+        // assign TargetCommandREQ = IOCommandResponse && (IOCommandEn || IOResponseRequested) && IOACK;
+        // // IO Hanshake
+        // assign IOREQ = (TargetResponseREQ && IOMemResponseFlag) || (TargetResponseREQ && IORegResponseFlag) || TargetCommandACK; // Handshake direction is flipped here due to full-duplex communication
+        // assign IOCommandEn = TargetCommandACK && ~IOResponseRequested;
+        // assign IOResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
+        // assign IODestRegOut = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];
+        // assign IODataOut = SysToTargetCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
+
+
+        assign IOOut_ResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
+        assign IOOut_DestReg = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];
+        assign IOOut_Data = SysToTargetCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
     //
 
 endmodule

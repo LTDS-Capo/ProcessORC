@@ -128,18 +128,32 @@ module PlatformIndependent_Test #(
     //
 
     // IO Interfaces
-            wire         GPIO_IO_Clk;
-            wire         GPIO_IO_ACK;
-            wire         GPIO_IO_REQ;
-            wire         GPIO_IO_CommandEn;
-            wire         GPIO_IO_ResponseRequested;
-            wire         GPIO_IO_CommandResponse;
-            wire         GPIO_IO_RegResponseFlag;
-            wire         GPIO_IO_MemResponseFlag;
-            wire   [3:0] GPIO_IO_DestRegIn;
-            wire   [3:0] GPIO_IO_DestRegOut;
-            wire  [15:0] GPIO_IO_DataIn;
-            wire  [15:0] GPIO_IO_DataOut;
+            // wire         GPIO_IO_Clk;
+            // wire         GPIO_IO_ACK;
+            // wire         GPIO_IO_REQ;
+            // wire         GPIO_IO_CommandEn;
+            // wire         GPIO_IO_ResponseRequested;
+            // wire         GPIO_IO_CommandResponse;
+            // wire         GPIO_IO_RegResponseFlag;
+            // wire         GPIO_IO_MemResponseFlag;
+            // wire   [3:0] GPIO_IO_DestRegIn;
+            // wire   [3:0] GPIO_IO_DestRegOut;
+            // wire  [15:0] GPIO_IO_DataIn;
+            // wire  [15:0] GPIO_IO_DataOut;
+
+            wire        GPIO_IOOut_ACK;
+            wire        GPIO_IOOut_REQ;
+            wire        GPIO_IOOut_ResponseRequested;
+            wire  [3:0] GPIO_IOOut_DestReg;
+            wire [15:0] GPIO_IOOut_Data;
+
+            wire        GPIO_IOIn_ACK;
+            wire        GPIO_IOIn_REQ;
+            wire        GPIO_IOIn_RegResponseFlag;
+            wire        GPIO_IOIn_MemResponseFlag;
+            wire  [3:0] GPIO_IOIn_DestReg;
+            wire [15:0] GPIO_IOIn_Data;
+
             IOManager_Test #(
                 .IOBASEADDR  (384),
                 .TOTALIOBYTES(128)
@@ -162,34 +176,56 @@ module PlatformIndependent_Test #(
                 .WritebackDestReg(IOInDestReg),
                 .WritebackDataOut(IOInData),
                 .GPIO_IO_Clk              (GPIO_IO_Clk),
-                .GPIO_IO_ACK              (GPIO_IO_ACK),
-                .GPIO_IO_REQ              (GPIO_IO_REQ),
-                .GPIO_IO_CommandEn        (GPIO_IO_CommandEn),
-                .GPIO_IO_ResponseRequested(GPIO_IO_ResponseRequested),
-                .GPIO_IO_CommandResponse  (GPIO_IO_CommandResponse),
-                .GPIO_IO_RegResponseFlag  (GPIO_IO_RegResponseFlag),
-                .GPIO_IO_MemResponseFlag  (GPIO_IO_MemResponseFlag),
-                .GPIO_IO_DestRegIn        (GPIO_IO_DestRegIn),
-                .GPIO_IO_DestRegOut       (GPIO_IO_DestRegOut),
-                .GPIO_IO_DataIn           (GPIO_IO_DataIn),
-                .GPIO_IO_DataOut          (GPIO_IO_DataOut)
+                // .GPIO_IO_ACK              (GPIO_IO_ACK),
+                // .GPIO_IO_REQ              (GPIO_IO_REQ),
+                // .GPIO_IO_CommandEn        (GPIO_IO_CommandEn),
+                // .GPIO_IO_ResponseRequested(GPIO_IO_ResponseRequested),
+                // .GPIO_IO_CommandResponse  (GPIO_IO_CommandResponse),
+                // .GPIO_IO_RegResponseFlag  (GPIO_IO_RegResponseFlag),
+                // .GPIO_IO_MemResponseFlag  (GPIO_IO_MemResponseFlag),
+                // .GPIO_IO_DestRegIn        (GPIO_IO_DestRegIn),
+                // .GPIO_IO_DestRegOut       (GPIO_IO_DestRegOut),
+                // .GPIO_IO_DataIn           (GPIO_IO_DataIn),
+                // .GPIO_IO_DataOut          (GPIO_IO_DataOut)
+                .GPIO_IOOut_ACK              (GPIO_IOOut_ACK),
+                .GPIO_IOOut_REQ              (GPIO_IOOut_REQ),
+                .GPIO_IOOut_ResponseRequested(GPIO_IOOut_ResponseRequested),
+                .GPIO_IOOut_DestReg          (GPIO_IOOut_DestReg),
+                .GPIO_IOOut_Data             (GPIO_IOOut_Data),
+                .GPIO_IOIn_ACK               (GPIO_IOIn_ACK),
+                .GPIO_IOIn_REQ               (GPIO_IOIn_REQ),
+                .GPIO_IOIn_RegResponseFlag   (GPIO_IOIn_RegResponseFlag),
+                .GPIO_IOIn_MemResponseFlag   (GPIO_IOIn_MemResponseFlag),
+                .GPIO_IOIn_DestReg           (GPIO_IOIn_DestReg),
+                .GPIO_IOIn_Data              (GPIO_IOIn_Data)
             );
         // IO Modules
             GPIOController GPIOInterface(
                 .clk                 (GPIO_IO_Clk),
                 .clk_en              (clk_en_out[3]),
                 .sync_rst            (sync_rst_out[3]),
-                .IO_ACK              (GPIO_IO_ACK),
-                .IO_REQ              (GPIO_IO_REQ),
-                .IO_CommandEn        (GPIO_IO_CommandEn),
-                .IO_ResponseRequested(GPIO_IO_ResponseRequested),
-                .IO_CommandResponse  (GPIO_IO_CommandResponse),
-                .IO_RegResponseFlag  (GPIO_IO_RegResponseFlag),
-                .IO_MemResponseFlag  (GPIO_IO_MemResponseFlag),
-                .IO_DestRegIn        (GPIO_IO_DestRegOut),
-                .IO_DestRegOut       (GPIO_IO_DestRegIn),
-                .IO_DataIn           (GPIO_IO_DataOut),
-                .IO_DataOut          (GPIO_IO_DataIn),
+                // .IO_ACK              (GPIO_IO_ACK),
+                // .IO_REQ              (GPIO_IO_REQ),
+                // .IO_CommandEn        (GPIO_IO_CommandEn),
+                // .IO_ResponseRequested(GPIO_IO_ResponseRequested),
+                // .IO_CommandResponse  (GPIO_IO_CommandResponse),
+                // .IO_RegResponseFlag  (GPIO_IO_RegResponseFlag),
+                // .IO_MemResponseFlag  (GPIO_IO_MemResponseFlag),
+                // .IO_DestRegIn        (GPIO_IO_DestRegOut),
+                // .IO_DestRegOut       (GPIO_IO_DestRegIn),
+                // .IO_DataIn           (GPIO_IO_DataOut),
+                // .IO_DataOut          (GPIO_IO_DataIn),
+                .IOOut_ACK              (GPIO_IOOut_ACK),       
+                .IOOut_REQ              (GPIO_IOOut_REQ),       
+                .IOOut_ResponseRequested(GPIO_IOOut_ResponseRequested),                     
+                .IOOut_DestReg          (GPIO_IOOut_DestReg),           
+                .IOOut_Data             (GPIO_IOOut_Data),        
+                .IOIn_ACK               (GPIO_IOIn_ACK),      
+                .IOIn_REQ               (GPIO_IOIn_REQ),      
+                .IOIn_RegResponseFlag   (GPIO_IOIn_RegResponseFlag),                  
+                .IOIn_MemResponseFlag   (GPIO_IOIn_MemResponseFlag),                  
+                .IOIn_DestReg           (GPIO_IOIn_DestReg),          
+                .IOIn_Data              (GPIO_IOIn_Data),       
                 .GPIO_DIn            (GPIO_DIn),
                 .GPIO_DOut           (GPIO_DOut),
                 .GPIO_DOutEn         (GPIO_DOutEn)

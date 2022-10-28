@@ -9,8 +9,8 @@
     //                      > - 1 : 32x
     //                  > [30:28] Timer Select
     //                  >    [31] Command
-    //                      > - 0 : Clear(Store)/Check(Load)
-    //                      > - 1 : Set(Store)/Wait(Load)
+    //                      > - 0 : Clear(Store)/Check(Atomic Load) [CHECK NEEDS VALIDATION]
+    //                      > - 1 : Set(Store)/Wait(Atomic Load)
     // GPIO MemMap Addr = 396-397 (Can upgrade with more commands if I check Load/Store)
     //                  > Pulse of Length 0 Selects clock.
     //                  > GPIO - In, Out, OutEn
@@ -51,9 +51,9 @@
     // r9 - Step Counter
     // rA - Fib Value 0
     // rB - Fib Value 1
-    // rC - Working Register
-    // rD - 
-    // rE - 
+    // rC - Fib Working Register
+    // rD - GPIO Input
+    // rE - GPIO Working Register
     // rF - *Return Pointer*
 //                                                                            //
 
@@ -91,24 +91,29 @@
         LLI rB 'h0   // 16'hCB00 - Preload Initial Fib Values
         MOV r9 r0    // 16'h0970 - Clear r9
         // Main Loop
-        MOV rC rA    // 16'h0C7A - Flip the fib values
-        MOV rA rB    // 16'h0A7B - Flip the fib values
+        MOV rC rA              // 16'h0C7A - Flip the fib values
+        MOV rA rB              // 16'h0A7B - Flip the fib values
         :LOOP_START
-        MOV rB rC    // 16'h0B7C - Flip the fib values
-        MOV r4 rA    // 16'h047A - Copy Current Fib to GPIO Write Value
-        JLI r0 []    // 16'h90 - Jump and Link to "WRITE_AND_WAIT"
-        ADD rA rB    // 16'h0A0B - Perform Fib
-        INC r9 r9    // 16'h0919 - Increment Step Counter
-        MOV r4 r9    // 16'h0479- Copy Step Counter to GPIO Write Value
-        JLI r0 []    // 16'h90 - Jump and Link to "WRITE_AND_WAIT"
-        MOV rC rA    // 16'h0C7A - Flip the fib values
-        BZI r0 []    // 16'hB0 - Jump to "LOOP_START"
-        MOV rA rB    // 16'h0A7B - Flip the fib values
+        MOV rB rC              // 16'h0B7C - Flip the fib values
+        MOV r4 rA              // 16'h047A - Copy Current Fib to GPIO Write Value
+        JLI r0 :WRITE_AND_WAIT // 16'h90 - Jump and Link to "WRITE_AND_WAIT"
+        ADD rA rB              // 16'h0A0B - Perform Fib
+        INC r9 r9              // 16'h0919 - Increment Step Counter
+        MOV r4 r9              // 16'h0479- Copy Step Counter to GPIO Write Value
+        JLI r0 :WRITE_AND_WAIT // 16'h90 - Jump and Link to "WRITE_AND_WAIT"
+        MOV rC rA              // 16'h0C7A - Flip the fib values
+        BZI r0 :LOOP_START     // 16'hB0 - Jump to "LOOP_START"
+        MOV rA rB              // 16'h0A7B - Flip the fib values
         // GPIO Write and Wait
         :WRITE_AND_WAIT
         AND r4 r7    // 16'h0447 - Mask Write Data
         IOR r4 r6    // 16'h0466 - Append Command
         STW r4 r5    // 16'h3455 - Submit GPIO Write
+            // Variable Wait Update
+        ALW rD r5    // 16'h3D95 - Atomic Load of GPIO Input
+        MOV r3 rD    // 16'h037D - Move GPIO Input to Command Byte 2
+        LUI r3 'h80  // 16'hE380 - Load Timer Command Byte 3 [LUI Applies the proper masks automatically]
+            // END Variable Wait Update
         STW r3 r1    // 16'h3351 - Store Timer Command Upper [Timer Set]
         LDW r4 r1    // 16'h3411 - Load Timer Command Upper [Timer Wait]
         MOV r0 r4    // 16'h0074 - Wait for r4 to clear

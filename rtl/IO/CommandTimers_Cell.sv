@@ -75,7 +75,7 @@ module CommandTimers_Cell #(
 
     // Check Buffer
         reg  CheckACK;
-        wire CheckACKTrigger = (TimerOutREQ && TimerOutACK && CheckACK && ~WaitACK) || (~CheckACK && Active && TimerCheck && TimerInREQ && TimerInACK) || sync_rst;
+        wire CheckACKTrigger = (TimerOutREQ && TimerOutACK && CheckACK && ~WaitACK) || (~CheckACK && Active && TimerCheck && TimerInREQ && TimerInACK) || (~CheckACK && ~Active && TimerCheck && TimerInREQ && TimerInACK) || sync_rst;
         wire NextCheckACK = TimerCheck && ~sync_rst;
         always_ff @(posedge clk) begin
             if (CheckACKTrigger) begin
@@ -84,8 +84,8 @@ module CommandTimers_Cell #(
         end
         reg  [31:0] CheckDataBuffer;
         wire [31:0] TempTimerDifference = CounterIn - ComparisonValue - 1;
-        wire        CheckDataBufferTrigger = (TimerElapsed && clk_en) || (CheckACK && clk_en) || sync_rst;
-        wire [31:0] NextCheckDataBuffer = (sync_rst || TimerElapsed || ~Active) ? 0 : TempTimerDifference;
+        wire        CheckDataBufferTrigger = (TimerElapsed && clk_en) || (TimerCheck && TimerInREQ && TimerInACK && clk_en) || sync_rst;
+        wire [31:0] NextCheckDataBuffer = (sync_rst || TimerElapsed || ~Active) ? '0 : TempTimerDifference;
         always_ff @(posedge clk) begin
             if (CheckDataBufferTrigger) begin
                 CheckDataBuffer <= NextCheckDataBuffer;
@@ -93,7 +93,7 @@ module CommandTimers_Cell #(
         end
         localparam CHECKBUFBITWIDTH = DATABITWIDTH + 8; // DATABITWIDTH for addr, 4 for minorOpcode, 4 for RegDest 
         reg  [CHECKBUFBITWIDTH-1:0] CheckMetaBuffer;
-        wire [CHECKBUFBITWIDTH-1:0] NextCheckMetaBuffer = (sync_rst) ? 0 : {CommandAddressIn, MinorOpcodeIn, RegisterDestIn};
+        wire [CHECKBUFBITWIDTH-1:0] NextCheckMetaBuffer = (sync_rst) ? '0 : {CommandAddressIn, MinorOpcodeIn, RegisterDestIn};
         always_ff @(posedge clk) begin
             if (CheckACKTrigger) begin
                 CheckMetaBuffer <= NextCheckMetaBuffer;
