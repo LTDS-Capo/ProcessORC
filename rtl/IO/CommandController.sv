@@ -1,6 +1,7 @@
 // 32'b[0000_0][000]_0000_0000_0000_0000_0000_0000
 module CommandController #(
     parameter PORTBYTEWIDTH = 4,
+    parameter CLOCKCOMMAND_ENABLE = 1,
     parameter CLOCKCOMMAND_LSB = 27,
     parameter CLOCKCOMMAND_MSB = 31,
     parameter CLOCKCOMMAND_OPCODE = 5'h1F,
@@ -31,19 +32,7 @@ module CommandController #(
     output                   [3:0] WritebackDestReg,
     output      [DATABITWIDTH-1:0] WritebackDataOut,
 
-    output                         IOClk,
-    // input                          IOACK,
-    // output                         IOREQ,
-    // output                         IOCommandEn,
-    // output                         IOResponseRequested,
-    // input                          IOCommandResponse,
-    // input                          IORegResponseFlag, // Force a Writeback handshake after updating local buffer
-    // input                          IOMemResponseFlag, // Only update local buffer
-    // input                    [3:0] IODestRegIn,
-    // input  [(PORTBYTEWIDTH*8)-1:0] IODataIn,
-    // output                   [3:0] IODestRegOut,
-    // output [(PORTBYTEWIDTH*8)-1:0] IODataOut
-
+    output        IOClk,
     output        IOOut_ACK,
     input         IOOut_REQ,
     output        IOOut_ResponseRequested,
@@ -111,7 +100,7 @@ module CommandController #(
             .ClockSelect     (ClockSelect),
             .target_clk      (target_clk)
         );
-        assign IOClk = target_clk;
+        assign IOClk = CLOCKCOMMAND_ENABLE[0] ? target_clk : sys_clk;
     //
 
     // System Handshakes and Command Generation
@@ -273,18 +262,6 @@ module CommandController #(
     //
 
     // IO Domain Control
-        // // Target to Sys Handshake
-        // assign TargetResponseACK = (IOMemResponseFlag || IORegResponseFlag) && IOACK;
-        // // Sys to Target Handshake
-        // assign TargetCommandREQ = IOCommandResponse && (IOCommandEn || IOResponseRequested) && IOACK;
-        // // IO Hanshake
-        // assign IOREQ = (TargetResponseREQ && IOMemResponseFlag) || (TargetResponseREQ && IORegResponseFlag) || TargetCommandACK; // Handshake direction is flipped here due to full-duplex communication
-        // assign IOCommandEn = TargetCommandACK && ~IOResponseRequested;
-        // assign IOResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
-        // assign IODestRegOut = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];
-        // assign IODataOut = SysToTargetCDC_dOut[(PORTBYTEWIDTH*8)-1:0];
-
-
         assign IOOut_ResponseRequested = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-1];
         assign IOOut_DestReg = SysToTargetCDC_dOut[SYSTOTARGETBITWIDTH-2:(PORTBYTEWIDTH*8)];
         assign IOOut_Data = SysToTargetCDC_dOut[(PORTBYTEWIDTH*8)-1:0];

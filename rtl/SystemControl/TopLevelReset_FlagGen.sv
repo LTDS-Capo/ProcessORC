@@ -10,7 +10,8 @@ module TopLevelReset_FlagGen #(
     input clk,
     input clk_en,
     input async_rst_in,
-    
+    output async_rst_out,
+
     input sync_rst_Trigger,
 
     input SyncIn [CLOCKDOMAINS-1:0],
@@ -23,10 +24,11 @@ module TopLevelReset_FlagGen #(
 );
     
     assign TESTBIT = SyncWait;
-
+    localparam ASYNCLIMIT = RESETWAITCYCLES + (OPERATIONALWAITCYCLES >> 2);
     localparam CYCLELIMIT = RESETWAITCYCLES + OPERATIONALWAITCYCLES + INITIALIZEWAITCYCLES + 1;
     localparam OPERATIONALCYCLELIMIT =  RESETWAITCYCLES + OPERATIONALWAITCYCLES;
     localparam RESETCYCLELIMIT = RESETWAITCYCLES;
+    assign async_rst_out = (NextCycleCount > RESETCYCLELIMIT) && (NextCycleCount < ASYNCLIMIT);
     wire CycleLimitReached = (NextCycleCount == CYCLELIMIT) && clk_en;
     wire OperationalLimitReached = (CycleCount == OPERATIONALCYCLELIMIT) && clk_en;
     wire ResetLimitReached = (CycleCount == RESETCYCLELIMIT) && clk_en;

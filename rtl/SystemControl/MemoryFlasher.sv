@@ -16,9 +16,6 @@ module MemoryFlasher #(
     output SystemEnable
 );
 
-    // Needs to support the fact that Data has 512 addresses of 16byte data...
-    // Instructions have 1024 addresses of 16bit data...
-
     // Active Register
     reg  [1:0] Active;
     wire       ActiveTrigger = (FlashFinished && clk_en) || (FlashInit && clk_en) || sync_rst;

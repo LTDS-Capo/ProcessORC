@@ -2,7 +2,7 @@ module IOManager_Test #(
     parameter DATABITWIDTH = 16,
     parameter IOBASEADDR = 384,
     parameter TOTALIOBYTES = 116, // 128 minus 8 for Clocks and 4 for Timers
-    parameter IODEVICES = 1
+    parameter IODEVICES = 2
 )(
     input sys_clk,
     input clk_en,
@@ -26,17 +26,6 @@ module IOManager_Test #(
     output [DATABITWIDTH-1:0] WritebackDataOut,
 
     output        GPIO_IO_Clk,
-    // input         GPIO_IO_ACK,
-    // output        GPIO_IO_REQ,
-    // output        GPIO_IO_CommandEn,
-    // output        GPIO_IO_ResponseRequested,
-    // input         GPIO_IO_CommandResponse,
-    // input         GPIO_IO_RegResponseFlag, // Force a Writeback handshake after updating local buffer
-    // input         GPIO_IO_MemResponseFlag, // Only update local buffer
-    // input   [3:0] GPIO_IO_DestRegIn,
-    // input  [15:0] GPIO_IO_DataIn,
-    // output  [3:0] GPIO_IO_DestRegOut,
-    // output [15:0] GPIO_IO_DataOut
 
     output        GPIO_IOOut_ACK,
     input         GPIO_IOOut_REQ,
@@ -49,7 +38,20 @@ module IOManager_Test #(
     input         GPIO_IOIn_RegResponseFlag,
     input         GPIO_IOIn_MemResponseFlag,
     input   [3:0] GPIO_IOIn_DestReg,
-    input  [15:0] GPIO_IOIn_Data
+    input  [15:0] GPIO_IOIn_Data,
+
+    output        Flasher_IOOut_ACK,
+    input         Flasher_IOOut_REQ,
+    output        Flasher_IOOut_ResponseRequested,
+    output  [3:0] Flasher_IOOut_DestReg,
+    output [31:0] Flasher_IOOut_Data,
+
+    input         Flasher_IOIn_ACK,
+    output        Flasher_IOIn_REQ,
+    input         Flasher_IOIn_RegResponseFlag,
+    input         Flasher_IOIn_MemResponseFlag,
+    input   [3:0] Flasher_IOIn_DestReg,
+    input  [31:0] Flasher_IOIn_Data
 
 );
     
@@ -132,11 +134,12 @@ module IOManager_Test #(
     // $$GEN$$ IOGen_Controllers(IO)
         wire [TOTALIODEVICES-1:0] IOCommandREQArray;
         // IO Port Controllers
-            localparam GPIO_DEVICE_INDEX = 2; // Starts at 12
+            localparam GPIO_DEVICE_INDEX = 2; // Starts at 2
             localparam GPIO_IO_INDEX = 12; // Starts at 12
             localparam GPIO_LOWERADDR = 12;
             localparam GPIO_UPPERADDR = 13;
             localparam GPIO_PORTBYTEWIDTH = 2;
+            localparam GPIO_CLOCKCOMMAND_ENABLE = 1;
             localparam GPIO_CLOCKCOMMAND_LSB = 0;
             localparam GPIO_CLOCKCOMMAND_MSB = 12;
             localparam GPIO_CLOCKCOMMAND_OPCODE = 13'h1C00; // 1_1100_0000_0000
@@ -151,6 +154,7 @@ module IOManager_Test #(
             wire   [DATABITWIDTH-1:0] GPIO_AddressIn = CommandAddressIn - GPIO_LOWERADDR - IOBASEADDR;
             CommandController #(
                 .PORTBYTEWIDTH         (GPIO_PORTBYTEWIDTH),
+                .CLOCKCOMMAND_ENABLE   (GPIO_CLOCKCOMMAND_ENABLE),
                 .CLOCKCOMMAND_LSB      (GPIO_CLOCKCOMMAND_LSB),
                 .CLOCKCOMMAND_MSB      (GPIO_CLOCKCOMMAND_MSB),
                 .CLOCKCOMMAND_OPCODE   (GPIO_CLOCKCOMMAND_OPCODE),
@@ -177,17 +181,6 @@ module IOManager_Test #(
                 .WritebackDestReg       (WritebackDestRegArray[GPIO_IO_INDEX]),
                 .WritebackDataOut       (WritebackDataOutArray[GPIO_IO_INDEX]),
                 .IOClk                  (GPIO_IO_Clk),
-                // .IOACK                  (GPIO_IO_ACK),
-                // .IOREQ                  (GPIO_IO_REQ),
-                // .IOCommandEn            (GPIO_IO_CommandEn),
-                // .IOResponseRequested    (GPIO_IO_ResponseRequested),
-                // .IOCommandResponse      (GPIO_IO_CommandResponse),
-                // .IORegResponseFlag      (GPIO_IO_RegResponseFlag),
-                // .IOMemResponseFlag      (GPIO_IO_MemResponseFlag),
-                // .IODestRegIn            (GPIO_IO_DestRegIn),
-                // .IODataIn               (GPIO_IO_DataIn),
-                // .IODestRegOut           (GPIO_IO_DestRegOut),
-                // .IODataOut              (GPIO_IO_DataOut)
                 .IOOut_ACK              (GPIO_IOOut_ACK),
                 .IOOut_REQ              (GPIO_IOOut_REQ),
                 .IOOut_ResponseRequested(GPIO_IOOut_ResponseRequested),
@@ -199,10 +192,68 @@ module IOManager_Test #(
                 .IOIn_MemResponseFlag   (GPIO_IOIn_MemResponseFlag),
                 .IOIn_DestReg           (GPIO_IOIn_DestReg),
                 .IOIn_Data              (GPIO_IOIn_Data)
-
             );
+        //
 
-
+        // Flash Port Controller
+            localparam FLASHER_DEVICE_INDEX = 3; // Starts at 2
+            localparam FLASHER_IO_INDEX = 13; // Starts at 12
+            localparam FLASHER_LOWERADDR = 14; // Starts at 12
+            localparam FLASHER_UPPERADDR = 15;
+            localparam FLASHER_PORTBYTEWIDTH = 4;
+            localparam FLASHER_CLOCKCOMMAND_ENABLE = '0;
+            localparam FLASHER_CLOCKCOMMAND_LSB = '0;
+            localparam FLASHER_CLOCKCOMMAND_MSB = '0;
+            localparam FLASHER_CLOCKCOMMAND_OPCODE = '0; // 1_1100_0000_0000
+            localparam FLASHER_CLOCKCOMMAND_CLKSELLSB = '0;
+            wire                      Flasher_En_Min = CommandAddressIn >= (FLASHER_LOWERADDR + IOBASEADDR);
+            wire                      Flasher_En_Max = CommandAddressIn <= (FLASHER_UPPERADDR + IOBASEADDR);
+            wire                      Flasher_En = Flasher_En_Min && Flasher_En_Max;
+            wire                      Flasher_CommandACK = Flasher_En ? CommandACK : '0;
+            wire                      Flasher_CommandREQ;
+            assign                    IOCommandREQArray[FLASHER_DEVICE_INDEX] = Flasher_CommandREQ && Flasher_En;
+            wire   [DATABITWIDTH-1:0] Flasher_AddressIn = CommandAddressIn - FLASHER_LOWERADDR - IOBASEADDR;
+            CommandController #(
+                .PORTBYTEWIDTH         (FLASHER_PORTBYTEWIDTH),
+                .CLOCKCOMMAND_ENABLE   (FLASHER_CLOCKCOMMAND_ENABLE),
+                .CLOCKCOMMAND_LSB      (FLASHER_CLOCKCOMMAND_LSB),
+                .CLOCKCOMMAND_MSB      (FLASHER_CLOCKCOMMAND_MSB),
+                .CLOCKCOMMAND_OPCODE   (FLASHER_CLOCKCOMMAND_OPCODE),
+                .CLOCKCOMMAND_CLKSELLSB(FLASHER_CLOCKCOMMAND_CLKSELLSB),
+                .DATABITWIDTH          (DATABITWIDTH)
+            ) Flasher_PortController (
+                .sys_clk                (sys_clk),
+                .clk_en                 (clk_en),
+                .sync_rst               (sync_rst),
+                .async_rst              (async_rst),
+                .src_clk0               (src_clk0),
+                .src_clk1               (src_clk1),
+                .src_clk2               (src_clk2),
+                .divided_clks           (divided_clks),
+                .divided_clk_sels       (divided_clk_sels),
+                .CommandACK             (Flasher_CommandACK),
+                .CommandREQ             (Flasher_CommandREQ),
+                .MinorOpcodeIn          (MinorOpcodeIn),
+                .CommandAddressIn_Offest(Flasher_AddressIn),
+                .CommandDataIn          (CommandDataIn),
+                .CommandDestReg         (CommandDestReg),
+                .WritebackACK           (WritebackACKArray[FLASHER_IO_INDEX]),
+                .WritebackREQ           (WritebackREQArray[FLASHER_IO_INDEX]),
+                .WritebackDestReg       (WritebackDestRegArray[FLASHER_IO_INDEX]),
+                .WritebackDataOut       (WritebackDataOutArray[FLASHER_IO_INDEX]),
+                .IOOut_ACK              (Flasher_IOOut_ACK),
+                .IOOut_REQ              (Flasher_IOOut_REQ),
+                .IOOut_ResponseRequested(Flasher_IOOut_ResponseRequested),
+                .IOOut_DestReg          (Flasher_IOOut_DestReg),
+                .IOOut_Data             (Flasher_IOOut_Data),
+                .IOIn_ACK               (Flasher_IOIn_ACK),
+                .IOIn_REQ               (Flasher_IOIn_REQ),
+                .IOIn_RegResponseFlag   (Flasher_IOIn_RegResponseFlag),
+                .IOIn_MemResponseFlag   (Flasher_IOIn_MemResponseFlag),
+                .IOIn_DestReg           (Flasher_IOIn_DestReg),
+                .IOIn_Data              (Flasher_IOIn_Data)
+            );
+        //
 //
 
     // Writeback Handshake Control

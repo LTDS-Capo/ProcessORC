@@ -18,9 +18,9 @@ module ALU_Simple0 #(
     wire [BITWIDTH-1:0] AddResult = AddResultTmp[BITWIDTH-1:0];
     wire [BITWIDTH-1:0] CarryCheckResult = {'0, AddResultTmp[BITWIDTH]};
 
-    wire   [BITWIDTH:0] SubResultTmp = {1'b0, Data_InA} + {1'b0, Data_InB};
+    wire   [BITWIDTH:0] SubResultTmp = {1'b0, Data_InA} - {1'b0, Data_InB};
     wire [BITWIDTH-1:0] SubResult = SubResultTmp[BITWIDTH-1:0];
-    wire [BITWIDTH-1:0] BorrowCheckResult = {'0, SubResultTmp[BITWIDTH]};
+    wire [BITWIDTH-1:0] BorrowCheckResult = {'0, SubResultTmp[BITWIDTH]}; // May need to change for a proper negative flag
 
     logic [BITWIDTH-1:0] TempOutput;
     always_comb begin : ALU_Simple0_OperationSelectionMux

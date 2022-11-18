@@ -6,8 +6,11 @@ module CPU #(
     input sync_rst,
 
     // Control and Status
-    input  SystemEn,
-    output HaltOut,
+    input        SystemEn,
+    output       HaltOut,
+    output       SoftwareResetOut,
+    output [3:0] ResetVector,
+    input        ResetResponse,
 
     // Memory Flashing
     input                    InstFlashEn,
@@ -199,7 +202,7 @@ module CPU #(
             wire BranchStallDisable;
             wire Halted;
             wire StallEn;
-            StallControl StallCtl (
+            SystemControl SysCtl (
                 .clk                   (clk),
                 .clk_en                (clk_en),
                 .sync_rst              (sync_rst),

@@ -8,6 +8,7 @@ module TopLevelReset #(
     input sys_clk, // Connect your fastest clock to this
     input clk_en,
     input async_rst_in,
+    input async_rst_out,
 
     input  [CLOCKDOMAINS-2:0] clks, // Sys_clk is your highest clock input.
 
@@ -37,6 +38,7 @@ module TopLevelReset #(
             .clk             (sys_clk),
             .clk_en          (clk_en),
             .async_rst_in    (async_rst_in),
+            .async_rst_out   (async_rst_out),
             .sync_rst_Trigger(sys_sync_rst_trigger),
             .SyncIn          (sys_SyncIn),
             .clk_en_out      (sys_clk_en_out),
