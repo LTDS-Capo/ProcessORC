@@ -5,10 +5,10 @@ module TopLevelReset #(
     parameter INITIALIZEWAITCYCLES = 1024,
     parameter CLOCKDOMAINS = 3
 )(
-    input sys_clk, // Connect your fastest clock to this
-    input clk_en,
-    input async_rst_in,
-    input async_rst_out,
+    input  sys_clk, // Connect your fastest clock to this
+    input  clk_en,
+    input  async_rst_in,
+    output async_rst_out,
 
     input  [CLOCKDOMAINS-2:0] clks, // Sys_clk is your highest clock input.
 

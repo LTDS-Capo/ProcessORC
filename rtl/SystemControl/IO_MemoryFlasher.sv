@@ -17,8 +17,9 @@ module IO_MemoryFlasher #(
     input         SoftwareResetIn,
     input   [3:0] ResetVectorIn,
     output        ResetResponseOut,
-    output        IOResetOut,
-    output        CPUResetOut,
+
+    output        ResetTriggerOut,
+    output        CPUResetLockoutOut,
 
     output        SystemEnable,
 
@@ -45,8 +46,12 @@ module IO_MemoryFlasher #(
         .clk               (clk),
         .clk_en            (clk_en),
         .sync_rst          (sync_rst),
-        .async_rst         (async_rst),
         .FlashInit         (FlashInit),
+        .SoftwareResetIn   (SoftwareResetIn),
+        .ResetVectorIn     (ResetVectorIn),
+        .ResetResponseOut  (ResetResponseOut),
+        .ResetTriggerOut   (ResetTriggerOut),
+        .CPUResetLockoutOut(CPUResetLockoutOut),
         .InstFlashEn       (InstFlashEn),
         .DataFlashEn       (DataFlashEn),
         .FlashAddr         (FlashAddr),

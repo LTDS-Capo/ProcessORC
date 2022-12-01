@@ -11,8 +11,6 @@ module SystemControl (
     output [3:0] ResetVectorOut,
     input        ResetResponseIn,
 
-    input  InstructionValid,
-
     input  BranchStallIn,
     input  RegisterStallIn,
     input  IssueCongestionStallIn,
@@ -49,7 +47,7 @@ module SystemControl (
         assign ResetVectorOut = InstructionValid ? ResetVectorBuffer[3:0] : '0;
 
         reg  ResetStall;
-        wrie ResetStallEn = |ResetVectorBuffer[2:0];
+        wire ResetStallEn = |ResetVectorBuffer[2:0];
         wire ResetStallTrigger = (ResetResponseIn && clk_en) || (ResetStallEn && InstructionValid && clk_en) || sync_rst;
         wire NextResetStall = ~ResetResponseIn && ~sync_rst;
         always_ff @(posedge clk) begin

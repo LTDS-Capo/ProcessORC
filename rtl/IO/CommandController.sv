@@ -100,7 +100,16 @@ module CommandController #(
             .ClockSelect     (ClockSelect),
             .target_clk      (target_clk)
         );
-        assign IOClk = CLOCKCOMMAND_ENABLE[0] ? target_clk : sys_clk;
+
+        generate
+            if (CLOCKCOMMAND_ENABLE[0] == 0) begin
+                assign IOClk = sys_clk;
+            end
+            else begin
+                assign IOClk = target_clk;
+            end
+        endgenerate
+        // assign IOClk = CLOCKCOMMAND_ENABLE ? target_clk : sys_clk;
     //
 
     // System Handshakes and Command Generation
@@ -214,7 +223,7 @@ module CommandController #(
             .dInACK (LocalCommandACK),
             .dInREQ (LocalCommandREQ_Tmp),
             .dIN    (SysToTargetCDC_dIn),
-            .r_clk  (target_clk),
+            .r_clk  (IOClk),
             // .dOutACK(TargetCommandACK),
             // .dOutREQ(TargetCommandREQ),
             .dOutACK(IOOut_ACK),
@@ -248,7 +257,7 @@ module CommandController #(
         ) TargetToSysCDC (
             // .rst    (async_rst),
             .rst    (sync_rst),
-            .w_clk  (target_clk),
+            .w_clk  (IOClk),
             // .dInACK (TargetResponseACK),
             // .dInREQ (TargetResponseREQ),
             .dInACK (IOIn_ACK),

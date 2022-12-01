@@ -23,7 +23,8 @@ module PlatformIndependent_Test #(
     // Reset Syncronization
         localparam CLOCKDOMAINS = 4;
         wire [CLOCKDOMAINS-2:0] ResetClks = {src_clk2, src_clk1, src_clk0};
-        wire [CLOCKDOMAINS-1:0] sync_rst_trigger = '0;
+        wire [CLOCKDOMAINS-2:0] Lower_sync_rst_trigger = '0;
+        wire [CLOCKDOMAINS-1:0] sync_rst_trigger = {ResetTrigger, Lower_sync_rst_trigger};
         wire [CLOCKDOMAINS-1:0] clk_en_out;
         wire [CLOCKDOMAINS-1:0] sync_rst_out;
         wire [CLOCKDOMAINS-1:0] init_out;
@@ -72,6 +73,12 @@ module PlatformIndependent_Test #(
         //     .SystemEnable(SystemEn)
         // );
 
+        wire        SoftwareReset;
+        wire  [3:0] ResetVector;
+        wire        ResetResponse;
+        wire        ResetTrigger;
+        wire        CPUResetLockout;
+
         wire        Flasher_IOOut_ACK;
         wire        Flasher_IOOut_REQ;
         wire        Flasher_IOOut_ResponseRequested;
@@ -96,6 +103,11 @@ module PlatformIndependent_Test #(
             .DataFlashEn            (DataFlashEn),
             .FlashAddr              (FlashAddr),
             .FlashData              (FlashData),
+            .SoftwareResetIn        (SoftwareReset),
+            .ResetVectorIn          (ResetVector),
+            .ResetResponseOut       (ResetResponse),
+            .ResetTriggerOut        (ResetTrigger),
+            .CPUResetLockoutOut     (CPUResetLockout),
             .SystemEnable           (SystemEn),
             .IOOut_ACK              (Flasher_IOOut_ACK),
             .IOOut_REQ              (Flasher_IOOut_REQ),
@@ -111,10 +123,8 @@ module PlatformIndependent_Test #(
         );
     //
 
-    //
-
     // CPU - ProcessORC
-        wire CPU_sync_rst = (sync_rst_out[3] && ~CPUResetLockout) || CPUFlashReset;
+        wire CPU_sync_rst = sync_rst_out[3] && ~CPUResetLockout;
         wire Halted;
         wire IOOutACK;
         wire IOOutREQ;
@@ -134,6 +144,9 @@ module PlatformIndependent_Test #(
             .sync_rst             (CPU_sync_rst),
             .SystemEn             (SystemEn),
             .HaltOut              (Halted),
+            .SoftwareResetOut     (SoftwareReset),
+            .ResetVector          (ResetVector),
+            .ResetResponse        (ResetResponse),
             .InstFlashEn          (InstFlashEn),
             .DataFlashEn          (DataFlashEn),
             .FlashAddr            (FlashAddr),
@@ -177,7 +190,6 @@ module PlatformIndependent_Test #(
                 .sys_clk         (sys_clk),
                 .clk_en          (clk_en_out[3]),
                 .sync_rst        (sync_rst_out[3]),
-                .async_rst       (async_rst),
                 .async_rst       (Local_async_rst),
                 .src_clk0        (src_clk0),
                 .src_clk1        (src_clk1),
@@ -218,9 +230,9 @@ module PlatformIndependent_Test #(
             );
         // IO Modules
             GPIOController GPIOInterface(
-                .clk                 (GPIO_IO_Clk),
-                .clk_en              (clk_en_out[3]),
-                .sync_rst            (sync_rst_out[3]),
+                .clk                    (GPIO_IO_Clk),
+                .clk_en                 (clk_en_out[3]),
+                .sync_rst               (sync_rst_out[3]),
                 .IOOut_ACK              (GPIO_IOOut_ACK),       
                 .IOOut_REQ              (GPIO_IOOut_REQ),       
                 .IOOut_ResponseRequested(GPIO_IOOut_ResponseRequested),                     

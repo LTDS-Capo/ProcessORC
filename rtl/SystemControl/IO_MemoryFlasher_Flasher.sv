@@ -117,7 +117,7 @@ module IO_MemoryFlasher_Flasher #(
     reg   [11:0] FlashAddress;
     wire         FlashAddressTrigger = (Active[0] && clk_en) || LocalSyncRst || ResetInstFlash || FlashInit_Tmp || ResetDataFlash;
     logic [11:0] NextFlashAddress;
-    wire   [1:0] NextFlashAddressCondition
+    wire   [1:0] NextFlashAddressCondition;
     wire   [9:0] MemMapStart = MEMMAPSTARTADDR;
     wire   [9:0] MemMapEnd = MEMMAPENDADDR + 1;
     wire  [11:0] MemMapCompareAddr = {2'b01, MemMapStart};
