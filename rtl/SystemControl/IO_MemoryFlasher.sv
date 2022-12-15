@@ -20,6 +20,7 @@ module IO_MemoryFlasher #(
 
     output        ResetTriggerOut,
     output        CPUResetLockoutOut,
+    output        IOResetLockoutOut,
 
     output        SystemEnable,
 
@@ -52,6 +53,7 @@ module IO_MemoryFlasher #(
         .ResetResponseOut  (ResetResponseOut),
         .ResetTriggerOut   (ResetTriggerOut),
         .CPUResetLockoutOut(CPUResetLockoutOut),
+        .IOResetLockoutOut (IOResetLockoutOut),
         .InstFlashEn       (InstFlashEn),
         .DataFlashEn       (DataFlashEn),
         .FlashAddr         (FlashAddr),

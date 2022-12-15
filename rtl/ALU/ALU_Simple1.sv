@@ -29,7 +29,7 @@ module ALU_Simple1 #(
 
     // Bit Manipulation Results
     wire [BITWIDTH-1:0] BitSetResult = Data_InA | BitSelectOneHot;
-    wire [BITWIDTH-1:0] BitClearResult = Data_InA & ~BitSelectOneHot;     
+    wire [BITWIDTH-1:0] BitClearResult = Data_InA & ~BitSelectOneHot;
     wire [BITWIDTH-1:0] BitFlipResult = Data_InA ^ BitSelectOneHot;      
     wire [BITWIDTH-1:0] BitSelectResult = {BITWIDTH{Data_InA[BitIndex]}};
 

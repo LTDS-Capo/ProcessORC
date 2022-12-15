@@ -31,13 +31,13 @@ module PlatformIndependent_Test #(
         wire async_rst_Tmp;
         wire Local_async_rst = async_rst || async_rst_Tmp;
         TopLevelReset #(
-            .RESETWAITCYCLES      (625000),
-            // .RESETWAITCYCLES      (64),
+            // .RESETWAITCYCLES      (625000),
+            .RESETWAITCYCLES      (64),
             .RESETCYCLELENGTH     (32),
-            .OPERATIONALWAITCYCLES(25000),
-            // .OPERATIONALWAITCYCLES(64),
-            .INITIALIZEWAITCYCLES (1024),
-            // .INITIALIZEWAITCYCLES (32),
+            // .OPERATIONALWAITCYCLES(25000),
+            .OPERATIONALWAITCYCLES(64),
+            // .INITIALIZEWAITCYCLES (1024),
+            .INITIALIZEWAITCYCLES (32),
             .CLOCKDOMAINS         (CLOCKDOMAINS)
         ) ResetSystem (
             .sys_clk         (sys_clk),
@@ -78,6 +78,7 @@ module PlatformIndependent_Test #(
         wire        ResetResponse;
         wire        ResetTrigger;
         wire        CPUResetLockout;
+        wire        IOResetLockout;
 
         wire        Flasher_IOOut_ACK;
         wire        Flasher_IOOut_REQ;
@@ -108,6 +109,7 @@ module PlatformIndependent_Test #(
             .ResetResponseOut       (ResetResponse),
             .ResetTriggerOut        (ResetTrigger),
             .CPUResetLockoutOut     (CPUResetLockout),
+            .IOResetLockoutOut      (IOResetLockout),
             .SystemEnable           (SystemEn),
             .IOOut_ACK              (Flasher_IOOut_ACK),
             .IOOut_REQ              (Flasher_IOOut_REQ),
@@ -168,6 +170,8 @@ module PlatformIndependent_Test #(
     //
 
     // IO Interfaces
+            wire IO_sync_rst = sync_rst_out[3] && ~IOResetLockout;
+            
             wire        GPIO_IO_Clk;
 
             wire        GPIO_IOOut_ACK;
@@ -189,7 +193,7 @@ module PlatformIndependent_Test #(
             ) IOInterface (
                 .sys_clk         (sys_clk),
                 .clk_en          (clk_en_out[3]),
-                .sync_rst        (sync_rst_out[3]),
+                .sync_rst        (IO_sync_rst),
                 .async_rst       (Local_async_rst),
                 .src_clk0        (src_clk0),
                 .src_clk1        (src_clk1),

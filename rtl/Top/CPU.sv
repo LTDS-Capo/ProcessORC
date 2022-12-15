@@ -207,6 +207,14 @@ module CPU #(
                 .clk_en                (clk_en),
                 .sync_rst              (sync_rst),
                 .InstructionValid      (InstructionValid),
+
+                .BAddrIn              (RegBAddr),
+                .MinorOpcodeIn        (MinorOpcodeOut),
+                .FunctionalUnitEnable (FunctionalUnitEnable),
+                .SoftwareResetOut     (SoftwareResetOut),
+                .ResetVectorOut       (ResetVector),
+                .ResetResponseIn      (ResetResponse),
+
                 .BranchStallIn         (BranchStallIn),
                 .RegisterStallIn       (RegisterStallIn),
                 .IssueCongestionStallIn(IssueCongestionStallIn),

@@ -12,7 +12,8 @@ module IO_MemoryFlasher_Flasher #(
     input   [3:0] ResetVectorIn,
     output        ResetResponseOut,
     output        ResetTriggerOut,
-    output        CPUResetLockoutOut,
+    output        CPUResetLockoutOut, 
+    output        IOResetLockoutOut,
 
     output        InstFlashEn,
     output        DataFlashEn,
@@ -46,7 +47,7 @@ module IO_MemoryFlasher_Flasher #(
         // Reset State
         reg   [1:0] ResetBuffer;
         logic [2:0] ResetStateVector;
-        always_comb begin : ResetStateMux
+        always_comb begin : ResetStateMux // Make it so IO reset is blocked when doing Inst flash only
             case (ResetBuffer)
                 2'b00  : ResetStateVector = {SoftwareResetIn, DesiredState} /* synthesis syn_keep=1 */; // Idle
                 2'b01  : ResetStateVector = {NextFlashAddress[10], 1'b1, ~DataReset} /* synthesis syn_keep=1 */; // Flash Inst
@@ -79,7 +80,8 @@ module IO_MemoryFlasher_Flasher #(
             end
         end
         wire   LocalResetBlock = ResetBuffer[1] && ResetBuffer[0] && (IOReset || InstReset);
-        assign CPUResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && IOReset;
+        assign CPUResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && ~InstReset && ~FullReset;
+        assign IOResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && ~IOReset && ~FullReset;
         assign ResetResponseOut = ResetStateVector[2] && ~ResetStateVector[1] && ~ResetStateVector[0];
         wire   ResetInstFlash = ResetStateVector[2] && ~ResetStateVector[1] && ResetStateVector[0];
         wire   ResetDataFlash = ResetStateVector[2] && ResetStateVector[1] && ~ResetStateVector[0];

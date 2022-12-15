@@ -22,14 +22,14 @@ module SystemControl (
 );
 
     // Reset Control
-        wire ResetEn   = (MinorOpcodeIn == 4'hE) && FunctionalUnitEnable[2];
+        wire ResetEn   = (MinorOpcodeIn == 4'hE) && FunctionalUnitEnable[2] && InstructionValid;
         // wire FullReset = BAddrIn[3];
         // wire InstReset = BAddrIn[2]; // Stall [Clears on reset]
         // wire IOReset   = BAddrIn[1]; // Stall [Clears on reply]
         // wire DataReset = BAddrIn[0]; // Stall [Clears on reply]
         reg  [4:0] ResetVectorBuffer;
-        wire       ResetVectorBufferTrigger = (ResetEn && clk_en) || sync_rst;
-        wire [4:0] NextResetVectorBuffer = (sync_rst) ? 0 : {ResetEn, BAddrIn};
+        wire       ResetVectorBufferTrigger = (ResetResponseIn && clk_en) || (ResetEn && clk_en) || sync_rst;
+        wire [4:0] NextResetVectorBuffer = (sync_rst || ResetResponseIn) ? '0 : {ResetEn, BAddrIn};
         always_ff @(posedge clk) begin
             if (ResetVectorBufferTrigger) begin
                 ResetVectorBuffer <= NextResetVectorBuffer;
@@ -43,8 +43,10 @@ module SystemControl (
                 ResetEnPulseLimit <= NextResetEnPulseLimit;
             end
         end
-        assign SoftwareResetOut = ResetVectorBuffer[4] && ~ResetEnPulseLimit && InstructionValid;
-        assign ResetVectorOut = InstructionValid ? ResetVectorBuffer[3:0] : '0;
+        // assign SoftwareResetOut = ResetVectorBuffer[4] && ~ResetEnPulseLimit && InstructionValid;
+        assign SoftwareResetOut = ResetVectorBuffer[4] && ~ResetEnPulseLimit;
+        // assign ResetVectorOut = InstructionValid ? ResetVectorBuffer[3:0] : '0;
+        assign ResetVectorOut = ResetVectorBuffer[3:0];
 
         reg  ResetStall;
         wire ResetStallEn = |ResetVectorBuffer[2:0];
@@ -55,7 +57,6 @@ module SystemControl (
                 ResetStall <= NextResetStall;
             end
         end
-
     //
     
     // Stall Control
@@ -68,7 +69,7 @@ module SystemControl (
             end
         end
         assign BranchStallDisable = BranchStallDelay;
-        assign StallEn = ResetStall || BranchStallDelay || RegisterStallIn || IssueCongestionStallIn || HaltStallIn || HaltCapture;
+        assign StallEn = ResetVectorBuffer[4] || ResetStall || BranchStallDelay || RegisterStallIn || IssueCongestionStallIn || HaltStallIn || HaltCapture;
     //
 
     // Halt Control

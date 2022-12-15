@@ -1,0 +1,147 @@
+//                                                                            //
+    //  Clock Conf Addr = 384-391
+    //                  >  [13:0] - clk division (4x)
+    //                  > [15:16] - clk source (4x)
+    //       Timer Addr = 392-395
+    //                  > [26:0] Wait time
+    //                  >   [27] PreScaler
+    //                      > - 0 : 1x
+    //                      > - 1 : 32x
+    //                  > [30:28] Timer Select
+    //                  >    [31] Command
+    //                      > - 0 : Clear(Store)/Check(Atomic Load) [CHECK NEEDS VALIDATION]
+    //                      > - 1 : Set(Store)/Wait(Atomic Load)
+    // GPIO MemMap Addr = 396-397 (Can upgrade with more commands if I check Load/Store)
+    //                  > Pulse of Length 0 Selects clock.
+    //                  > GPIO - In, Out, OutEn
+    //                  >>> NonPulse
+    //                      > [15:13] IOAddr*
+    //                      > [12:10] Command
+    //                          > - 0 : WriteBit
+    //                          > - 1 : WriteByte
+    //                          > - 2 : ClearBit
+    //                          > - 3 : ReadStatus
+    //                          > - 4 : ReadPin
+    //                          > - 5 : ReadStatusByte
+    //                          > - 6 : ReadPinByte
+    //                          > - 7 : PulseBit         // Used if Pulse Length != 0
+    //                          > - 7 : Configure Clocks // Used if Pulse Length == 0
+    //                          >   [9:8] *Ignore*
+    //                          >   [7:1] WriteByteValue/*Ignore*
+    //                          >     [0] WriteByteValue/WriteBitValue/*Ignore*
+    //                  >>> Pulse
+    //                      > [15:13] IOAddr
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - NOT 10'h000
+    //                  >>> Configure Clocks
+    //                      > [15:13] Clock Select
+    //                      > [12:10] Command - 3'h7
+    //                      >   [9:0] PulseLength - 10'h000
+    // Flasher MemMap Addr = 398-401 (Can upgrade with more commands if I check Load/Store)
+    //                  Operations
+    //                      >> Atomic Load - Read from memory
+    //                      >> Store - Write to Memory
+    //                  Bits
+    //                      >> 31:27 -  5b - *Reserved*
+    //                      >> 26:16 - 11b - Address
+    //                      >>  15:0 - 16b - Data 
+//                                                                            //
+// Registers - Pre Flash
+    // r0 - ZR
+    // r1 - Flasher IO Lower Address
+    // r2 - Flash routine - Value
+    // r3 - Flash routine - Address
+    // r4 - Loop Check
+    // r5 - Flasher IO Upper Address
+    // r6 - 
+    // r7 - 
+    // r8 - 
+    // r9 - 
+    // rA - 
+    // rB - 
+    // rC - 
+    // rD - 
+    // rE - 
+    // rF - 
+// Registers - Post Flash
+    // r0 - ZR
+    // r1 - Timer Base Address
+    // r2 - Timer Command Byte [1:0]
+    // r3 - Timer Command Byte [3:2]
+    // r4 - GPIO Write Value - Destructive
+    // r5 - GPIO Base Address
+    // r6 - GPIO Command
+    // r7 - GPIO Data Mask
+    // r8 - Reset Condition Check
+    // r9 - Step Counter
+    // rA - Fib Value 0
+    // rB - Fib Value 1
+    // rC - Fib Working Register
+    // rD - GPIO Input
+    // rE - GPIO Working Register
+    // rF - *Return Pointer*
+//                                                                            //
+
+:FUNCTION: GPIO_FibTestVariableIOReset
+    :DATA:
+        @'h000 
+        'hD188
+        'hC220
+        'hE200
+        'hC300
+        'hE380
+        'h3251
+        'h0111
+        'h0111
+        'hD58C
+        'hC7FF
+        'hCA01
+        'hCB00
+        'h0970
+        'h0C7A
+        'h0A7B
+        'h0B7C
+        'h900B
+        'h20E2
+        'h047A
+        'h9008
+        'h0A0B
+        'h0919
+        'h0479
+        'h9004
+        'h0C7A
+        'hB3F8
+        'h0A7B
+        'h0447
+        'hE404
+        'h3455
+        'hED18
+        'h3D95
+        'h037D
+        'hE380
+        'h3351
+        'h0473
+        'h3491
+        'h0074
+        'hA00F
+        // last line is on 'h026
+    :ENDDATA:
+
+    :INSTRUCTIONS:
+        LEI r1 'd398
+        LEI r5 'd400
+        LLI r4 'h026
+        LDW r2 r4
+        :Loop
+        STW r2 r1
+        STW r4 r5
+        BZI r4 :Reset
+        DEC r4 r4
+        BZI r0 :Loop
+        LDW r2 r4
+        :Reset
+        ALW r4 r5 // Force an Atomic Load of the last address accessed
+        MOV r0 r4 // Wait for the Atomic Load to come back and clear r4 Dirty-Bit
+        RST 'b0111
+    :ENDINSTRUCTIONS:
+:ENDFUNCTION:
