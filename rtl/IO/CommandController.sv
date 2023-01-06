@@ -32,19 +32,19 @@ module CommandController #(
     output                   [3:0] WritebackDestReg,
     output      [DATABITWIDTH-1:0] WritebackDataOut,
 
-    output        IOClk,
-    output        IOOut_ACK,
-    input         IOOut_REQ,
-    output        IOOut_ResponseRequested,
-    output  [3:0] IOOut_DestReg,
-    output [15:0] IOOut_Data,
+    output                         IOClk,
+    output                         IOOut_ACK,
+    input                          IOOut_REQ,
+    output                         IOOut_ResponseRequested,
+    output                   [3:0] IOOut_DestReg,
+    output [(PORTBYTEWIDTH*8)-1:0] IOOut_Data,
 
-    input         IOIn_ACK,
-    output        IOIn_REQ,
-    input         IOIn_RegResponseFlag,
-    input         IOIn_MemResponseFlag,
-    input   [3:0] IOIn_DestReg,
-    input  [15:0] IOIn_Data
+    input                          IOIn_ACK,
+    output                         IOIn_REQ,
+    input                          IOIn_RegResponseFlag,
+    input                          IOIn_MemResponseFlag,
+    input                    [3:0] IOIn_DestReg,
+    input  [(PORTBYTEWIDTH*8)-1:0] IOIn_Data
 
     //output [(PORTBYTEWIDTH*8)-1:0] LoadBuffer_TEST
     //output [3:0] TEST_VECTOR,
@@ -82,7 +82,7 @@ module CommandController #(
     //
 
     // Clock Selection
-        wire       ClockUpdate_Tmp = CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB];
+        wire       ClockUpdate_Tmp = (CLOCKCOMMAND_OPCODE == LocalCommandData[CLOCKCOMMAND_MSB:CLOCKCOMMAND_LSB]) && CLOCKCOMMAND_ENABLE;
         // wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK;
         wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK_Tmp;
         wire [2:0] ClockSelect = LocalCommandData[CLOCKCOMMAND_CLKSELLSB+2:CLOCKCOMMAND_CLKSELLSB];
@@ -129,7 +129,7 @@ module CommandController #(
         //   - Responses (Takes priority)
         localparam REGRESPONSEBITWIDTH = (DATABITWIDTH >= (PORTBYTEWIDTH*8)) ? (PORTBYTEWIDTH*8) : DATABITWIDTH;
         // wire                    RegResponse_Tmp = LocalIORegResponse && TargetCommandACK; 
-        wire                    RegResponse_Tmp = LocalIORegResponse && LocalResponseACK; 
+        wire                    RegResponse_Tmp = LocalIORegResponse && LocalResponseACK;  
         wire                    LocalResponseACK;
         // wire                    LocalResponseREQ = (RegResponse_Tmp && WritebackREQ) || ~RegResponse_Tmp;
         wire                    LocalResponseREQ = (LocalIORegResponse && WritebackREQ) || ~LocalIORegResponse;

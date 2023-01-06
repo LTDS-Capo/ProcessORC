@@ -7,6 +7,8 @@ module InstructionIssue #(
     input clk_en,
     input sync_rst,
 
+    input                        StallIn,
+
     // Instruction Input
     input                  [3:0] MinorOpcode,
     input                  [4:0] FunctionalUnitEnable,
@@ -77,6 +79,6 @@ module InstructionIssue #(
 
 
     // Load Store Unit Control
-    assign LoadStore_ACK = FunctionalUnitEnable[3] || CongestionStallBuffer;
+    assign LoadStore_ACK = (FunctionalUnitEnable[3] || CongestionStallBuffer) && ~StallIn;
 
 endmodule

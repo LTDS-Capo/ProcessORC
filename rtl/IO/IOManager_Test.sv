@@ -199,7 +199,7 @@ module IOManager_Test #(
             localparam FLASHER_DEVICE_INDEX = 3; // Starts at 2
             localparam FLASHER_IO_INDEX = 13; // Starts at 12
             localparam FLASHER_LOWERADDR = 14; // Starts at 12
-            localparam FLASHER_UPPERADDR = 15;
+            localparam FLASHER_UPPERADDR = 17;
             localparam FLASHER_PORTBYTEWIDTH = 4;
             localparam FLASHER_CLOCKCOMMAND_ENABLE = '0;
             localparam FLASHER_CLOCKCOMMAND_LSB = '0;

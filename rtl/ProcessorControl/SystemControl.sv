@@ -18,6 +18,7 @@ module SystemControl (
 
     output BranchStallDisable,
     output Halted,
+    output LoadStoreStallEn,
     output StallEn
 );
 
@@ -70,6 +71,7 @@ module SystemControl (
         end
         assign BranchStallDisable = BranchStallDelay;
         assign StallEn = ResetVectorBuffer[4] || ResetStall || BranchStallDelay || RegisterStallIn || IssueCongestionStallIn || HaltStallIn || HaltCapture;
+        assign LoadStoreStallEn = ResetVectorBuffer[4] || ResetStall || BranchStallDelay || RegisterStallIn || HaltStallIn || HaltCapture;
     //
 
     // Halt Control

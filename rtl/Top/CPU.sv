@@ -201,6 +201,7 @@ module CPU #(
             wire IssueCongestionStallIn = IssueCongestionStallOut;
             wire BranchStallDisable;
             wire Halted;
+            wire LoadStoreStallEn;
             wire StallEn;
             SystemControl SysCtl (
                 .clk                   (clk),
@@ -220,7 +221,8 @@ module CPU #(
                 .IssueCongestionStallIn(IssueCongestionStallIn),
                 .HaltStallIn           (HaltEn),
                 .BranchStallDisable    (BranchStallDisable),
-                .Halted                (Halted), 
+                .Halted                (Halted),
+                .LoadStoreStallEn      (LoadStoreStallEn),
                 .StallEn               (StallEn)
             );
         //
@@ -355,6 +357,7 @@ module CPU #(
                 .clk                    (clk),
                 .clk_en                 (clk_en),
                 .sync_rst               (sync_rst),
+                .StallIn                (LoadStoreStallEn),
                 .MinorOpcode            (MinorOpcode),
                 .FunctionalUnitEnable   (FunctionalUnitEnableIn),
                 .WriteBackSourceIn      (WriteBackSourceIn),

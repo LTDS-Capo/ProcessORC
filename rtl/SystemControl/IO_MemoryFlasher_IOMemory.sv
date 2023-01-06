@@ -55,7 +55,7 @@ module IO_MemoryFlasher_IOMemory (
         endcase
     end
 
-    assign IOOut_REQ = IOOut_ResponseRequested ? IOOut_REQ : clk_en;
+    assign IOOut_REQ = IOOut_ResponseRequested ? IOIn_REQ : clk_en;
     assign IOIn_ACK = IOOut_ResponseRequested & IOOut_ACK && clk_en;
     assign IOIn_RegResponseFlag = IOOut_ResponseRequested & IOOut_ACK && clk_en;
     assign IOIn_MemResponseFlag = '0;

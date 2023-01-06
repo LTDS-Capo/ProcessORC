@@ -72,10 +72,10 @@ module RoundRobin #(
             end
             // $display(" >> SHIFTEDADJUSTMENT  - %0b", SHIFTEDADJUSTMENT);
             // $display(" >> OFFSETCORRECTION   - %0d", OFFSETCORRECTION);
-            $display(" >> PortIndex     - %0d", PriorityIndex);
+            // $display(" >> PortIndex     - %0d", PriorityIndex);
             // $display(" >> ShiftedVec    - %04b", ShiftedPortACKVector);
             // $display(" >> LowestBit     - %04b", IsolatedLowerBit);
-            $display(" >> BitScanResult - %0d", BitScanResult);
+            // $display(" >> BitScanResult - %0d", BitScanResult);
         end
     //
 

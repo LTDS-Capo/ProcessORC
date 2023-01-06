@@ -79,12 +79,23 @@ module IO_MemoryFlasher_Flasher #(
                 ResetResponseDetection <= NextResetResponseDetection;
             end
         end
+        reg  FlashResetDelay;
+        wire NextFlashResetDelay = ~sync_rst && (ResetStateVector[2]);
+        wire FlashResetDelayTrigger = sync_rst || (clk_en);
+        always_ff @(posedge clk) begin
+            if (FlashResetDelayTrigger) begin
+                FlashResetDelay <= NextFlashResetDelay;
+            end
+        end
+        
         wire   LocalResetBlock = ResetBuffer[1] && ResetBuffer[0] && (IOReset || InstReset);
         assign CPUResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && ~InstReset && ~FullReset;
         assign IOResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && ~IOReset && ~FullReset;
         assign ResetResponseOut = ResetStateVector[2] && ~ResetStateVector[1] && ~ResetStateVector[0];
-        wire   ResetInstFlash = ResetStateVector[2] && ~ResetStateVector[1] && ResetStateVector[0];
-        wire   ResetDataFlash = ResetStateVector[2] && ResetStateVector[1] && ~ResetStateVector[0];
+        // wire   ResetInstFlash = ResetStateVector[2] && ~ResetStateVector[1] && ResetStateVector[0];
+        wire   ResetInstFlash = FlashResetDelay && ~ResetBuffer[1] && ResetBuffer[0];
+        // wire   ResetDataFlash = ResetStateVector[2] && ResetStateVector[1] && ~ResetStateVector[0];
+        wire   ResetDataFlash = FlashResetDelay && ResetBuffer[1] && ~ResetBuffer[0];
         assign ResetTriggerOut = ResetStateVector[2] && ResetStateVector[1] && ResetStateVector[0];
     //
 
@@ -92,7 +103,8 @@ module IO_MemoryFlasher_Flasher #(
         reg  [1:0] Active;
         wire       FlashInit_Tmp = FlashInit && ~LocalResetBlock;
         wire       ActiveTrigger = (FlashFinished && clk_en) || (FlashInit_Tmp && clk_en) || (ResetInstFlash && clk_en) || (ResetDataFlash && clk_en) || LocalSyncRst;
-        wire       FlashFinished = FlashAddress[11] || (NextFlashAddress[10] && ~DataReset);
+        wire       ResetActive = |ResetBuffer;
+        wire       FlashFinished = FlashAddress[11] || (NextFlashAddress[10] && ~DataReset && ResetActive);
         wire [1:0] NextActive;
         assign     NextActive[0] = (FlashInit_Tmp && ~FlashFinished && ~LocalSyncRst) || (ResetInstFlash && ~LocalSyncRst) || (ResetDataFlash && ~LocalSyncRst);
         assign     NextActive[1] = FlashFinished && ~ResetInstFlash && ~LocalSyncRst;
