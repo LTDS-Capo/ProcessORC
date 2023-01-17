@@ -31,21 +31,21 @@ module RegisterFile #(
     // Write Decoder
     logic [REGISTERCOUNT-1:0] WriteDecodeVector;
     always_comb begin : WriteDecoder
-        WriteDecodeVector = 0;
+        WriteDecodeVector = '0;
         WriteDecodeVector[Write_Address] = 1'b1;
     end
 
     // Mem Write Decoder
     logic [REGISTERCOUNT-1:0] MemWriteDecodeVector;
     always_comb begin : MemWriteDecoder
-        MemWriteDecodeVector = 0;
+        MemWriteDecodeVector = '0;
         MemWriteDecodeVector[Mem_Write_Address] = 1'b1;
     end
 
     // Dirty Bit Decoder
     logic [REGISTERCOUNT-1:0] DirtyBitDecodeVector;
     always_comb begin : DirtyBitDecoder
-        DirtyBitDecodeVector = 0;
+        DirtyBitDecodeVector = '0;
         DirtyBitDecodeVector[ReadA_Address] = 1'b1;
     end
 
@@ -56,7 +56,7 @@ module RegisterFile #(
         genvar RegisterIndex;
         for (RegisterIndex = 0; RegisterIndex < REGISTERCOUNT; RegisterIndex = RegisterIndex + 1) begin : RegisterGeneration
             if (RegisterIndex == 0) begin
-                assign DataOutVector[RegisterIndex] = 0;
+                assign DataOutVector[RegisterIndex] = '0;
                 assign DirtyBitOutVector[RegisterIndex] = 1'b0;
             end
             else begin
@@ -90,14 +90,10 @@ module RegisterFile #(
     // RegisterStallOut and Sync Generation
     wire   StallA = DirtyBitOutVector[ReadA_Address] && (ReadA_En || RegisterStallBuffer[0]);
     wire   StallB = DirtyBitOutVector[ReadB_Address] && (ReadB_En || RegisterStallBuffer[1]);
-    // wire   StallClearCheck = DirtyBitOutVector[Mem_Write_Address] && Mem_Write_En
-    // assign RegistersSync = ~|DirtyBitOutVector;
 
     reg  [1:0] RegisterStallBuffer;
     wire RegisterStall = StallA || StallB;
-    // wire RegisterStallBufferTrigger = (Mem_Write_En && clk_en) || (DirtyBitTrigger && clk_en) || sync_rst;
     wire RegisterStallBufferTrigger = (Mem_Write_En && clk_en) || (RegisterStall && clk_en) || sync_rst;
-    // wire NextRegisterStallBuffer = RegisterStall && ~sync_rst;
     wire [1:0] NextRegisterStallBuffer = sync_rst ? '0 : {StallB, StallA};
     always_ff @(posedge clk) begin
         if (RegisterStallBufferTrigger) begin
@@ -109,11 +105,9 @@ module RegisterFile #(
     assign RegisterStallOut = RegisterStall || (|RegisterStallBuffer);
 
     // Read A decoder
-    // assign ReadA_Data = ReadA_En ? DataOutVector[ReadA_Address] : 0;
     assign ReadA_Data = DataOutVector[ReadA_Address];
     
     // Read B decoder
-    // assign ReadB_Data = ReadB_En ? DataOutVector[ReadB_Address] : 0;
     assign ReadB_Data = DataOutVector[ReadB_Address];
 
 endmodule

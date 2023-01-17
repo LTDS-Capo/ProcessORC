@@ -23,6 +23,7 @@ module IO_MemoryFlasher_Flasher #(
     output        SystemEnable,
 
     output        FlashReadEn,
+    output [10:0] FlashReadAddr,
     input  [15:0] FlashDataIn
 
 );
@@ -31,8 +32,8 @@ module IO_MemoryFlasher_Flasher #(
         // Type - Priority - VectorIndex - TargetState - Notes
         // FullReset - 1 - 3 - 11 - Submit Reset Trigger
         // InstReset - 2 - 2 - 01 - Flash Inst Memory, Submit Reset, Lockout Local Reset, Do Not Reply
-        // IOReset   - 3 - 1 - 10 - Submit Reset, Lockout Local resets and CPU reset, Reply
-        // DataReset - 4 - 0 - 11 - Flashes Fixed Memory, Reply 
+        // IOReset   - 3 - 1 - 11 - Submit Reset, Lockout Local resets and CPU reset, Reply
+        // DataReset - 4 - 0 - 10 - Flashes Fixed Memory, Reply 
 
         wire [1:0] DesiredState;
         wire FullReset = ResetVectorIn[3]; // // Buffer these locally // no
@@ -41,7 +42,7 @@ module IO_MemoryFlasher_Flasher #(
         wire DataReset = ResetVectorIn[0]; // // Buffer these locally // no
         wire LocalSoftResetEn = InstReset || IOReset;
         assign DesiredState[0] = FullReset || IOReset || InstReset;
-        assign DesiredState[1] = FullReset || IOReset || DataReset;
+        assign DesiredState[1] = FullReset || (IOReset && ~DataReset && ~InstReset) || (DataReset && ~InstReset);
         wire LocalSyncRst = sync_rst && ~LocalResetBlock;
 
         // Reset State
@@ -162,10 +163,27 @@ module IO_MemoryFlasher_Flasher #(
 
     // Data ROM
     wire [15:0] CurrentData;
+    wire  [9:0] DataAddr = {'0, FlashAddr[9:1]};
     FlashROM_Data DataROM (
-        .Address(FlashAddress[9:0]),
+        .Address(DataAddr),
         .Value  (CurrentData)
     );
+
+    // Output Delay Buffer
+        wire [15:0] LocalFlashData = FlashAddress[10] ? CurrentData : CurrentInstruction;
+        reg  [28:0] OutputDelayBuffer;
+        wire SystemEnable_Tmp = Active[1];
+        wire InstFlashEn_Tmp = Active[0] && ~FlashAddress[10] && ~FlashFinished;
+        wire DataFlashEn_Tmp = Active[0] && FlashAddress[10] && ~FlashFinished;
+        wire [28:0] NextOutputDelayBuffer = sync_rst ? '0 : {SystemEnable_Tmp, InstFlashEn_Tmp, DataFlashEn_Tmp, FlashAddress[9:0], LocalFlashData};
+        wire OutputDelayBufferTrigger = sync_rst || clk_en;
+        always_ff @(posedge clk) begin
+            if (OutputDelayBufferTrigger) begin
+                OutputDelayBuffer <= NextOutputDelayBuffer;
+            end
+        end
+    //
+    
 
     logic [15:0] FlashDataOut_Tmp;
     wire   [1:0] FlashDataCondition = {PoweredUp, FlashAddress[10]};
@@ -179,12 +197,15 @@ module IO_MemoryFlasher_Flasher #(
         endcase
     end
 
+
     // Flashing Output Assignments
-    assign SystemEnable = Active[1];
-    assign FlashAddr = FlashAddress[9:0];
-    assign FlashDataOut = FlashDataOut_Tmp;
     assign FlashReadEn = Active[0] && ~FlashFinished;
-    assign InstFlashEn = Active[0] && ~FlashAddress[10] && ~FlashFinished;
-    assign DataFlashEn = Active[0] && FlashAddress[10] && ~FlashFinished;
+    assign FlashReadAddr = FlashAddress[10:0];
+
+    assign SystemEnable = OutputDelayBuffer[28];
+    assign FlashAddr = OutputDelayBuffer[25:16];
+    assign FlashDataOut = PoweredUp ? FlashDataIn : OutputDelayBuffer[15:0];
+    assign InstFlashEn = OutputDelayBuffer[27];
+    assign DataFlashEn = OutputDelayBuffer[26];
 
 endmodule

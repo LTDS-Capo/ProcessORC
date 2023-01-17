@@ -42,27 +42,61 @@ module IO_MemoryFlasher_IOMemory (
         end
     end
 
-    wire         MemReadEn = IOOut_ACK && IOOut_REQ && IOOut_ResponseRequested && clk_en;
-    logic [10:0] FlashReadAddr;
-    wire   [1:0] NextCaseCondition = {FlashReadEn, MemReadEn};
-    always_comb begin : FlashReadAddrMux
-        case (NextCaseCondition)
-            2'b00  : FlashReadAddr = '0;
-            2'b01  : FlashReadAddr = FlashWriteAddr;
-            2'b10  : FlashReadAddr = FlashAddr;
-            2'b11  : FlashReadAddr = FlashAddr;
-            default: FlashReadAddr = '0; // Default is also case 0
-        endcase
-    end
+    // wire         MemReadEn = IOOut_ResponseRequested;
+    // logic [10:0] FlashReadAddr;
+    // wire   [1:0] NextCaseCondition = {FlashReadEn, MemReadEn};
+    // always_comb begin : FlashReadAddrMux
+    //     case (NextCaseCondition)
+    //         2'b00  : FlashReadAddr = '0;
+    //         2'b01  : FlashReadAddr = FlashWriteAddr;
+    //         2'b10  : FlashReadAddr = FlashAddr;
+    //         2'b11  : FlashReadAddr = FlashAddr;
+    //         default: FlashReadAddr = '0; // Default is also case 0
+    //     endcase
+    // end
 
-    assign IOOut_REQ = IOOut_ResponseRequested ? IOIn_REQ : clk_en;
-    assign IOIn_ACK = IOOut_ResponseRequested & IOOut_ACK && clk_en;
-    assign IOIn_RegResponseFlag = IOOut_ResponseRequested & IOOut_ACK && clk_en;
+    // Flash Read Clear Delay
+        reg  FlashReadClearDelay;
+        wire NextFlashReadClearDelay = ~sync_rst && FlashReadEn;
+        wire FlashReadClearDelayTrigger = sync_rst || clk_en;
+        always_ff @(posedge clk) begin
+            if (FlashReadClearDelayTrigger) begin
+                FlashReadClearDelay <= NextFlashReadClearDelay;
+            end
+        end
+        wire FlashClear = FlashReadClearDelay && ~FlashReadEn;
+    //
+
+    // Read Buffer
+        reg  [15:0] ReadBuffer;
+        wire [10:0] FlashReadAddr = FlashReadEn ? FlashAddr : FlashWriteAddr;
+        wire [15:0] ReadData = FlashMem[FlashReadAddr];
+        wire ReadBufferTrigger = clk_en;
+        always_ff @(posedge clk) begin
+            if (ReadBufferTrigger) begin
+                ReadBuffer <= ReadData;
+            end
+        end
+    //
+
+    // Handshake Status
+        reg  [4:0] ReadStatus;
+        wire [4:0] NextReadStatus = (sync_rst || (IOIn_ACK && IOIn_REQ && ~IOOut_ACK) || FlashClear) ? '0 : {IOOut_ResponseRequested, IOOut_DestReg};
+        wire ReadStatusTrigger = sync_rst || (clk_en && IOOut_ACK && IOOut_REQ && IOOut_ResponseRequested) || (clk_en && IOIn_ACK && IOIn_REQ) || (clk_en && FlashReadEn) || (clk_en && FlashClear);
+        always_ff @(posedge clk) begin
+            if (ReadStatusTrigger) begin
+                ReadStatus <= NextReadStatus;
+            end
+        end
+    //
+
+    assign IOOut_REQ = IOOut_ResponseRequested ? ~ReadStatus[4] : clk_en;
+    assign IOIn_ACK = ReadStatus[4];
+    assign IOIn_RegResponseFlag = ReadStatus[4];
     assign IOIn_MemResponseFlag = '0;
-    assign IOIn_DestReg = IOOut_DestReg;
-    assign IOIn_Data = {'0, FlashMem[FlashReadAddr]};
+    assign IOIn_DestReg = ReadStatus[3:0];
+    assign IOIn_Data = {'0, ReadBuffer[15:0]};
 
-    // assign FlashData = FlashMem[FlashReadAddr];
 
 
 endmodule

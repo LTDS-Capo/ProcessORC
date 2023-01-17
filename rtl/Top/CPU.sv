@@ -630,6 +630,7 @@ module CPU #(
             ) FixedMem (
                 .clk            (clk),
                 .clk_en         (clk_en),
+                .sync_rst       (sync_rst),
                 .FlashEn        (DataFlashEn),
                 .FlashAddr      (FlashAddr),
                 .FlashData      (FlashData),

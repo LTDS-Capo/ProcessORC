@@ -29,7 +29,7 @@ module RegisterFile_Cell #(
             2'b01  : NextRegister = DataIn;
             2'b10  : NextRegister = Mem_DataIn;
             2'b11  : NextRegister = Mem_DataIn;
-            default: NextRegister = 0; // Default is also case 0
+            default: NextRegister = '0; // Default is also case 0
         endcase
     end
     always_ff @(posedge clk) begin

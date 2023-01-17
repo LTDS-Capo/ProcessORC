@@ -39,6 +39,7 @@ module IO_MemoryFlasher #(
 );
 
     wire        FlashReadEn;
+    wire [10:0] FlashReadAddr;
 
     IO_MemoryFlasher_Flasher #(
         .MEMMAPSTARTADDR(MEMMAPSTARTADDR),
@@ -60,7 +61,8 @@ module IO_MemoryFlasher #(
         .FlashDataOut      (FlashData),
         .SystemEnable      (SystemEnable),
         .FlashReadEn       (FlashReadEn),
-        .FlashDataIn       (IOIn_Data[15:0])
+        .FlashDataIn       (IOIn_Data[15:0]),
+        .FlashReadAddr     (FlashReadAddr)
     );
 
     IO_MemoryFlasher_IOMemory IOMemory (
@@ -68,7 +70,7 @@ module IO_MemoryFlasher #(
         .clk_en                 (clk_en),
         .sync_rst               (sync_rst),
         .FlashReadEn            (FlashReadEn),
-        .FlashAddr              (FlashAddr),
+        .FlashAddr              (FlashReadAddr),
         .IOOut_ACK              (IOOut_ACK),
         .IOOut_REQ              (IOOut_REQ),
         .IOOut_ResponseRequested(IOOut_ResponseRequested),
