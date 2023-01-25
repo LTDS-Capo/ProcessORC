@@ -6,21 +6,46 @@ module FlashROM_Instruction (
     logic [15:0] TempValue;
     always_comb begin : ROMBlock
         case (Address)
+
             10'h000 : TempValue = 16'hD18E; // LEI r1 'd398
             10'h001 : TempValue = 16'hD590; // LEI r5 'd400
             10'h002 : TempValue = 16'hC426; // LLI r4 'h26
-            10'h003 : TempValue = 16'h3214; // LDW r2 r4
+            10'h003 : TempValue = 16'h0674; // MOV r6 r4
             //                             :Loop
-            10'h004 : TempValue = 16'h3251; // STW r2 r1
-            10'h005 : TempValue = 16'h3455; // STW r4 r5
-            10'h006 : TempValue = 16'hB404; // BZI r4 :Reset[+4]
-            10'h007 : TempValue = 16'h0434; // DEC r4 r4
-            10'h008 : TempValue = 16'hB3FC; // BZI r0 :Loop[-4]
-            10'h009 : TempValue = 16'h3214; // LDW r2 r4
+            10'h004 : TempValue = 16'h0606; // ADD r6 r6
+            // 10'h005 : TempValue = 16'h3214; // LDW r2 r6
+            10'h005 : TempValue = 16'h3216; // LDW r2 r6
+            10'h006 : TempValue = 16'h3251; // STW r2 r1
+            10'h007 : TempValue = 16'h3455; // STW r4 r5
+            10'h008 : TempValue = 16'hB404; // BZI r4 :Reset[+1]
+            10'h009 : TempValue = 16'h0434; // DEC r4 r4
+            10'h00A : TempValue = 16'hB3FA; // BZI r0 :Loop[-6]
+            10'h00B : TempValue = 16'h0674; // MOV r6 r4
             //                             :Reset
-            10'h00A : TempValue = 16'h3495; // ALW r4 r5
-            10'h00B : TempValue = 16'h0074; // MOV r0 r4
-            10'h00C : TempValue = 16'h20E7; // RST 'b0111
+            10'h00C : TempValue = 16'h3495; // ALW r4 r5
+            10'h00D : TempValue = 16'h0074; // MOV r0 r4
+            10'h00E : TempValue = 16'h20E7; // RST 'b0111
+
+            // 10'h000 : TempValue = 16'hD18E; // LEI r1 'd398
+            // 10'h001 : TempValue = 16'hD590; // LEI r5 'd400
+            // 10'h002 : TempValue = 16'hC44C; // LLI r4 'h26*2
+            // 10'h003 : TempValue = 16'hC701; // LLI r7 'h01
+            // 10'h004 : TempValue = 16'h3214; // LDW r2 r4
+            // //                             :Loop
+            // 10'h005 : TempValue = 16'h3251; // STW r2 r1
+            // 10'h006 : TempValue = 16'h0674; // MOV r6 r4
+            // 10'h007 : TempValue = 16'h1647; // SHR r6 r7
+            // 10'h008 : TempValue = 16'h3655; // STW r6 r5
+            // 10'h009 : TempValue = 16'hB405; // BZI r4 :Reset[+5]
+            // 10'h00A : TempValue = 16'h0434; // DEC r4 r4
+            // 10'h00B : TempValue = 16'h0434; // DEC r4 r4
+            // 10'h00C : TempValue = 16'hB3F9; // BZI r0 :Loop[-7]
+            // 10'h00D : TempValue = 16'h3214; // LDW r2 r4
+            // //                             :Reset
+            // 10'h00E : TempValue = 16'h3495; // ALW r4 r5
+            // 10'h00F : TempValue = 16'h0074; // MOV r0 r4
+            // 10'h010 : TempValue = 16'h20E7; // RST 'b0111
+
 
             // // GPIO Fib Test - Variable (With IO Reset)
             // 10'h000 : TempValue = 16'hD188; // LEI r1 'd392 - Load Timer Base Address

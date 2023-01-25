@@ -32,12 +32,12 @@ module PlatformIndependent_Test #(
         wire Local_async_rst = async_rst || async_rst_Tmp;
         TopLevelReset #(
             // .RESETWAITCYCLES      (625000),
-            .RESETWAITCYCLES      (64),
-            .RESETCYCLELENGTH     (32),
+            .RESETWAITCYCLES      (32),
+            .RESETCYCLELENGTH     (16),
             // .OPERATIONALWAITCYCLES(25000),
-            .OPERATIONALWAITCYCLES(64),
+            .OPERATIONALWAITCYCLES(32),
             // .INITIALIZEWAITCYCLES (1024),
-            .INITIALIZEWAITCYCLES (32),
+            .INITIALIZEWAITCYCLES (16),
             .CLOCKDOMAINS         (CLOCKDOMAINS)
         ) ResetSystem (
             .sys_clk         (sys_clk),

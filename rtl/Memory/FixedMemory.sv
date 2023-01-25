@@ -33,7 +33,7 @@ module FixedMemory #(
 
     // Memory
         reg  [DATABITWIDTH-1:0] DataMemory [511:0];
-        wire              [8:0] MemAddr = FlashEn ? FlashAddr[9:1] : WriteAddr;
+        wire              [8:0] MemAddr = FlashEn ? FlashAddr[9:1] : WriteAddr[9:1];
         wire                    DataMemoryWriteTrigger = (BufferedStoreFlag && clk_en) || (FlashEn && clk_en);
         wire [DATABITWIDTH-1:0] NextStoreData = FlashEn ? FlashData : StoreValue_Tmp;
         always_ff @(posedge clk) begin
@@ -55,22 +55,26 @@ module FixedMemory #(
     //
 
     // Read Status Buffer
-        reg  [32:0] ReadStatus;
+        reg  [33:0] ReadStatus;
         wire StoreFlag = ~MinorOpcodeIn[3] && MinorOpcodeIn[2] && LoadStore_ACK;
-        wire LoadFlag = ~StoreFlag;
-        wire [32:0] NextReadStatus = (sync_rst || (Writeback_REQ && ~LoadStore_ACK) || (BufferedStoreFlag && ~LoadStore_ACK)) ? '0 : {StoreFlag, LoadFlag, DestRegisterIn, MinorOpcodeIn, DataAddrIn[9:1], DataIn};
+        wire LoadFlag = ~StoreFlag && LoadStore_ACK;
+        wire [33:0] NextReadStatus = (sync_rst || (Writeback_REQ && ~LoadStore_ACK) || (BufferedStoreFlag && ~LoadStore_ACK)) ? '0 : {StoreFlag, LoadFlag, DestRegisterIn, MinorOpcodeIn[1:0], DataAddrIn[9:0], DataIn};
+        // wire [32:0] NextReadStatus = (sync_rst || (Writeback_REQ && ~LoadStore_ACK) || (BufferedStoreFlag && ~LoadStore_ACK)) ? '0 : {1'b1, DestRegisterIn, MinorOpcodeIn, DataAddrIn[9:0], DataIn};
         wire ReadStatusTrigger = sync_rst || (clk_en && LoadStore_ACK && LoadStore_REQ) || (clk_en && Writeback_REQ && Writeback_ACK) || (clk_en && BufferedStoreFlag);
         always_ff @(posedge clk) begin
             if (ReadStatusTrigger) begin
                 ReadStatus <= NextReadStatus;
             end
         end
-        wire       BufferedStoreFlag = ReadStatus[32];
-        wire       BufferedLoadFlag = ReadStatus[31];
-        wire [8:0] WriteRegister = ReadStatus[30:27];
-        wire [1:0] WriteMinorOpcodeLower = ReadStatus[26:25];
-        wire [8:0] WriteAddr = ReadStatus[24:16];
-        wire [8:0] WriteData = ReadStatus[15:0];
+        // wire StatusValid = ReadStatus[32];
+        wire        BufferedStoreFlag = ReadStatus[33];
+        // wire        BufferedStoreFlag = ~WriteMinorOpcodeLower[3] && WriteMinorOpcodeLower[2] && StatusValid;
+        wire        BufferedLoadFlag = ReadStatus[32];
+        // wire        BufferedLoadFlag = (WriteMinorOpcodeLower[3] || ~WriteMinorOpcodeLower[2]) && StatusValid;
+        wire  [3:0] WriteRegister = ReadStatus[31:28];
+        wire  [1:0] WriteMinorOpcodeLower = ReadStatus[27:26];
+        wire  [9:0] WriteAddr = ReadStatus[25:16];
+        wire [15:0] WriteData = ReadStatus[15:0];
     //
 
 
@@ -78,10 +82,11 @@ module FixedMemory #(
         logic [DATABITWIDTH-1:0] StoreValue_Tmp;
         always_comb begin : DataInMux
             case (WriteMinorOpcodeLower)
+                2'b00  : StoreValue_Tmp = WriteAddr[0] ? {WriteData[7:0], ReadBuffer[7:0]} : {ReadBuffer[15:8], WriteData[7:0]};  // Store Byte
                 2'b01  : StoreValue_Tmp = WriteData; // Store Word
                 2'b10  : StoreValue_Tmp = 16'hFFFF; // Store Double
                 2'b11  : StoreValue_Tmp = 16'hFFFF; // Store Quad
-                default: StoreValue_Tmp = WriteAddr[0] ? {WriteData[7:0], ReadBuffer[7:0]} : {ReadBuffer[15:8], WriteData[7:0]}; // Store Byte
+                default: StoreValue_Tmp = 16'hFFFF;
             endcase
         end
     //
@@ -90,10 +95,11 @@ module FixedMemory #(
         logic [DATABITWIDTH-1:0] DataOut_Tmp;
         always_comb begin : DataOutMux
             case (WriteMinorOpcodeLower)
+                2'b00  : DataOut_Tmp = WriteAddr[0] ? {'0, ReadBuffer[15:8]} : {'0, ReadBuffer[7:0]}; // Load Byte
                 2'b01  : DataOut_Tmp = ReadBuffer; // Load Word
                 2'b10  : DataOut_Tmp = 16'hFFFF; // Load Double
                 2'b11  : DataOut_Tmp = 16'hFFFF; // Load Quad
-                default: DataOut_Tmp = WriteAddr[0] ? {'0, ReadBuffer[15:8]} : {'0, ReadBuffer[7:0]}; // Default is also case 0 - Load Byte
+                default: DataOut_Tmp = 16'hFFFF;
             endcase
         end
     //

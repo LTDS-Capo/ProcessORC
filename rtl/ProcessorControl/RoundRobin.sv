@@ -6,7 +6,7 @@ module RoundRobin #(
     input clk,
     input clk_en,
     input sync_rst,
-
+    
     input [PORTCOUNT-1:0] PortACKVector,
     output [PORTADDRWIDTH-1:0] PortSelection
 );

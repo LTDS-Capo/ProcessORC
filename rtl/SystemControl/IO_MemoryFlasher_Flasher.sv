@@ -17,7 +17,7 @@ module IO_MemoryFlasher_Flasher #(
 
     output        InstFlashEn,
     output        DataFlashEn,
-    output  [9:0] FlashAddr,
+    output  [9:0] FlashAddressOut,
     output [15:0] FlashDataOut,
 
     output        SystemEnable,
@@ -33,7 +33,7 @@ module IO_MemoryFlasher_Flasher #(
         // FullReset - 1 - 3 - 11 - Submit Reset Trigger
         // InstReset - 2 - 2 - 01 - Flash Inst Memory, Submit Reset, Lockout Local Reset, Do Not Reply
         // IOReset   - 3 - 1 - 11 - Submit Reset, Lockout Local resets and CPU reset, Reply
-        // DataReset - 4 - 0 - 10 - Flashes Fixed Memory, Reply 
+        // DataReset - 4 - 0 - 10 - Flashes Fixed Memory, Reply
 
         wire [1:0] DesiredState;
         wire FullReset = ResetVectorIn[3]; // // Buffer these locally // no
@@ -43,7 +43,7 @@ module IO_MemoryFlasher_Flasher #(
         wire LocalSoftResetEn = InstReset || IOReset;
         assign DesiredState[0] = FullReset || IOReset || InstReset;
         assign DesiredState[1] = FullReset || (IOReset && ~DataReset && ~InstReset) || (DataReset && ~InstReset);
-        wire LocalSyncRst = sync_rst && ~LocalResetBlock;
+        wire LocalSyncRst = sync_rst && ~(LocalResetBlock || LocalResetLockoutBuffer);
 
         // Reset State
         reg   [1:0] ResetBuffer;
@@ -88,8 +88,17 @@ module IO_MemoryFlasher_Flasher #(
                 FlashResetDelay <= NextFlashResetDelay;
             end
         end
-        
-        wire   LocalResetBlock = ResetBuffer[1] && ResetBuffer[0] && (IOReset || InstReset);
+
+        wire LocalResetBlock = ResetBuffer[1] && ResetBuffer[0] && (IOReset || InstReset);
+        reg  LocalResetLockoutBuffer;
+        wire NextLocalResetLockoutBuffer = ~LocalSyncRst && (LocalResetBlock && ~FlashInit);
+        wire LocalResetLockoutBufferTrigger = LocalSyncRst || (clk_en && LocalResetBlock) || (clk_en && FlashInit);
+        always_ff @(posedge clk) begin
+            if (LocalResetLockoutBufferTrigger) begin
+                LocalResetLockoutBuffer <= NextLocalResetLockoutBuffer;
+            end
+        end
+
         assign CPUResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && ~InstReset && ~FullReset;
         assign IOResetLockoutOut = ResetBuffer[1] && ResetBuffer[0] && ~IOReset && ~FullReset;
         assign ResetResponseOut = ResetStateVector[2] && ~ResetStateVector[1] && ~ResetStateVector[0];
@@ -138,7 +147,8 @@ module IO_MemoryFlasher_Flasher #(
     wire  [11:0] MemMapCompareAddr = {2'b01, MemMapStart};
     wire         MemMapSkipTrigger = (FlashAddress == MemMapCompareAddr);
     assign NextFlashAddressCondition[0] = Active[0] && (~FlashAddress[10] || MemMapSkipTrigger) && ~LocalSyncRst && ~ResetInstFlash && ~FlashInit_Tmp && ~ResetDataFlash;
-    assign NextFlashAddressCondition[1] = FlashAddress[10] && ~LocalSyncRst && ~ResetInstFlash && ~FlashInit_Tmp && ~ResetDataFlash;
+    // assign NextFlashAddressCondition[1] = FlashAddress[10] && ~LocalSyncRst && ~ResetInstFlash && ~FlashInit_Tmp && ~ResetDataFlash;
+    assign NextFlashAddressCondition[1] = FlashAddress[10] && ~LocalSyncRst && ~FlashInit_Tmp;
     always_comb begin : NextFlashAddressMux
         case (NextFlashAddressCondition)
             2'b00  : NextFlashAddress = {1'b0, (ResetDataFlash && ~LocalSyncRst), 10'b0};
@@ -163,7 +173,7 @@ module IO_MemoryFlasher_Flasher #(
 
     // Data ROM
     wire [15:0] CurrentData;
-    wire  [9:0] DataAddr = {'0, FlashAddr[9:1]};
+    wire  [9:0] DataAddr = {'0, FlashAddress[9:1]};
     FlashROM_Data DataROM (
         .Address(DataAddr),
         .Value  (CurrentData)
@@ -203,7 +213,7 @@ module IO_MemoryFlasher_Flasher #(
     assign FlashReadAddr = FlashAddress[10:0];
 
     assign SystemEnable = OutputDelayBuffer[28];
-    assign FlashAddr = OutputDelayBuffer[25:16];
+    assign FlashAddressOut = OutputDelayBuffer[25:16];
     assign FlashDataOut = PoweredUp ? FlashDataIn : OutputDelayBuffer[15:0];
     assign InstFlashEn = OutputDelayBuffer[27];
     assign DataFlashEn = OutputDelayBuffer[26];

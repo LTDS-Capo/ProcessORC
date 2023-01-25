@@ -4,7 +4,7 @@ module IO_MemoryFlasher_IOMemory (
     input sync_rst,
 
     input         FlashReadEn,
-    input  [10:0] FlashAddr,
+    input  [10:0] FlashAddrIn,
     // output [15:0] FlashData,
 
     input         IOOut_ACK,
@@ -49,8 +49,8 @@ module IO_MemoryFlasher_IOMemory (
     //     case (NextCaseCondition)
     //         2'b00  : FlashReadAddr = '0;
     //         2'b01  : FlashReadAddr = FlashWriteAddr;
-    //         2'b10  : FlashReadAddr = FlashAddr;
-    //         2'b11  : FlashReadAddr = FlashAddr;
+    //         2'b10  : FlashReadAddr = FlashAddrIn;
+    //         2'b11  : FlashReadAddr = FlashAddrIn;
     //         default: FlashReadAddr = '0; // Default is also case 0
     //     endcase
     // end
@@ -69,7 +69,9 @@ module IO_MemoryFlasher_IOMemory (
 
     // Read Buffer
         reg  [15:0] ReadBuffer;
-        wire [10:0] FlashReadAddr = FlashReadEn ? FlashAddr : FlashWriteAddr;
+        wire [10:0] FlashReadAddr = FlashReadEn ? FlashAddrIn : FlashWriteAddr;
+        // wire [10:0] FlashReadAddr = FlashReadEn ? {'0, FlashAddrIn[9:1]} : FlashWriteAddr;
+        // wire [10:0] FlashReadAddr = FlashReadEn ? {FlashAddrIn[10:1], ~FlashAddrIn[0]} : FlashWriteAddr;
         wire [15:0] ReadData = FlashMem[FlashReadAddr];
         wire ReadBufferTrigger = clk_en;
         always_ff @(posedge clk) begin
