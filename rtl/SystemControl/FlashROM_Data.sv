@@ -79,7 +79,8 @@ module FlashROM_Data (
             10'h00F : TempValue = 16'h0B7C; // MOV rB rC    - Flip the fib values
                 // IO Reset Test
             10'h010 : TempValue = 16'h900B; // JLI r0 [+11] - Jump and Link to "WRITE_AND_WAIT"
-            10'h011 : TempValue = 16'h20E2; // RST b0010    - IO Reset
+            // 10'h011 : TempValue = 16'h20E2; // RST b0010    - IO Reset
+            10'h011 : TempValue = 16'h0000; // NOP          - NOP
                 // END Io Reset Test
             10'h012 : TempValue = 16'h047A; // MOV r4 rA    - Copy Current Fib to GPIO Write Value
             10'h013 : TempValue = 16'h9008; // JLI r0 [+8]  - Jump and Link to "WRITE_AND_WAIT"
@@ -88,7 +89,8 @@ module FlashROM_Data (
             10'h016 : TempValue = 16'h0479; // MOV r4 r9    - Copy Step Counter to GPIO Write Value
             10'h017 : TempValue = 16'h9004; // JLI r0 [+4]  - Jump and Link to "WRITE_AND_WAIT"
             10'h018 : TempValue = 16'h0C7A; // MOV rC rA    - Flip the fib values
-            10'h019 : TempValue = 16'hB3F8; // BZI r0 [-5]  - Jump to "LOOP_START"
+            // 10'h019 : TempValue = 16'hB3F8; // BZI r0 [-5]  - Jump to "LOOP_START"
+            10'h019 : TempValue = 16'hB3F6; // BZI r0 [-10]  - Jump to "LOOP_START"
             10'h01A : TempValue = 16'h0A7B; // MOV rA rB    - Flip the fib values
                     // GPIO Write and Wait 
                         // :WRITE_AND_WAIT 

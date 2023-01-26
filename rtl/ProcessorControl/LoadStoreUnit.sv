@@ -56,6 +56,7 @@ module LoadStoreUnit #(
         logic LoadStore_REQ_Tmp;
         always_comb begin : LoadStore_REQMux
             case (PortSel)
+                2'b00  : LoadStore_REQ_Tmp = FixedMemory_REQ;
                 2'b01  : LoadStore_REQ_Tmp = IOManager_REQ;
                 2'b10  : LoadStore_REQ_Tmp = Cache_REQ;
                 2'b11  : LoadStore_REQ_Tmp = 1'b0;

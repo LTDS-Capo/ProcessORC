@@ -33,6 +33,7 @@ module PlatformIndependent_Test #(
         TopLevelReset #(
             // .RESETWAITCYCLES      (625000),
             .RESETWAITCYCLES      (32),
+            // .RESETWAITCYCLES      (25_000_000),
             .RESETCYCLELENGTH     (16),
             // .OPERATIONALWAITCYCLES(25000),
             .OPERATIONALWAITCYCLES(32),
