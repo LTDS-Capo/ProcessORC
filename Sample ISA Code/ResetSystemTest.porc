@@ -1,7 +1,9 @@
 //                                                                            //
     //  Clock Conf Addr = 384-391
     //                  >  [13:0] - clk division (4x)
-    //                  > [15:16] - clk source (4x)
+    //                  > [15:14] - clk scale (4x)
+    //                  >  [12:0] - clk division (4x)
+    //                  > [15:13] - clk scale (4x)
     //       Timer Addr = 392-395
     //                  > [26:0] Wait time
     //                  >   [27] PreScaler

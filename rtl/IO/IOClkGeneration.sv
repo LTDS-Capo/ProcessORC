@@ -104,13 +104,14 @@ module IOClkGeneration #(
                 wire LocalConfigREQ;
                 wire        divided_clk;
                 wire  [1:0] divided_clk_sel;
-                IOClkGeneration_Cell ClkDivisionGen (
+                IOClkGeneration_CellNew ClkDivisionGen (
                     .sys_clk           (sys_clk),
                     .clk_en            (clk_en),
                     .sync_rst          (sync_rst),
-                    .src_clk0          (src_clk0),
-                    .src_clk1          (src_clk1),
-                    .src_clk2          (src_clk2),
+                    // .src_clk0          (src_clk0),
+                    // .src_clk1          (src_clk1),
+                    // .src_clk2          (src_clk2),
+                    .src_clk           (src_clk0),
                     .ConfigACK         (LocalConfigACK),
                     .ConfigREQ         (LocalConfigREQ),
                     .LoadEn            (LoadEn),

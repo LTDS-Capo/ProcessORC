@@ -24,7 +24,9 @@ module FlashROM_Instruction (
             //                             :Reset
             10'h00C : TempValue = 16'h3495; // ALW r4 r5
             10'h00D : TempValue = 16'h0074; // MOV r0 r4
-            10'h00E : TempValue = 16'h20E7; // RST 'b0111
+            10'h00E : TempValue = 16'h0075; // MOV r0 r5
+            10'h00F : TempValue = 16'h0800; // ADD r8 r0
+            10'h010 : TempValue = 16'h20E7; // RST 'b0111
 
             // 10'h000 : TempValue = 16'hD18E; // LEI r1 'd398
             // 10'h001 : TempValue = 16'hD590; // LEI r5 'd400

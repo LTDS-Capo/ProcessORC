@@ -87,13 +87,14 @@ module CommandController #(
         wire       ClockUpdate = ClockUpdate_Tmp && LocalCommandACK_Tmp;
         wire [2:0] ClockSelect = LocalCommandData[CLOCKCOMMAND_CLKSELLSB+2:CLOCKCOMMAND_CLKSELLSB];
         wire       target_clk;
-        IOClkSelectionBuffer ClockSelection (
+        IOClkSelectionBufferNew ClockSelection (
             .sys_clk         (sys_clk),
             .clk_en          (clk_en),
             .sync_rst        (sync_rst),
-            .src_clk0        (src_clk0),
-            .src_clk1        (src_clk1),
-            .src_clk2        (src_clk2),
+            // .src_clk0        (src_clk0),
+            // .src_clk1        (src_clk1),
+            // .src_clk2        (src_clk2),
+            .src_clk         (src_clk0),
             .divided_clks    (divided_clks),
             .divided_clk_sels(divided_clk_sels),
             .ClockUpdate     (ClockUpdate),
