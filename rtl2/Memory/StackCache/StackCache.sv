@@ -24,6 +24,17 @@ module StackCache #(
     output                  [31:0] StackPointerOut,
     input                          StackPointerSwap, // Force Cache Flush and Fetch
 
+
+
+    // Keep an extra 6 bits associated with entry in the Stack Transaction Queue
+    output         StackDirty,
+    output         StackToBeWritten,
+    output         StackToBeRead, // Stored as a 4bit counter
+
+
+
+
+
     output      [DATABITWIDTH-1:0] GPR14DataOut,
     output                         GPR14Dirty,
     output                         GPR14ForwardEnable,
@@ -112,7 +123,6 @@ module StackCache #(
             end
         end
         
-
 
 
 
