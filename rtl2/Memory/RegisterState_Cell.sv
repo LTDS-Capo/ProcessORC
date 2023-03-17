@@ -1,4 +1,4 @@
-module RegisterStateCell (
+module RegisterState_Cell (
     input clk,
     input clk_en,
     input sync_rst,
@@ -95,4 +95,4 @@ module RegisterStateCell (
         assign ToBeRead = ToBeReadStatus;
     //
 
-endmodule : RegisterStateCell
+endmodule : RegisterState_Cell

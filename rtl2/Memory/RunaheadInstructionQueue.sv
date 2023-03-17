@@ -24,7 +24,21 @@ module RunaheadInstructionQueue #(
 );
 
     // Entry:
-    // {AWouldHaveForwarded, BWouldHaveForwarded, Instruction}
+    // {Speculative, StackTag, AWouldHaveForwarded, BWouldHaveForwarded, Instruction}
+    
+    //* Stack Tag
+    // 4bit Tag for operations that Push to the Stack cache
+
+    //* Speculative Bit:
+    // Append a bit when speculating and pushing an instruction to the runahead queue.
+    // > Have a counter to count how many instructions were pushed to the runahead queue during the current speculation.
+    // - Increment Counter: Push an Instruction to the Runahead Queue while actively Speculating
+    // - Decrement Counter: Issue an Instruction with a Speculative Bit '1'
+    // If Predicted Correctly; Prevent any speculation until counter reaches 0
+    // If Predicted Incorrectly; Add counter value to Runahead Tail pointer... effectively throwing away all speculative instructions.
+    // > Spectulation Valid Bit
+    // - Set: Begining Speculation
+    // - Clear: Mispredicted || (~Speculating && Counter == 1 && RunaheadIssue) [When issuing your last speculative instruction, post speculation]
 
     // When to forward Instruction into Runahead Queue: DirtyBForward || DirtyAForward || ADirty || BDirty || (AToBeRead != 0)
     // When to Issue from Runahead Queue: ~ADirty && ~BDirty

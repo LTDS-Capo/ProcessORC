@@ -14,12 +14,14 @@ module Decode1 #(
         // Operand A
     input  [DATABITWIDTH-1:0] OperandADataIn,
     input               [3:0] OperandARegisterAddress,
+    input               [3:0] OperandAStackCacheTag, // TODO:
     input               [1:0] OperandAStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
     input                     Forward0ToA,
     input                     Forward1ToA,
         // Operand B
     input  [DATABITWIDTH-1:0] OperandBDataIn,
     input               [3:0] OperandBRegisterAddress,
+    input               [3:0] OperandBStackCacheTag, // TODO:
     input               [1:0] OperandBStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
     input                     Forward0ToB,
     input                     Forward1ToB,

@@ -10,7 +10,7 @@ else
     }
     mypath=$(getmypath)
     tmp="$mypath/../tmp"
-    rtl="$mypath/../rtl"
+    rtl="$mypath/../rtl2"
     mkdir -p $tmp
     rm $tmp/*
     incdirlist=$(find $rtl/ -not -path */testbench -and -type d -exec bash -c 'echo "-I $1"' bash "{}" \; )

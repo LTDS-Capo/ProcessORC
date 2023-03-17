@@ -5,10 +5,10 @@ module RegisterStatus (
 
     input         ReadingFromA,
     input         WillBeWritingToA,
-    input   [3:0] ReadAAddress, // Turn into a OneHot from primary Register Read
+    input  [15:0] ReadAOperandOneHot, // Predecoded in register file
     input         MarkADirty,
     input         ReadingFromB,
-    input   [3:0] ReadBAddress, // Turn into a OneHot from primary Register Read
+    input   [3:0] ReadBAddress,
 
     input         IssuedFromA,
     input   [3:0] IssueAAddress,
@@ -16,10 +16,10 @@ module RegisterStatus (
     input   [3:0] IssueBAddress,
 
     input         LoadingToReg,
-    input   [3:0] LoadingRegAddress,
+    input  [15:0] LoadingRegOneHot,
 
     input         WritingToReg,
-    input   [3:0] WritingRegAddress,
+    input  [15:0] WritingRegOneHot,
 
     input         StackDirty, // make a dedicated unit just for this
     input         StackToBeWritten, // make a dedicated unit just for this
@@ -30,14 +30,6 @@ module RegisterStatus (
     output [15:0] ToBeReadVector
 );
 
-
-    // Read A Decoder
-        logic [15:0] ReadAOperandOneHot;
-        always_comb begin
-            ReadAOperandOneHot = 0;
-            ReadAOperandOneHot[ReadAAddress] = 1'b1;
-        end
-    //
 
     // Read B Decoder
         logic [15:0] ReadBOperandOneHot;
@@ -60,22 +52,6 @@ module RegisterStatus (
         always_comb begin
             IssueBOperandOneHot = 0;
             IssueBOperandOneHot[IssueBAddress] = 1'b1;
-        end
-    //
-
-    // Loading To Reg Decoder
-        logic [15:0] LoadingRegOneHot;
-        always_comb begin
-            LoadingRegOneHot = 0;
-            LoadingRegOneHot[LoadingRegAddress] = 1'b1;
-        end
-    //
-
-    // Writeing To Reg Decoder
-        logic [15:0] WritingRegOneHot;
-        always_comb begin
-            WritingRegOneHot = 0;
-            WritingRegOneHot[WritingRegAddress] = 1'b1;
         end
     //
 
