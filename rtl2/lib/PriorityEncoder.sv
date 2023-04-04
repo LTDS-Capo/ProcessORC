@@ -1,6 +1,6 @@
 module PriorityEncoder #(
     parameter DATABITWIDTH = 16,
-    parameter INDEXBITWIDTH = $clog2(DATABITWIDTH)
+    parameter INDEXBITWIDTH = (DATABITWIDTH == 1) ? 1 : $clog2(DATABITWIDTH)
 )(
     input   [DATABITWIDTH-1:0] DataInput,
     output [INDEXBITWIDTH-1:0] LowestOneIndex

@@ -7,7 +7,6 @@ module RegisterFile #(
 
     // Speculation Status
     input                     Speculating,
-    input                     DecodedRegisterWriteback,
     input                     EndSpeculationPulse,
     input                     MispredictedSpeculationPulse,
 
