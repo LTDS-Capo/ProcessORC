@@ -30,7 +30,8 @@ module BranchTargetBuffer #(
     // Prediction Array
         reg  [DATABITWIDTH+1:0] PredictionArray [PREDICTORDEPTH-1:0];
         wire [DATABITWIDTH-1:0] ZeroPadd = 0;
-        wire [DATABITWIDTH+1:0] NextIndexedPrediction = sync_rst ? {2'b10, ZeroPadd} : {UpdatedPrediction, ActualDestination};
+        // resets to weakly not-taken
+        wire [DATABITWIDTH+1:0] NextIndexedPrediction = sync_rst ? {2'b01, ZeroPadd} : {UpdatedPrediction, ActualDestination};
         wire PredictionArrayTrigger = sync_rst || (clk_en && UpdateEnable && PredictingRegisterBranch);
         always_ff @(posedge clk) begin
             if (PredictionArrayTrigger) begin

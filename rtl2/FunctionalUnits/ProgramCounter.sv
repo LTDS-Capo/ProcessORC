@@ -18,11 +18,12 @@ module ProgramCounter #(
 
     input                     Speculating,
     input                     BeginSpeculationPulse,
-    input                     RelativeSpeculation, // TODO
+    input                     RelativeSpeculation,
     input                     PredictingTrue,
     input  [DATABITWIDTH-1:0] SpeculativeDestination,
     output                    MispredictedSpeculationPulse,
     output                    EndSpeculationPulse,
+    output [DATABITWIDTH-1:0] ActualDestination,
 
 
     input  [DATABITWIDTH-1:0] ECallDestination,
@@ -74,27 +75,46 @@ module ProgramCounter #(
         
         wire                      AEqualsZero = OperandAData == 0;
         wire                [6:0] BranchOffsetLower = {MinorOpcode, 3'b000};
-        wire   [DATABITWIDTH-7:0] BranchOffsetUpper = 0;
+        wire   [DATABITWIDTH-8:0] BranchOffsetUpper = 0;
         wire   [DATABITWIDTH-1:0] BranchOffset = {BranchOffsetUpper, BranchOffsetLower};
         wire                      MispredicatedTaken = SpeculationResultBuffer[DATABITWIDTH] && ~AEqualsZero && Speculating;
         wire                      PredictionTaken = SpeculationResultBuffer[DATABITWIDTH] && Speculating;
         wire   [DATABITWIDTH-1:0] BranchToOffsetRegisterDestination = OperandAData + BranchOffset;
 
+        // PC + 1                      - *Normal Operation*
+        // Sync_rst                    - sync_rst
+        // // A + Offset                  - AEqualsZero && BranchEnable && ~RelativeBranchEnable && DestinationMismatch && PredictionTaken
+        // A + Offset                  - AEqualsZero && BranchEnable && PredictionTaken
+        // // Rollback + Immediate        - AEqualsZero && BranchEnable && RelativeBranchEnable && ~PredictionTaken
+        // Rollback + Immediate        - AEqualsZero && BranchEnable && ~PredictionTaken
+        // Rollback                    - ~AEqualsZero && BranchEnable && PredictionTaken
+        // SpeculativeDestination      - BeginSpeculationPulse && PredictingTrue && ~RelativeSpeculation
+        // PC + SpeculativeDestination - BeginSpeculationPulse && PredictingTrue && RelativeSpeculation
+
         logic  [DATABITWIDTH-1:0] NextProgramCounter;
-        wire                [2:0] NextProgramCounterCondition;
-        assign                    NextProgramCounterCondition[0] = (AEqualsZero && RelativeBranchEnable && BranchEnable && ~PredictionTaken) || (MispredicatedTaken && BranchEnable) || (BeginSpeculationPulse && PredictingTrue && SpeculativeDestination) || sync_rst;
-        assign                    NextProgramCounterCondition[1] = (AEqualsZero && BranchEnable && ~MispredicatedTaken && ~PredictionTaken && ~sync_rst) || (BeginSpeculationPulse && PredictingTrue && ~sync_rst);
-        assign                    NextProgramCounterCondition[2] = (BeginSpeculationPulse && PredictingTrue && ~BranchEnable && ~sync_rst) || (MispredicatedTaken && BranchEnable && ~sync_rst);
+        wire   [3:0] NextProgramCounterCondition;
+        assign       NextProgramCounterCondition[0] = (AEqualsZero && BranchEnable) || sync_rst;
+        assign       NextProgramCounterCondition[1] = (PredictionTaken && BranchEnable) || sync_rst;
+        assign       NextProgramCounterCondition[2] = (BeginSpeculationPulse && PredictingTrue && RelativeSpeculation) || sync_rst;
+        assign       NextProgramCounterCondition[3] = (BeginSpeculationPulse && PredictingTrue) || sync_rst;
         always_comb begin : NextProgramCounterMux
             case (NextProgramCounterCondition)
-                3'b000 : NextProgramCounter = ProgramCounter + 1; // Standard PC + 1
-                3'b001 : NextProgramCounter = 0; // sync_rst
-                3'b010 : NextProgramCounter = BranchToOffsetRegisterDestination; // A + Offset
-                3'b011 : NextProgramCounter = ProgramCounter + ImmediateData; // PC + Signed Imm //TODO: If Speculative, add to the Rollback Value
-                3'b100 : NextProgramCounter = 0; //! ERROR
-                3'b101 : NextProgramCounter = SpeculationRollbackAddress;
-                3'b110 : NextProgramCounter = SpeculativeDestination;
-                3'b111 : NextProgramCounter = ProgramCounter + SpeculativeDestination;
+                4'b0000  : NextProgramCounter = ProgramCounter + 1; // Normal Operation
+                4'b0001  : NextProgramCounter = SpeculationRollbackAddress + ImmediateData; // Mispredicted Immediate Branch
+                4'b0010  : NextProgramCounter = SpeculationRollbackAddress; // Rollback
+                4'b0011  : NextProgramCounter = BranchToOffsetRegisterDestination; // Mispredicted Destination
+                4'b0100  : NextProgramCounter = ProgramCounter + 1; //! ERROR
+                4'b0101  : NextProgramCounter = SpeculationRollbackAddress + ImmediateData; // Mispredicted Immediate Branch
+                4'b0110  : NextProgramCounter = SpeculationRollbackAddress; // Rollback
+                4'b0111  : NextProgramCounter = BranchToOffsetRegisterDestination; // Mispredicted Destination
+                4'b1000  : NextProgramCounter = SpeculativeDestination; // Begin BTB Speculation
+                4'b1001  : NextProgramCounter = SpeculativeDestination; // Begin BTB Speculation
+                4'b1010  : NextProgramCounter = SpeculativeDestination; // Begin BTB Speculation
+                4'b1011  : NextProgramCounter = SpeculativeDestination; // Begin BTB Speculation
+                4'b1100  : NextProgramCounter = ProgramCounter + SpeculativeDestination; // Begin Imm Speculation
+                4'b1101  : NextProgramCounter = ProgramCounter + SpeculativeDestination; // Begin Imm Speculation
+                4'b1110  : NextProgramCounter = ProgramCounter + SpeculativeDestination; // Begin Imm Speculation
+                4'b1111  : NextProgramCounter = 0; // sync_rst
                 default: NextProgramCounter = 0;
             endcase
         end
@@ -104,6 +124,7 @@ module ProgramCounter #(
                 ProgramCounter <= NextProgramCounter;
             end
         end
+        assign ActualDestination = NextProgramCounter;
         assign ProgramCounterValue = ProgramCounter;
         assign JumpAndLinkDataOut = SpeculationRollbackAddress;
         assign EndSpeculationPulse = Speculating && BranchEnable && ~StallEnable;

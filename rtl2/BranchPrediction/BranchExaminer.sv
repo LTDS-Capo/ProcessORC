@@ -95,6 +95,7 @@ module BranchExaminer #(
         // > Stores 2 bit values for branches issued in the past, based on Instruction Address.
             wire       ImmediatePredictorValid;
             wire [1:0] ImmediatePrediction;
+            // resets to Weakly Taken
             ImmediatePredictor #(
                 .PREDICTIONLOOKUPADDRESSBITWIDTH(PREDICTIONLOOKUPADDRESSBITWIDTH),
                 .LINECOUNT                      (3),
@@ -125,16 +126,16 @@ module BranchExaminer #(
                     default: Prediction = 0;
                 endcase
             end
-            assign PredictingTrue = BTBEntryValid ? BTBPrediction[1] : GlobalPrediction[0];
+            assign PredictingTrue = Prediction;
     //
 
     // Destination Generation
         // Branch Target Buffer
         // Output: Entry Valid, 2bit Prediction, Speculative Destination
-        // TODO:
             wire                    BTBEntryValid;
             wire              [1:0] BTBPrediction;
             wire [DATABITWIDTH-1:0] BTBDestination;
+            // resets to Weakly Not-Taken
             BranchTargetBuffer #(
                 .DATABITWIDTH  (DATABITWIDTH),
                 .PREDICTORDEPTH(64)
@@ -153,7 +154,7 @@ module BranchExaminer #(
             );
         // Immediate
             wire [DATABITWIDTH-11:0] ImmediateDesinationSign = {DATABITWIDTH-10{FetchedInstruction[9]}};
-            wire  [DATABITWIDTH-1:0] ImmediateDesination = {ImmediateDesinationSign, FetchedInstruction};
+            wire  [DATABITWIDTH-1:0] ImmediateDesination = {ImmediateDesinationSign, FetchedInstruction[8:0]};
         // Output Assignment
             assign SpeculativeDestination = FetchedInstruction[12] ? ImmediateDesination : BTBDestination;
     //
