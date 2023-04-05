@@ -2,7 +2,7 @@ module BranchExaminer #(
     parameter DATABITWIDTH = 16,
     // How many lower bits from the incoming address do you want to be included in the final Hash.
     parameter PRESERVEDBITCOUNT = 3, // Must be equal or less than HASHBITWIDTH - //! forced to minimum of 1
-    parameter PREDICTIONLOOKUPADDRESSBITWIDTH = 6
+    parameter PREDICTIONLOOKUPADDRESSBITWIDTH = 6 //! Do Not Change ... for now, not parameterized properly
 )(
     input clk,
     input clk_en,
@@ -12,32 +12,39 @@ module BranchExaminer #(
     input              [15:0] FetchedInstruction,
 
     input                     EndSpeculationPulse,
+    input  [DATABITWIDTH-1:0] ActualDestination,
     input                     MispredictedSpeculationPulse,
 
     output                    Speculating,
     output                    BeginSpeculationPulse,
-    output                    RelativeSpeculation, // TODO
+    output                    RelativeSpeculation,
     output                    PredictingTrue,
     output [DATABITWIDTH-1:0] SpeculativeDestination,
 
     output SpeculationStall // Raises when a branch comes in, but your already speculating
 );
 
+    //! START_NOTE:
+    //* Potentially have a mechanism for flushing the predictors
+    //! END_NOTE:
+
     // Speculation Status
-        reg  SpeculationStatus;
-        wire SpeculationRequired = FetchedInstruction[15] && ~FetchedInstruction[14] && ~ImmediateRegisterAZero;
-        wire NextSpeculationStatus = ~sync_rst && SpeculationRequired && ~EndSpeculationPulse;
-        wire SpeculationStatusTrigger = sync_rst || (clk_en && SpeculationRequired && ~SpeculationStatus) || EndSpeculationPulse;
+        reg  [1:0] SpeculationStatus;
+        wire       SpeculationRequired = FetchedInstruction[15] && ~FetchedInstruction[14] && ~ImmediateRegisterAZero;
+        wire [1:0] NextSpeculationStatus = sync_rst ? 0 : {FetchedInstruction[12], SpeculationRequired};
+        wire       SpeculationStatusTrigger = sync_rst || (clk_en && SpeculationRequired && ~SpeculationStatus[0]) || EndSpeculationPulse;
         always_ff @(posedge clk) begin
             if (SpeculationStatusTrigger) begin
                 SpeculationStatus <= NextSpeculationStatus;
             end
         end
+        wire   PredictingImmediateBranch = SpeculationStatus[1] && SpeculationStatus[0];
+        wire   PredictingRegisterBranch = ~SpeculationStatus[1] && SpeculationStatus[0];
         // Output Assignments
-        assign BeginSpeculationPulse = SpeculationRequired && ~SpeculationStatus;
-        assign RelativeSpeculation = FetchedInstruction[12];
-        assign Speculating = SpeculationStatus;
-        assign SpeculationStall = SpeculationRequired && SpeculationStatus;
+        assign BeginSpeculationPulse = SpeculationRequired && ~SpeculationStatus[0];
+        assign RelativeSpeculation = FetchedInstruction[12] || PredictingRegisterBranch;
+        assign Speculating = SpeculationStatus[0];
+        assign SpeculationStall = SpeculationRequired && SpeculationStatus[0];
     //
 
     // Prediction Address Generation
@@ -75,7 +82,7 @@ module BranchExaminer #(
             ModifiedTwoBitPredictor GlobalPredictor (
                 .StateIn (GlobalPrediction),
                 .Taken   (BranchResolvedTaken),
-                .StateOut(UpdatedGlobalPrediction),
+                .StateOut(UpdatedGlobalPrediction)
             );
             wire [1:0] NextGlobalPrediction = sync_rst ? 0 : (UpdatedGlobalPrediction);
             wire GlobalPredictionTrigger = sync_rst || (clk_en && EndSpeculationPulse);
@@ -86,19 +93,22 @@ module BranchExaminer #(
             end
         // Immediate Predictor
         // > Stores 2 bit values for branches issued in the past, based on Instruction Address.
+            wire       ImmediatePredictorValid;
+            wire [1:0] ImmediatePrediction;
             ImmediatePredictor #(
                 .PREDICTIONLOOKUPADDRESSBITWIDTH(PREDICTIONLOOKUPADDRESSBITWIDTH),
                 .LINECOUNT                      (3),
                 .LINEWIDTH                      (3)
             ) ImmPredictor (
-                .clk            (clk),
-                .clk_en         (clk_en),
-                .sync_rst       (sync_rst),
-                .Address        (ActivePredictionAddress),
-                .UpdateEnable   (EndSpeculationPulse),
-                .BranchTaken    (BranchResolvedTaken),
-                .PredictionValid(),
-                .Prediction     ()
+                .clk                      (clk),
+                .clk_en                   (clk_en),
+                .sync_rst                 (sync_rst),
+                .Address                  (ActivePredictionAddress),
+                .PredictingImmediateBranch(PredictingImmediateBranch),
+                .UpdateEnable             (EndSpeculationPulse),
+                .BranchTaken              (BranchResolvedTaken),
+                .PredictionValid          (ImmediatePredictorValid),
+                .Prediction               (ImmediatePrediction)
             );
 
         // Output Assignment
@@ -109,13 +119,13 @@ module BranchExaminer #(
             always_comb begin : PredictionMux
                 case (PredictionCondition)
                     2'b00  : Prediction = 1'b1; // Unconditional Branch
-                    2'b01  : Prediction = BTBPredition[1]; // Use BTB Prediction
+                    2'b01  : Prediction = BTBPrediction[1]; // Use BTB Prediction
                     2'b10  : Prediction = GlobalPrediction[1]; // Use Global Predictor
                     2'b11  : Prediction = ImmediatePrediction[1]; // Use Immediate Predictor
                     default: Prediction = 0;
                 endcase
             end
-            assign PredictingTrue = BTBEntryValid ? BTBTwoBitPredition[1] : GlobalPrediction[0];
+            assign PredictingTrue = BTBEntryValid ? BTBPrediction[1] : GlobalPrediction[0];
     //
 
     // Destination Generation
@@ -123,8 +133,24 @@ module BranchExaminer #(
         // Output: Entry Valid, 2bit Prediction, Speculative Destination
         // TODO:
             wire                    BTBEntryValid;
-            wire              [1:0] BTBPredition;
-            wire [DATABITWIDTH-1:0] BTBDestination = 0; //! set 0 till BTB is finished
+            wire              [1:0] BTBPrediction;
+            wire [DATABITWIDTH-1:0] BTBDestination;
+            BranchTargetBuffer #(
+                .DATABITWIDTH  (DATABITWIDTH),
+                .PREDICTORDEPTH(64)
+            ) BTBPredictor (
+                .clk                      (clk),
+                .clk_en                   (clk_en),
+                .sync_rst                 (sync_rst),
+                .Address                  (ActivePredictionAddress),
+                .PredictingRegisterBranch (PredictingRegisterBranch),
+                .UpdateEnable             (EndSpeculationPulse),
+                .ActualDestination        (ActualDestination),
+                .BranchTaken              (BranchResolvedTaken),
+                .PredictionValid          (BTBEntryValid),
+                .Prediction               (BTBPrediction),
+                .PredictedDestination     (BTBDestination)
+            );
         // Immediate
             wire [DATABITWIDTH-11:0] ImmediateDesinationSign = {DATABITWIDTH-10{FetchedInstruction[9]}};
             wire  [DATABITWIDTH-1:0] ImmediateDesination = {ImmediateDesinationSign, FetchedInstruction};
