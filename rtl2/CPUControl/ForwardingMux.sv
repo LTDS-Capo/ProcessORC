@@ -19,7 +19,7 @@ module ForwardingMux #(
     input  [DATABITWIDTH-1:0] LoadResult,
 
     output [DATABITWIDTH-1:0] OperandADataOut,
-    output [DATABITWIDTH-1:0] OperandADataOut
+    output [DATABITWIDTH-1:0] OperandBDataOut
 );
 
     // Writeback History

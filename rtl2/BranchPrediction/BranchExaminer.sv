@@ -21,7 +21,7 @@ module BranchExaminer #(
     output                    PredictingTrue,
     output [DATABITWIDTH-1:0] SpeculativeDestination,
 
-    output SpeculationStall // Raises when a branch comes in, but your already speculating
+    output                    SpeculationStall // Raises when a branch comes in, but your already speculating
 );
 
     //! START_NOTE:

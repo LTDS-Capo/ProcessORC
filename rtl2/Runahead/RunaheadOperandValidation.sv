@@ -6,9 +6,9 @@ module RunaheadOperandValidation (
     input         IssuedInstructionValid,
     input  [15:0] IssuedInstruction,
     input   [3:0] OperandARegisterAddress,
-    input   [1:0] OperandAStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
+    input   [2:0] OperandAStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
     input   [3:0] OperandBRegisterAddress,
-    input   [1:0] OperandBStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
+    input   [2:0] OperandBStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
     input         Forward0ToA,
     input         Forward1ToA,
     input         Forward0ToB,
@@ -19,8 +19,8 @@ module RunaheadOperandValidation (
 
     output        InstructionToRunaheadQueueValid,
     output [15:0] InstructionToRunaheadQueue,
-    output        AWouldHaveForwarded,
-    output        BWouldHaveForwarded,
+    // output        AWouldHaveForwarded,
+    // output        BWouldHaveForwarded,
 
     output        InvalidateIssuedInstruction,
     output        ForwardLoadToA,
@@ -54,13 +54,13 @@ module RunaheadOperandValidation (
 
     // Runahead Queue Connection Assigments
         assign InstructionToRunaheadQueueValid = (DirtyBForward || DirtyAForward || ADirty || BDirty || AToBeRead) && IssuedInstructionValid;
-        assign InstructionToRunaheadQueue = IssuedInstructionValid;
-        assign AWouldHaveForwarded = Forward0ToA || Forward1ToA;
-        assign BWouldHaveForwarded = Forward0ToB || Forward1ToB;
+        assign InstructionToRunaheadQueue = IssuedInstruction;
+        // assign AWouldHaveForwarded = Forward0ToA || Forward1ToA;
+        // assign BWouldHaveForwarded = Forward0ToB || Forward1ToB;
     //
 
     // Issued Instruction Output Assignments
-        assign InvalidateIssuedInstruction == InstructionToRunaheadQueueValid;
+        assign InvalidateIssuedInstruction = InstructionToRunaheadQueueValid;
         assign ForwardLoadToA = LoadAOperandMatch;
         assign ForwardLoadToB = LoadBOperandMatch;
     //
