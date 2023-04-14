@@ -19,8 +19,6 @@ module RunaheadOperandValidation (
 
     output        InstructionToRunaheadQueueValid,
     output [15:0] InstructionToRunaheadQueue,
-    // output        AWouldHaveForwarded,
-    // output        BWouldHaveForwarded,
 
     output        InvalidateIssuedInstruction,
     output        ForwardLoadToA,
@@ -55,8 +53,6 @@ module RunaheadOperandValidation (
     // Runahead Queue Connection Assigments
         assign InstructionToRunaheadQueueValid = (DirtyBForward || DirtyAForward || ADirty || BDirty || AToBeRead) && IssuedInstructionValid;
         assign InstructionToRunaheadQueue = IssuedInstruction;
-        // assign AWouldHaveForwarded = Forward0ToA || Forward1ToA;
-        // assign BWouldHaveForwarded = Forward0ToB || Forward1ToB;
     //
 
     // Issued Instruction Output Assignments
