@@ -55,6 +55,11 @@ module RegisterStatus (
         end
     //
 
+    // Dirty B Check
+        wire [15:0] DirtyBVector = IssueBOperandOneHot & DirtyVector;
+        wire        DirtyB = |DirtyBVector;
+    //
+
     // Register Status
         genvar RegisterGenIndex;
         generate
@@ -73,7 +78,7 @@ module RegisterStatus (
                     wire IssuedAsB = IssueBOperandOneHot[RegisterGenIndex] && IssuedFromB;
                     wire LoadValid = LoadingRegOneHot[RegisterGenIndex] && LoadingToReg;
                     wire WritebackValid = WritingRegOneHot[RegisterGenIndex] && WritingToReg;
-                    RegisterStateCell RegisterState (
+                    RegisterState_Cell RegisterState (
                         .clk             (clk),
                         .clk_en          (clk_en),
                         .sync_rst        (sync_rst),
@@ -83,6 +88,7 @@ module RegisterStatus (
                         .UsedAsB         (UsedAsB),
                         .IssuedAsA       (IssuedAsA),
                         .IssuedAsB       (IssuedAsB),
+                        .DirtyB          (DirtyB),
                         .LoadValid       (LoadValid),
                         .WritebackValid  (WritebackValid),
                         .Dirty           (DirtyVector[RegisterGenIndex]),

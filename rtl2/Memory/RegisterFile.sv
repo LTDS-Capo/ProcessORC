@@ -13,16 +13,17 @@ module RegisterFile #(
     // Read Operands
         // Operand A
     input               [3:0] OperandAAddr,
+    input               [3:0] SecondardyOperandAAddr,
     input                     OperandADirtySet,
     input                     OperandAReadEn,
     input                     WillBeWritingToA,
     output [DATABITWIDTH-1:0] OperandAData,
-    output              [2:0] OperandAStatus,
+    output              [1:0] OperandAStatus,
         // Operand B
     input               [3:0] OperandBAddr,
     input                     OperandBReadEn,
     output [DATABITWIDTH-1:0] OperandBData,
-    output              [2:0] OperandBStatus,
+    output              [1:0] OperandBStatus,
 
     // From Instruction Issue
     input                     IssuedFromA,
@@ -42,8 +43,10 @@ module RegisterFile #(
 
     // To Runahead Queue
     output [15:0] DirtyVector,
-    output [15:0] ToBeWrittenVector,
-    output [15:0] ToBeReadVector
+    output        RunaheadEnqueue, // TODO
+
+    // To Stall Controller
+    output ToBeWrittenStall
 );
 
     // Read A Decoder
@@ -109,6 +112,7 @@ module RegisterFile #(
     //
 
     // Register Status
+        wire [15:0] ToBeWrittenVector;
         RegisterStatus RegStatus (
             .clk               (clk),
             .clk_en            (clk_en),
@@ -134,6 +138,9 @@ module RegisterFile #(
             .ToBeWrittenVector (ToBeWrittenVector),
             .ToBeReadVector    (ToBeReadVector)
         );
+        assign OperandAStatus = {DirtyVector[OperandAAddr], ToBeReadVector[OperandAAddr]};
+        assign OperandBStatus = {DirtyVector[OperandBAddr], ToBeReadVector[OperandBAddr]};
+        assign ToBeWrittenStall = WillBeWritingToA && ToBeWrittenVector[SecondardyOperandAAddr];
     //
 
     // Stack Cache

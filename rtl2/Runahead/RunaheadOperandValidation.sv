@@ -6,9 +6,9 @@ module RunaheadOperandValidation (
     input         IssuedInstructionValid,
     input  [15:0] IssuedInstruction,
     input   [3:0] OperandARegisterAddress,
-    input   [2:0] OperandAStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
+    input   [1:0] OperandAStatusVector, // [1]Dirty, [0]ToBeRead
     input   [3:0] OperandBRegisterAddress,
-    input   [2:0] OperandBStatusVector, // [2]Dirty , [1]ToBeWritten, [0]ToBeRead
+    input         OperandBDirtyVector,
     input         Forward0ToA,
     input         Forward1ToA,
     input         Forward0ToB,
@@ -29,7 +29,7 @@ module RunaheadOperandValidation (
     // When to forward Instruction into Runahead Queue: DirtyBForward || DirtyAForward || ADirty || BDirty || AToBeRead
     // Else; Issue Instruction
 
-    // Runahead History
+    //? Runahead History
         reg  [1:0] RunaheadHistory;
         wire [1:0] NextRunaheadHistory = sync_rst ? 0 : {RunaheadHistory[0], InstructionToRunaheadQueueValid};
         wire RunaheadHistoryTrigger = sync_rst || clk_en;
@@ -42,20 +42,19 @@ module RunaheadOperandValidation (
         wire DirtyBForward = (RunaheadHistory[1] && Forward1ToB) || (Forward0ToB && RunaheadHistory[0]);
     //
 
-    // Operand Status Decode
+    //? Operand Status Decode
         wire   LoadAOperandMatch = (LoadRegisterDestination == OperandARegisterAddress) && LoadToBeWritten;
-        wire   LoadBOperandMatch = (LoadRegisterDestination == OperandARegisterAddress) && LoadToBeWritten;
-        wire   ADirty = OperandAStatusVector[2] && ~LoadAOperandMatch;
-        wire   AToBeRead = OperandAStatusVector[0];
-        wire   BDirty = OperandBStatusVector[2] && ~LoadBOperandMatch;
+        wire   LoadBOperandMatch = (LoadRegisterDestination == OperandBRegisterAddress) && LoadToBeWritten;
+        wire   ADirty = OperandAStatusVector[1] && ~LoadAOperandMatch;
+        wire   BDirty = OperandBDirtyVector && ~LoadBOperandMatch;
     //
 
-    // Runahead Queue Connection Assigments
-        assign InstructionToRunaheadQueueValid = (DirtyBForward || DirtyAForward || ADirty || BDirty || AToBeRead) && IssuedInstructionValid;
+    //? Runahead Queue Connection Assigments
+        assign InstructionToRunaheadQueueValid = (DirtyBForward || DirtyAForward || ADirty || BDirty) && IssuedInstructionValid;
         assign InstructionToRunaheadQueue = IssuedInstruction;
     //
 
-    // Issued Instruction Output Assignments
+    //? Issued Instruction Output Assignments
         assign InvalidateIssuedInstruction = InstructionToRunaheadQueueValid;
         assign ForwardLoadToA = LoadAOperandMatch;
         assign ForwardLoadToB = LoadBOperandMatch;
