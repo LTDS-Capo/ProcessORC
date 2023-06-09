@@ -1,0 +1,55 @@
+//! Accumulator
+    //* Register Map:
+    // -> r0: Zero Register
+    // -> r1:
+    // -> r2:
+    // -> r3:
+    // -> r4:
+    // -> r5:
+    // -> r6:
+    // -> r7:
+
+    //* Code:
+    // -> 
+
+//! 2 Operand
+    //* Register Map:
+    // -> r0: Zero Register
+    // -> r1:
+    // -> r2:
+    // -> r3:
+    // -> r4:
+    // -> r5:
+    // -> r6:
+    // -> r7:
+
+    //* Code:
+    // -> 
+
+    //! Accumulator
+    //* Register Map:
+    // -> r0: Zero Register
+    // -> r1:
+    // -> r2:
+    // -> r3:
+    // -> r4:
+    // -> r5:
+    // -> r6:
+    // -> r7:
+
+    //* Code:
+    // -> 
+
+//! 3 Operand
+    //* Register Map:
+    // -> r0: Zero Register
+    // -> r1:
+    // -> r2:
+    // -> r3:
+    // -> r4:
+    // -> r5:
+    // -> r6:
+    // -> r7:
+
+    //* Code:
+    // -> 

@@ -11,3 +11,9 @@
 //! maybe.. finally.. get to Stack Cache
 
 //? ToBeWritten Stall can also cover for if you try and access the stack and it causes it to go out of range with no free space in the cache
+
+
+//* ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~
+// 5/26/23
+// -> Now that a solid state machine has been setup for the registers, generate the same for the Stack Cache
+// -> Go back to work on the Stach Cache

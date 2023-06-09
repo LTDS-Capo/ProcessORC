@@ -98,6 +98,7 @@ module RegisterFile #(
                         .WillBeWritingToA            (WillBeWritingToA),
                         .EndSpeculationPulse         (EndSpeculationPulse),
                         .MispredictedSpeculationPulse(MispredictedSpeculationPulse),
+                        .CurrentlySpeculative        (), // Do Not Care
                         .WritebackEn                 (Cell_WriteBackEn),
                         .WritebackData               (WritebackData),
                         .LoadWriteEn                 (Cell_LoadWriteEn),
