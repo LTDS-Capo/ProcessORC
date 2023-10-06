@@ -56,7 +56,7 @@ module RegisterFile #(
         genvar RegisterIndex;
         for (RegisterIndex = 0; RegisterIndex < REGISTERCOUNT; RegisterIndex = RegisterIndex + 1) begin : RegisterGeneration
             if (RegisterIndex == 0) begin
-                assign DataOutVector[RegisterIndex] = '0;
+                assign DataOutVector[RegisterIndex] = {DATABITWIDTH{1'b0}};
                 assign DirtyBitOutVector[RegisterIndex] = 1'b0;
             end
             else begin

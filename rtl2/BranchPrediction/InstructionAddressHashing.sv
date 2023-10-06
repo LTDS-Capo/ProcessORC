@@ -55,10 +55,10 @@ module InstructionAddressHashing #(
         generate
             if (LOCALHASHBITWIDTH < 5) begin
                 wire [3:0] NibbleAddition = ByteChecksumResult[7:4] + ByteChecksumResult[3:0];
-                assign LocalUpperHash = NibbleAddition[LOCALHASHBITIWIDTH-1:0];
+                assign LocalUpperHash = NibbleAddition[LOCALHASHBITWIDTH-1:0];
             end
-            else if (LOCALHASHBITIWIDTH < 9) begin
-                assign LocalUpperHash = ByteChecksumResult[LOCALHASHBITIWIDTH-1:0];
+            else if (LOCALHASHBITWIDTH < 9) begin
+                assign LocalUpperHash = ByteChecksumResult[LOCALHASHBITWIDTH-1:0];
             end
             else begin
                 assign LocalUpperHash = 0;

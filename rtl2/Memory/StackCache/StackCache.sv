@@ -31,6 +31,7 @@ module StackCache #(
     output                     [31:0] CacheLineOutMemLineAddr,
     output    [CACHELINEBITWIDTH-1:0] CacheLineOutData,
 
+    input                             PrePop,
     input                             DirectionWE,
     input                             StackDirection, // 0 - Grows Down with Push, 1 - Grows Up with Push
     input                             UpperBoundWE,
@@ -154,48 +155,60 @@ module StackCache #(
     //
 
     //? Stack Pointer Behavior:
-    //* SP Modify - *Pop*
+    //* 0 - SP Modify - *Pop*
         // Check if desired Cache Line is Valid
         // Increment Stack Pointer [Based on GrowthDirection] 
-    //* SP Modify - *Push*
+    //* 1 - SP Modify - *Push*
         // Check if desired Cache Line is Valid
         // Decrement Stack Pointer [Based on GrowthDirection]
-    //* A Operand (Non-Move) - 
+    //* 2 - A Operand (Non-Move) - Peak & Replace 
         // Check if desired Cache Line is Valid
         // Check if desired Value is Not-Dirty
         // Read TOS
         // Assign Write Tag (Marks value dirty)
         // ~ Wait ~
         // Write value, clear Write Tag
-    //* A Operand (Move)     -
+    //* 3 - A Operand (Move)     - Push to Stack
         // Check if desired Cache Line is Valid
         // Check if desired Value is Not-Dirty
         // Assign Write Tag (Marks value dirty)
-        // Increment Stack Pointer [Based on GrowthDirection]
+        // Decrement Stack Pointer [Based on GrowthDirection]
         // ~ Wait ~
         // Write value, clear Write Tag
-        // Check SP +1/-1 Line Status (Correct if not true)
-    //* B Operand (Non-Move) -
+//        // Check SP +1/-1 Line Status (Correct if not true)
+    //* 4 - B Operand (Non-Move) - Pop
         // Check if desired Cache Line is Valid
         // Check if desired Value is Not-Dirty
         // Read TOS
         // Increment Stack Pointer [Based on GrowthDirection]
-        // Check SP +1/-1 Line Status (Correct if not true)
-    //* B Operand (Move)     -
+//        // Check SP +1/-1 Line Status (Correct if not true)
+    //* 5 - B Operand (Move)     - Peak
         // Check if desired Cache Line is Valid
         // Check if desired Value is Not-Dirty
         // Read TOS
-    //* Stack Pick           -
+    //* 6 - Stack Pick           -
         // Check if desired Cache Line is Valid
         // Check if desired Value is Not-Dirty
         // Read desired Value
-    //* Stack Place          -
+    //* 7 - Stack Place          -
         // Check if desired Cache Line is Valid
         // Check if desired Value is Not-Dirty
         // Assign Write Tag (Marks value dirty)
         // ~ Wait ~
         // Write value, clear Write Tag
 
+
+    //? Required Functions
+        //* Key: X - Required, d - Dont Care
+        // 7, 6, 5, 4, 3, 2, 1, 0
+        // X, X, X, X, X, X, X, X : Check Line Validity [Same as: Read, when ignoring the read output if not required]
+        // X, X, X, X, X, X, -, - : Check Value Dirty Status
+        // -, X, X, X, d, X, d, d : Read
+        // X, -, -, -, X, X, -, - : Assign Write Tag & Mark Dirty [Same as: ~Wait AND Same as: Write, Clear Tag, & Mark Clean]
+        // -, -, -, X, -, -, -, X : Increment Stack Pointer (Pop)
+        // -, -, -, -, X, -, X, - : Decrement Stack Pointer (Push)
+//      // X, -, -, -, X, X, -, - : ~ Wait
+//      // X, -, -, -, X, X, -, - : Write, Clear Tag,b & Mark Clean
 
 
 endmodule : StackCache

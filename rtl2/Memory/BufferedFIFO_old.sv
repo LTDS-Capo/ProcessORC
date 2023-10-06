@@ -1,4 +1,4 @@
-module BufferedFIFO #(
+module BufferedFIFO_old #(
     parameter DATABITWIDTH = 16,
     parameter FIFODEPTH = 32,
     parameter FIFOINDEXBITWIDTH = (FIFODEPTH == 1) ? 1 : $clog2(FIFODEPTH)
@@ -71,4 +71,4 @@ module BufferedFIFO #(
             assign OutputData = FIFOMemory[TailIndex];
         //
 
-endmodule : BufferedFIFO
+endmodule : BufferedFIFO_old

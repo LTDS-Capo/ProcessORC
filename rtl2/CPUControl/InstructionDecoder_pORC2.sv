@@ -46,10 +46,10 @@ module InstructionDecoder_pORC2 #(
                 3'b001 : TempImmediate = {BranchSignPad, FetchedInstruction[9:0]}; // JLI Relative
                 3'b010 : TempImmediate = 0; //! Not Used
                 3'b011 : TempImmediate = {BranchSignPad, FetchedInstruction[9:0]}; // BZI Relative
-                3'b000 : TempImmediate = {ImmediatePad8Bit, FetchedInstruction[7:0]}; // Load Lower
-                3'b001 : TempImmediate = {Unsigned10BitPadd, FetchedInstruction[9:0]}; // Load Unsigned Extended
-                3'b010 : TempImmediate = {UpperImmediateUpperPad, FetchedInstruction[7:0], UpperImmediateLowerPad}; // Load Upper
-                3'b011 : TempImmediate = {Negative10BitPadd, FetchedInstruction[9:0]}; // Load Negative
+                3'b100 : TempImmediate = {ImmediatePad8Bit, FetchedInstruction[7:0]}; // Load Lower
+                3'b101 : TempImmediate = {Unsigned10BitPadd, FetchedInstruction[9:0]}; // Load Unsigned Extended
+                3'b110 : TempImmediate = {UpperImmediateUpperPad, FetchedInstruction[7:0], UpperImmediateLowerPad}; // Load Upper
+                3'b111 : TempImmediate = {Negative10BitPadd, FetchedInstruction[9:0]}; // Load Negative
                 default: TempImmediate = 0;
             endcase
         end
