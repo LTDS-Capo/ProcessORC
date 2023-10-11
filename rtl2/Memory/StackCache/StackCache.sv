@@ -199,16 +199,21 @@ module StackCache #(
 
 
     //? Required Functions
-        //* Key: X - Required, d - Dont Care
-        // 7, 6, 5, 4, 3, 2, 1, 0
-        // X, X, X, X, X, X, X, X : Check Line Validity [Same as: Read, when ignoring the read output if not required]
-        // X, X, X, X, X, X, -, - : Check Value Dirty Status
-        // -, X, X, X, d, X, d, d : Read
-        // X, -, -, -, X, X, -, - : Assign Write Tag & Mark Dirty [Same as: ~Wait AND Same as: Write, Clear Tag, & Mark Clean]
-        // -, -, -, X, -, -, -, X : Increment Stack Pointer (Pop)
-        // -, -, -, -, X, -, X, - : Decrement Stack Pointer (Push)
-//      // X, -, -, -, X, X, -, - : ~ Wait
-//      // X, -, -, -, X, X, -, - : Write, Clear Tag,b & Mark Clean
+        //*  Key: X - Required, d - Dont Care
+        //!  7, 6, 5, 4, 3, 2, 1, 0 : Order : Module : Task
+        //   X, X, X, X, X, X, X, X :     1 :      A : Check Line Validity [Same as: Read, when ignoring the read output if not required]
+        //   X, X, X, X, X, X, -, - :     1 :      B : Check Value Dirty Status
+        //   -, X, X, X, d, X, d, d :     1 :      B : Read
+        //   X, -, -, -, X, X, -, - : 1 ... :      B : Assign Write Tag & Mark Dirty [Same as: ~Wait AND Same as: Write, Clear Tag, & Mark Clean]
+        //   -, -, -, X, -, -, -, X :     1 :      C : Increment Stack Pointer (Pop)
+        //   -, -, -, -, X, -, X, - :     1 :      C : Decrement Stack Pointer (Push)
+        //// X, -, -, -, X, X, -, - : ~ Wait
+        //// X, -, -, -, X, X, -, - : Write, Clear Tag,b & Mark Clean
+
+    //? Modules Needed:
+    //  A: Line_StateMachine - For Line Validity
+    //  B: Line              - To Read, Write, and Dirty Status Read/Modify
+    //  C: Stack Pointer     - To generate Read and Write Addresses
 
 
 endmodule : StackCache

@@ -25,7 +25,6 @@ module ProgramCounter #(
     output                    EndSpeculationPulse,
     output [DATABITWIDTH-1:0] ActualDestination,
 
-
     input  [DATABITWIDTH-1:0] ECallDestination,
     input  [DATABITWIDTH-1:0] EBreakDestination,
     input  [DATABITWIDTH-1:0] XReturnDestination,

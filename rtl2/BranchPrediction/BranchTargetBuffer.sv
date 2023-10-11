@@ -28,6 +28,7 @@ module BranchTargetBuffer #(
     //
 
     // Prediction Array
+        // TODO this needs a proper reset mechanism... this wont work, put them in a genblock like the registers
         reg  [DATABITWIDTH+1:0] PredictionArray [PREDICTORDEPTH-1:0];
         wire [DATABITWIDTH-1:0] ZeroPadd = 0;
         // resets to weakly not-taken

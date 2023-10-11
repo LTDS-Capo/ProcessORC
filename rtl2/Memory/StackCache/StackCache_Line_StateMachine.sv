@@ -5,12 +5,12 @@
 // > Popping Out of a Line
 
 //? Overflow/Underflow Checks
-// NextPushValid - RoundDown8s(StackPointer) + 16 <= StackUpper Bounds //* Next Push Line on UpperBounds
-// PushValid     - RoundDown8s(StackPointer) + 8 <= StackUpper Bounds  //* Push Line on UpperBounds
-// NextPopValid  - RoundDown8s(StackPointer) - 16 >= StackLower Bounds //* Next Pop Line On LowerBounds
-// PopValid      - RoundDown8s(StackPointer) - 8 >= StackLower Bounds  //* Pop Line On LowerBounds
-// OnUpperBounds - RoundDown8s(StackPointer) == Stack UpperBounds      //* On Upper/LowerBounds
-// OnLowerBounds - RoundDown8s(StackPointer) == Stack LowerBounds      //* On Upper/LowerBounds
+// NextPushValid - RoundDown8s(StackPointer) + 16 <= Stack Push Bounds //* Next Push Line on PushBounds
+// PushValid     - RoundDown8s(StackPointer) + 8 <= Stack Push Bounds  //* Push Line on PushBounds
+// OnPushBounds - RoundDown8s(StackPointer) == Stack Push Bounds      //* On Push/PopBounds
+// NextPopValid  - RoundDown8s(StackPointer) - 16 >= Stack Pop Bounds //* Next Pop Line On PopBounds
+// PopValid      - RoundDown8s(StackPointer) - 8 >= Stack Pop Bounds  //* Pop Line On PopBounds
+// OnPopBounds - RoundDown8s(StackPointer) == Stack Pop Bounds      //* On Push/PopBounds
 
 //? New Stack Pointer
 //* IF PrePop is NOT Set in CSRs:
@@ -83,7 +83,7 @@
 module StackCache_Line_StateMachine (
     input clk,
     input clk_en,
-    input sync_rst,
+    input sync_rst
 
     
 );
@@ -100,4 +100,7 @@ module StackCache_Line_StateMachine (
 
 
 
+
 endmodule : StackCache_Line_StateMachine
+
+

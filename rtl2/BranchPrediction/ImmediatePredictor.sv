@@ -58,7 +58,7 @@ module ImmediatePredictor #(
                 for (PREDICTIONINDEX = 0; PREDICTIONINDEX < LINEWIDTH; PREDICTIONINDEX = PREDICTIONINDEX + 1) begin : IndexUpdate
                     logic  [2:0] NextIndexedPrediction;
                     wire   [1:0] NextIndexedPredictionCondition;
-                    assign       NextIndexedPredictionCondition[0] = UpdateIndexOneHot[PREDICTIONINDEX]|| sync_rst;
+                    assign       NextIndexedPredictionCondition[0] = UpdateIndexOneHot[PREDICTIONINDEX] || sync_rst;
                     assign       NextIndexedPredictionCondition[1] = sync_rst;
                     always_comb begin : NextIndexedPredictionMux
                         case (NextIndexedPredictionCondition)
