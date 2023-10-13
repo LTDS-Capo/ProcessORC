@@ -19,6 +19,7 @@ module RegisterFile_Cell #(
 
     output [DATABITWIDTH-1:0] ReadData
 );
+    // TODO: Make the Load ports fully disabled via a generate block
 
     //? Notes
         // Write Priority:

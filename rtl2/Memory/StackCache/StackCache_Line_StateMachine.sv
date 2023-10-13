@@ -44,47 +44,77 @@
 // Set Tail to 2'b10
 // Clear StackCacheBusy
 
+
+
+
+
+
+
+
+
+
+
+
+
 //? Pushing Out of a Line
-// Check If (OnBounds)
-// > If True: //! Overflow Fault
-// > If False: Increment Head
-//   > Check if Tail is Valid AND StackLine+2
-//     > If True: Increment Tail
-//     > If False: Mark Invalid
-//     > Check If (OnBounds || PushOnBounds)
-//       > If True: //* END
-//       > If False: Check For CleanStatus
-//         > If Clean : Fetch StackLine+2
-//           > Increment Tail
-//           > Mark Valid when Fetch completes
-//         > If Dirty : Wait Till Clean
-//           > Fetch StackLine+2
-//           > Increment Tail
-//           > Mark Valid when Fetch completes
+// Increment Head
+// Check if Tail is Valid AND StackLine+2
+// > If True: Increment Tail
+// > If False: Check if NextLinePushValid
+//    :WaitLoop
+//    > If True: Check if Line Clean
+//      > If True: Mark Invalid
+//      > If False: Wait
+//          > If Line Gets Clean: GoTo WaitLoop
+//          > If 
+//    > If False: Do Nothing - On Bounds
+
+
+
+
+
+
+
+
+
+//? Pushing Out of a Line
+// Increment Head
+// > Check if Tail is Valid AND StackLine+2
+//   > If True: Increment Tail
+//   > If False: Mark Invalid
+//   > Check If (OnBounds || PushOnBounds)
+//     > If True: //* END
+//     > If False: Check For CleanStatus
+//       > If Clean : Fetch StackLine+2
+//         > Increment Tail
+//         > Mark Valid when Fetch completes
+//       > If Dirty : Wait Till Clean
+//         > Fetch StackLine+2
+//         > Increment Tail
+//         > Mark Valid when Fetch completes
 
 //? Popping Out of a Line
-// Check If (OnBounds)
-// > If True: //! Underflow Fault
-// > If False: Decrement Head
-//   > Check if Tail is Valid AND StackLine-2
-//     > If True: Deccrement Tail
-//     > If False: Mark Invalid
-//       > Check If (OnBounds || PopOnBounds)
-//         > If True: //* END
-//       > If False: Check For CleanStatus
-//         > If Clean : Fetch StackLine-2
-//           > Increment Tail
-//           > Mark Valid when Fetch completes
-//         > If Dirty : Wait Till Clean
-//           > Fetch StackLine-2
-//           > Increment Tail
-//           > Mark Valid when Fetch completes
+// Decrement Head
+// > Check if Tail is Valid AND StackLine-2
+//   > If True: Deccrement Tail
+//   > If False: Mark Invalid
+//     > Check If (OnBounds || PopOnBounds)
+//       > If True: //* END
+//     > If False: Check For CleanStatus
+//       > If Clean : Fetch StackLine-2
+//         > Increment Tail
+//         > Mark Valid when Fetch completes
+//       > If Dirty : Wait Till Clean
+//         > Fetch StackLine-2
+//         > Increment Tail
+//         > Mark Valid when Fetch completes
 
 module StackCache_Line_StateMachine (
-    input clk,
-    input clk_en,
-    input sync_rst
+    input  clk,
+    input  clk_en,
+    input  sync_rst,
 
+    output StackBusy,
     
 );
 

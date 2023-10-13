@@ -85,7 +85,7 @@ module RunaheadSpeculativeClearQueue #(
     //
 
     //? Runahead Validation Depth
-    //! Id Mispredicted:
+    //! If Mispredicted:
     // When Clear Queue has a valid output that is marked Mispredicted,
     //   Add the current output of the Clear Queue to the RunaheadFIFO's Tail. ACK Output
     //! If Properly Prediced:

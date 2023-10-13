@@ -1,6 +1,6 @@
 module RunaheadInstructionQueue #(
     parameter RUNAHEADDEPTH = 32,
-    parameter STACKTAGWIDTH = 4,
+    parameter STACKTAGWIDTH = 5,
     parameter CLEARQUEUEQDEPTH = 8
 )(
     input clk,
