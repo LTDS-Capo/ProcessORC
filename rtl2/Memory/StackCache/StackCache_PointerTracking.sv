@@ -96,7 +96,7 @@ module StackCache_PointerTracking #(
     //                                                                       //
     //* Shadow Pointer - for speculation rollback
         wire [32:0] NextShadowStackPointer = (sync_rst || EndSpeculationPulse) ? 33'd0 : {1'b1, StackPointer};
-        wire ShadowStackPointerTrigger = sync_rst || (clk_en && Speculating && ~ShadowStackPointer[32]) || (clk_en && EndSpeculationPulse);
+        wire        ShadowStackPointerTrigger = sync_rst || (clk_en && Speculating && ~ShadowStackPointer[32]) || (clk_en && EndSpeculationPulse);
         always_ff @(posedge clk) begin
             if (ShadowStackPointerTrigger) begin
                 ShadowStackPointer <= NextShadowStackPointer;
@@ -129,7 +129,7 @@ module StackCache_PointerTracking #(
     //                                                                       //
     //* Buffer
     reg  [31:0] UpperBounds;
-    wire UpperBoundsTrigger = sync_rst || (clk_en && CSRWriteEnable && ~CSRAddr[1] && CSRAddr[0]);
+    wire        UpperBoundsTrigger = sync_rst || (clk_en && CSRWriteEnable && ~CSRAddr[1] && CSRAddr[0]);
     always_ff @(posedge clk) begin
         if (UpperBoundsTrigger) begin
             UpperBounds <= NextBound;
@@ -142,7 +142,7 @@ module StackCache_PointerTracking #(
     //                                                                       //
     //* Buffer
     reg  [31:0] LowerBounds;
-    wire LowerBoundsTrigger = sync_rst || (clk_en && CSRWriteEnable && CSRAddr[1] && ~CSRAddr[0]);
+    wire        LowerBoundsTrigger = sync_rst || (clk_en && CSRWriteEnable && CSRAddr[1] && ~CSRAddr[0]);
     always_ff @(posedge clk) begin
         if (LowerBoundsTrigger) begin
             LowerBounds <= NextBound;
