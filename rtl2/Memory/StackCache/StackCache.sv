@@ -133,9 +133,10 @@ module StackCache #(
 
     //? Modules Needed:
     // Status: C - Complete, P - Pending, W - Work In Progress
-    //  A: W - Line_StateMachine - For Line Validity
-    //  B: C - Line              - To Read, Write, and Dirty Status Read/Modify
-    //  C: C - Stack Pointer     - To generate Read and Write Addresses
+    //  A:   W - Line_StateMachine - For Line Validity
+    //   a1: W - Replacement Queue - To track the Stack Cache Lines that need replacement
+    //  B:   C - Line              - To Read, Write, and Dirty Status Read/Modify
+    //  C:   C - Stack Pointer     - To generate Read and Write Addresses
 
 
 endmodule : StackCache

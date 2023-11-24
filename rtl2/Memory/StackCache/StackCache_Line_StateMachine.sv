@@ -13,8 +13,12 @@
 // OnPopBounds - RoundDown8s(StackPointer) == Stack Pop Bounds         //* On Push/PopBounds
 
 //? New Stack Pointer - Begin Init
+//! The Checks below check for Line Bound Validity and if the value is already in the cache.
 //* IF PrePop is NOT Set in CSRs:
 // Set StackCacheBusy
+// Check Active Line
+// > If in-range: Continue
+// > If out-of-bounds: Seg Fault
 // Check PushValid
 // > If True: Fetch Line Stack Pointer points to -1 [Place in Line 2'b01] //* Next Push
 // > If False: Mark Line 2'b11 Invalid
@@ -29,7 +33,10 @@
 // Clear StackCacheBusy
 //* IF PrePop is Set in CSRs:
 // Set StackCacheBusy
-// Check NextPushValid  
+// Check Active Line
+// > If in-range: Continue
+// > If out-of-bounds: Seg Fault
+// Check NextPushValid
 // > If True: Fetch Line Stack Pointer points to -2 [Place in Line 2'b10] //* Pending Eviction
 // > If False: Mark Line 2'b10 Invalid
 // Check PushValid
@@ -93,11 +100,17 @@
 //    Subtract 16 for NextPushIndex
 //    OR
 //    Add 16 for NextPopIndex
+//* Memory Load Register Dest
+// > For Register Loads > 0xxxx
+//    xxxx: Register Address
+// > For Stack Line Loads > 100xx
+//    xx: Stack Cache Line Index
 //* Pointers
 // > Wait to replace the lines at the front of the Queue until they are Clean.
-// > Head - Where to write next Entry
-// > Body - Newest Entry being Actively Fetched
-// > Tail - Oldest Entry being Actively Fetched
+// >      Head - Where to write next Entry
+// > StoreTail - Newest Entry being Actively Stored
+// >  LoadTail - Newest Entry being Actively Fetched
+// >      Tail - Oldest Entry being Actively Fetched
 //* If the Line the Tail points to is Valid, Store the contents before Fetching.
 //* If the Line the Tail points to is Not Valid, Ignore Contents and Immediately Fetch.
 //* If Target Line Address matches the current Line Address, instantly mark complete.
@@ -119,6 +132,23 @@ module StackCache_Line_StateMachine (
     output StackBusy,
      
 );
+
+//? State Machine
+    //! The Checks below check for Line Bound Validity and if the value is already in the cache.
+    //* Name                      - Bin  - Trigger                                 - Trigger Source  - Next           - Next Calc
+    //  Start Up/Fault            - 0000 - SwapValid                               - PointerTracking - 0001           - 4'b0001
+    //  Fault Check               - 0001 - 1'b1                                    -                 - 0000/0010/0101 - {2'b00, ~PointerFault, (~PointerFault && ~PrePop)}
+    //  NextPushValid Check&Fetch - 0010 - 1'b1                                    -                 - 0101           - 4'b0011
+    //  PushValid Check&Fetch     - 0101 - 1'b1                                    -                 - 0100           - 4'b0100
+    //  Active Line Check         - 0100 - 1'b1                                    -                 - 0111           - 4'b0101
+    //  PopValid Check&Fetch      - 0111 - 1'b1                                    -                 - 0110           - 4'b0110
+    //  NextPopValid Check&Fetch  - 0110 - 1'b1                                    -                 - 1000           - 4'b1000
+    //  Initialized               - 1000 - PushingOut || PoppingOut || PointerSwap - PointerTracking - 1001/1010/0001 - {2'b10, PoppingOut, PushingOut}
+    //? The below may not need to be states... could just be reactionary responses... allowing for back to back PopOut>PushOut or PushOut>PopOut...
+    //?    For timing reasons, do all supporting logic for the PushOut/PopOut before ANDing with PushingOut/PoppingOut (respectively)
+    ////  Push Out Check/Inc Active - 1001 - 1'b1                                    -                 - 1100           - 4'b1100
+    ////  Pop Out Check/Inc Active  - 1010 - 1'b1                                    -                 - 1100           - 4'b1100
+    ////  +Default+                 - xxxx - 1'b1                                    -                 - 0000           - 4'b0000
 
 
 //? Status Vector
